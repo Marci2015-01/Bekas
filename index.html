@@ -2,40 +2,53 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<title>Szuper Állatos Útkelő 4.0</title>
+<title>Szuper Állatos Útkelő 5.0</title>
 <style>
-body {margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden;}
-canvas {border:3px solid white; background:#222;}
-#menu {position:absolute; top:20px; left:50%; transform:translateX(-50%); text-align:center; display:none; background:rgba(0,0,0,0.85); padding:15px; border-radius:8px; max-height:80vh; overflow-y:auto;}
+html, body {margin:0; padding:0; height:100%; overflow:hidden; background:#111; font-family:Arial;}
+canvas {display:block;}
+#menu, #help {position:absolute; top:20px; left:50%; transform:translateX(-50%); text-align:center; display:none; background:rgba(0,0,0,0.85); padding:20px; border-radius:8px; max-height:80vh; overflow-y:auto; color:white;}
 button {margin:3px; padding:5px 10px; font-size:14px; cursor:pointer;}
 .locked {opacity:0.3; cursor:not-allowed;}
 </style>
 </head>
 <body>
 <div id="menu"></div>
-<canvas id="game" width="400" height="600"></canvas>
+<div id="help"></div>
+<canvas id="game"></canvas>
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 
+// Teljes képernyő
+function resizeCanvas(){canvas.width=window.innerWidth; canvas.height=window.innerHeight;}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
 // ---------- ALAP ----------
-const baseLaneHeight=60; let maxLevel=10;
-let level=1, lanes, worldHeight, cars=[], logs=[], houses=[];
+const baseLaneHeight=canvas.height/10; 
+let maxLevel=10, level=parseInt(localStorage.getItem('level'))||1;
+let lanes, worldHeight, cars=[], logs=[], houses=[];
 let frog={x:185,y:0,size:30,speed:50,stepFrame:0};
 let cameraY=0,startTime,elapsedTime=0;
 let gameState="playing",loseReason="",starsEarned=0;
+
+// Hangok
+const sounds={jump:new Audio('https://www.soundjay.com/button/sounds/button-16.mp3'),
+              crash:new Audio('https://www.soundjay.com/button/sounds/button-10.mp3'),
+              win:new Audio('https://www.soundjay.com/button/sounds/button-3.mp3')};
 
 // ---------- ÁLLATOK ----------
 const animalNames=["Béka","Tehén","Malac","Kutya","Macska","Süni","Nyúl","Mókus","Kacsa","Csirke"];
 const animals=[],colors=["#2ecc71","#f08080","#fff","#ff0","#ff8000","#00ffff","#ff00ff","#aaa","#88f","#f88"];
 for(let i=0;i<100;i++){
     const name=animalNames[i%animalNames.length]+(i>=animalNames.length?i:"");
-    animals.push({name:name,unlock:Math.floor(i/2)+1,color:colors[i%colors.length],anim:stepSimpleAnimal});
+    animals.push({name:name,unlock:(i*2)+1,color:colors[i%colors.length],anim:stepSimpleAnimal});
 }
 let selectedAnimal="Béka",unlockedAnimals=["Béka"];
 
 // ---------- MENÜ ----------
-const menuDiv=document.getElementById("menu"); let menuVisible=false;
+const menuDiv=document.getElementById("menu");
+let menuVisible=false;
 function toggleMenu(){menuVisible=!menuVisible; menuDiv.style.display=menuVisible?'block':'none'; if(menuVisible) updateMenu();}
 function updateMenu(){
     menuDiv.innerHTML="<h3>Válaszd ki az állatod:</h3>";
@@ -51,25 +64,24 @@ function updateMenu(){
     });
 }
 
+// ---------- SEGÍTSÉG ----------
+const helpDiv=document.getElementById("help");
+function toggleHelp(){helpDiv.style.display=helpDiv.style.display==='block'?'none':'block';
+if(helpDiv.style.display==='block'){
+helpDiv.innerHTML="<h3>Játékszabályok és irányítás</h3>"+
+"<p>🕹️ Mozgatás: W/A/S/D vagy nyilak</p>"+
+"<p>Shift/E – Állat választó menü</p>"+
+"<p>Q vagy 0 – Segítség menü</p>"+
+"<p>Feladat: Juss át a folyón és az autósávokon, kerüld az ütközést és a vizet.</p>"+
+"<p>🚗 Autók elütnek, 🌊 Vízbe esés a deszkáról, 🚂 Vonat átgázol.</p>";}}
+
 // ---------- CSILLAG IDŐK ----------
 function starTimes(){const base=20; return {5:base,4:base+3,3:base+6,2:base+9,1:base+12};}
 
-// ---------- PÁLYA, AUTÓK, DESZKÁK, HÁZAK, VONAT ----------
+// ---------- PÁLYA ----------
 function createCars(){cars=[]; for(let i=5;i<lanes-1;i++){const count=1+Math.floor(level/3); const dir=i%2===0?1:-1; const speedFactor=0.7+level*0.1; for(let j=0;j<count;j++){const speed=(Math.random()*0.3+speedFactor)*dir; cars.push({lane:i,x:Math.random()*canvas.width,y:i*baseLaneHeight+15,width:50,height:28,speed,baseSpeed:speed});}}}
-
-function createLogs(){
-    logs=[];
-    for(let i=2;i<4;i++){
-        const count=3;
-        const dir=i%2===0?1:-1;
-        for(let j=0;j<count;j++){
-            logs.push({lane:i, x:Math.random()*canvas.width, y:i*baseLaneHeight+10, width:80, height:20, speed:0.5*dir}); // <-- lassabb
-        }
-    }
-}
-
-
-function createHouses(){houses=[]; for(let i=0;i<lanes;i+=2){houses.push({x:Math.random()*canvas.width,y:i*baseLaneHeight+10,width:50,height:40});}}
+function createLogs(){logs=[]; for(let i=2;i<4;i++){const count=3; const dir=i%2===0?1:-1; for(let j=0;j<count;j++){logs.push({lane:i, x:Math.random()*canvas.width, y:i*baseLaneHeight+10, width:80, height:20, speed:0.5*dir});}}}
+function createHouses(){houses=[]; for(let i=0;i<lanes;i+=2){houses.push({x:Math.random()*canvas.width, y:i*baseLaneHeight+10, width:50, height:40});}}
 
 // Vonatsáv
 const trainLane = 4;
@@ -77,20 +89,21 @@ let train={x:-300, y:trainLane*baseLaneHeight+5, width:300, height:30, speed:6, 
 let trainLight={x:canvas.width-50, y:train.y-15, state:"green"};
 
 function setupLevel(){
-    lanes=8+level; worldHeight=lanes*baseLaneHeight; frog.x=185; frog.y=worldHeight-50; frog.stepFrame=0;
+    lanes=10; worldHeight=lanes*baseLaneHeight; frog.x=canvas.width/2-15; frog.y=worldHeight-50; frog.stepFrame=0;
     createCars(); createLogs(); createHouses(); cameraY=0; startTime=performance.now(); gameState="playing"; loseReason=""; starsEarned=0;
-    animals.forEach(a=>{if(level>=a.unlock && !unlockedAnimals.includes(a.name)){unlockedAnimals.push(a.name); showUnlockAnimation(a.name);}});
+    animals.forEach(a=>{if(level>=a.unlock && level%2===0 && !unlockedAnimals.includes(a.name)){unlockedAnimals.push(a.name); showUnlockAnimation(a.name);}});
 }
 
 // ---------- IRÁNYÍTÁS ----------
 document.addEventListener("keydown", e=>{
     if(e.key==="Shift"||e.key.toLowerCase()==="e") toggleMenu();
+    if(e.key.toLowerCase()==="q"||e.key==="0") toggleHelp();
     if(gameState!=="playing" && e.key==="Enter"){setupLevel(); return;}
     if(gameState!=="playing") return;
-    if(e.key==="ArrowUp"||e.key.toLowerCase()==="w"){ frog.y-=frog.speed; frog.stepFrame++; }
-    if(e.key==="ArrowDown"||e.key.toLowerCase()==="s"){ frog.y+=frog.speed; frog.stepFrame++; }
-    if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a"){ frog.x-=frog.speed; frog.stepFrame++; }
-    if(e.key==="ArrowRight"||e.key.toLowerCase()==="d"){ frog.x+=frog.speed; frog.stepFrame++; }
+    if(e.key==="ArrowUp"||e.key.toLowerCase()==="w"){ frog.y-=frog.speed; frog.stepFrame++; sounds.jump.play();}
+    if(e.key==="ArrowDown"||e.key.toLowerCase()==="s"){ frog.y+=frog.speed; frog.stepFrame++; sounds.jump.play();}
+    if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a"){ frog.x-=frog.speed; frog.stepFrame++; sounds.jump.play();}
+    if(e.key==="ArrowRight"||e.key.toLowerCase()==="d"){ frog.x+=frog.speed; frog.stepFrame++; sounds.jump.play();}
 });
 
 // ---------- KAMERA ----------
@@ -104,18 +117,12 @@ function updateLogs(){
         log.x += log.speed; 
         if(log.speed>0 && log.x>canvas.width) log.x=-log.width; 
         if(log.speed<0 && log.x<-log.width) log.x=canvas.width+log.width;
-
         if(frog.y+frog.size > log.y && frog.y < log.y + log.height &&
-           frog.x+frog.size > log.x && frog.x < log.x + log.width){
-            onLog = log;
-        }
+           frog.x+frog.size > log.x && frog.x < log.x + log.width){ onLog = log; }
     }
     if(frogInWater(frog.y)){
-        if(onLog){
-            frog.x += onLog.speed; // Béka mozog a deszkával
-        } else {
-            gameState = "lose"; loseReason = "víz";
-        }
+        if(onLog){ frog.x += onLog.speed; } 
+        else { gameState = "lose"; loseReason = "víz"; sounds.crash.play(); }
     }
 }
 function frogInWater(y){ return y>=2*baseLaneHeight && y<4*baseLaneHeight; }
@@ -123,9 +130,7 @@ function frogInWater(y){ return y>=2*baseLaneHeight && y<4*baseLaneHeight; }
 function updateTrain(){
     if(!train.active && Math.random()<0.001){ train.active=true; train.x=-train.width; trainLight.state="red"; }
     if(train.active){ train.x += train.speed; if(train.x>canvas.width){ train.active=false; trainLight.state="green"; } 
-        if(frog.y+frog.size>train.y && frog.y<train.y+train.height && frog.x+frog.size>train.x && frog.x<train.x+train.width){
-            gameState="lose"; loseReason="vonat";
-        }
+        if(frog.y+frog.size>train.y && frog.y<train.y+train.height && frog.x+frog.size>train.x && frog.x<train.x+train.width){ gameState="lose"; loseReason="vonat"; sounds.crash.play();}
     }
 }
 
@@ -133,10 +138,10 @@ function updateTrain(){
 function checkState(){
     elapsedTime=(performance.now()-startTime)/1000;
     const stars=starTimes();
-    if(elapsedTime>stars[1]){gameState="lose"; loseReason="idő";}
-    for(let car of cars){if(frog.x<car.x+car.width&&frog.x+frog.size>car.x&&frog.y<car.y+car.height&&frog.y+frog.size>car.y){gameState="lose"; loseReason="autó";}}
-    if(frog.x<0||frog.x+frog.size>canvas.width||frog.y>worldHeight){gameState="lose"; loseReason="szél";}
-    if(frog.y<0){gameState="win"; starsEarned=1; for(let s=5;s>=1;s--){if(elapsedTime<=stars[s]){starsEarned=s; break;}} if(level<maxLevel){level++;}}
+    if(elapsedTime>stars[1]){gameState="lose"; loseReason="idő"; sounds.crash.play();}
+    for(let car of cars){if(frog.x<car.x+car.width&&frog.x+frog.size>car.x&&frog.y<car.y+car.height&&frog.y+frog.size>car.y){gameState="lose"; loseReason="autó"; sounds.crash.play();}}
+    if(frog.x<0||frog.x+frog.size>canvas.width||frog.y>worldHeight){gameState="lose"; loseReason="szél"; sounds.crash.play();}
+    if(frog.y<0){gameState="win"; sounds.win.play(); starsEarned=1; for(let s=5;s>=1;s--){if(elapsedTime<=stars[s]){starsEarned=s; break;}} if(level<maxLevel){level++; localStorage.setItem('level',level);}}
 }
 
 // ---------- LAKAT ANIMÁCIÓ ----------
@@ -148,21 +153,9 @@ function drawRoads(){for(let i=0;i<lanes;i++){ctx.fillStyle=(i===2||i===3)?"#1E9
 function drawCars(){for(let car of cars){ctx.fillStyle="red"; ctx.fillRect(car.x,car.y,car.width,car.height); ctx.fillStyle="#87CEEB"; ctx.fillRect(car.x+5,car.y+5,car.width-10,car.height/2-5); ctx.fillStyle="black"; const wheelR=6; const wheelY=car.y+car.height+wheelR/2; ctx.beginPath(); ctx.arc(car.x+10,wheelY,wheelR,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(car.x+car.width-10,wheelY,wheelR,0,Math.PI*2); ctx.fill();}}
 function drawLogs(){for(let l of logs){ctx.fillStyle="#8B4513"; ctx.fillRect(l.x,l.y,l.width,l.height);}}
 function drawHouses(){for(let h of houses){ctx.fillStyle="#964B00"; ctx.fillRect(h.x,h.y,h.width,h.height); ctx.fillStyle="#FFD700"; ctx.fillRect(h.x+10,h.y+10,h.width-20,h.height-20);}}
-
-function drawTrainTrack(){
-    const y = trainLane * baseLaneHeight + baseLaneHeight/2;
-    ctx.strokeStyle = "#888"; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(0, y-10); ctx.lineTo(canvas.width, y-10); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, y+10); ctx.lineTo(canvas.width, y+10); ctx.stroke();
-    ctx.strokeStyle = "#555"; ctx.lineWidth = 2;
-    for(let x=0; x<canvas.width; x+=20){
-        ctx.beginPath(); ctx.moveTo(x, y-12); ctx.lineTo(x, y+12); ctx.stroke();
-    }
-}
+function drawTrainTrack(){const y = trainLane * baseLaneHeight + baseLaneHeight/2; ctx.strokeStyle = "#888"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, y-10); ctx.lineTo(canvas.width, y-10); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, y+10); ctx.lineTo(canvas.width, y+10); ctx.stroke(); ctx.strokeStyle = "#555"; ctx.lineWidth = 2; for(let x=0; x<canvas.width; x+=20){ctx.beginPath(); ctx.moveTo(x, y-12); ctx.lineTo(x, y+12); ctx.stroke();}}
 function drawTrainLight(){ ctx.fillStyle=trainLight.state==="green"?"#0f0":"#f00"; ctx.beginPath(); ctx.arc(trainLight.x,trainLight.y,10,0,Math.PI*2); ctx.fill();}
 function drawTrain(){ if(train.active){ ctx.fillStyle="purple"; ctx.fillRect(train.x,train.y,train.width,train.height); }}
-
-// ---------- EGYSZERŰ ÁLLAT ANIM ----------
 function stepSimpleAnimal(x,y,frame){ctx.fillStyle=animals.find(a=>a.name===selectedAnimal).color; ctx.fillRect(x,y,30,30); let offset=frame%2*3; ctx.fillRect(x+5,y+30+offset,5,6); ctx.fillRect(x+20,y+30+offset,5,6);}
 function drawAnimal(){stepSimpleAnimal(frog.x,frog.y,frog.stepFrame);}
 
