@@ -10,7 +10,7 @@
         height: 100%; width: 100%;
         overflow: hidden; 
         background-color: #222;
-        font-family: sans-serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         touch-action: none; user-select: none;
     }
     canvas { display: block; background-color: #333; }
@@ -23,47 +23,50 @@
         z-index: 50;
     }
     #msg-box {
-        background: rgba(0,0,0,0.9); color: white; padding: 20px;
-        border-radius: 15px; text-align: center; border: 3px solid white;
-        pointer-events: auto; min-width: 260px; max-width: 80%;
+        background: rgba(0,0,0,0.9); color: white; padding: 25px;
+        border-radius: 15px; text-align: center; border: 3px solid #2ecc71;
+        pointer-events: auto; min-width: 280px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
+    h1 { margin: 0 0 10px 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; }
+    p { color: #aaa; margin-bottom: 20px; }
+    
     button.big-btn {
         background: #27ae60; color: white; border: none; padding: 15px 30px; 
-        font-size: 20px; border-radius: 10px; cursor: pointer; margin-top: 15px;
-        font-weight: bold; width: 100%;
+        font-size: 20px; border-radius: 8px; cursor: pointer; margin-top: 5px;
+        font-weight: bold; width: 100%; transition: transform 0.1s;
     }
     button.big-btn:active { background: #2ecc71; transform: scale(0.95); }
 
     /* HUD */
     #hud {
-        position: absolute; top: 10px; left: 10px;
+        position: absolute; top: 15px; left: 15px;
         background: rgba(0,0,0,0.6); color: white;
-        padding: 5px 15px; border-radius: 20px;
+        padding: 8px 18px; border-radius: 30px;
         font-weight: bold; font-size: 18px; pointer-events: none; z-index: 10;
-        border: 1px solid rgba(255,255,255,0.3);
+        border: 1px solid rgba(255,255,255,0.2);
     }
     #gp-status {
-        position: absolute; bottom: 10px; left: 10px;
-        color: #0f0; font-weight: bold; font-size: 14px;
-        background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 5px;
-        display: none; z-index: 10;
+        position: absolute; bottom: 15px; left: 15px;
+        color: #2ecc71; font-weight: bold; font-size: 14px;
+        background: rgba(0,0,0,0.8); padding: 5px 12px; border-radius: 5px;
+        display: none; z-index: 10; border: 1px solid #2ecc71;
     }
 
     /* Érintő gombok */
     #controls {
-        position: absolute; bottom: 10px; right: 10px;
+        position: absolute; bottom: 20px; right: 20px;
         width: 180px; height: 130px; z-index: 100;
         display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr;
-        gap: 5px; opacity: 0.8;
+        gap: 8px; opacity: 0.6;
     }
     .ctrl-btn {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.1);
         border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 8px; color: white; font-size: 24px;
+        border-radius: 10px; color: white; font-size: 24px;
         display: flex; justify-content: center; align-items: center;
         cursor: pointer; pointer-events: auto;
     }
-    .ctrl-btn:active, .active-key { background: rgba(255, 255, 255, 0.5); transform: scale(0.95); }
+    .ctrl-btn:active, .active-key { background: rgba(255, 255, 255, 0.4); border-color: white; transform: scale(0.95); }
     #btn-up { grid-column: 2; grid-row: 1; }
     #btn-left { grid-column: 1; grid-row: 2; }
     #btn-down { grid-column: 2; grid-row: 2; }
@@ -72,14 +75,14 @@
 </head>
 <body>
 
-<div id="hud">Szint: <span id="lvl-num">1</span></div>
-<div id="gp-status">🎮 Gamepad</div>
+<div id="hud">SZINT: <span id="lvl-num" style="color:#f1c40f">1</span></div>
+<div id="gp-status">🎮 Gamepad Aktív</div>
 
 <div id="ui-layer">
     <div id="msg-box">
-        <h1 id="msg-title">SZUPER ÚTKELŐ</h1>
-        <p id="msg-text">Juss át a túloldalra!</p>
-        <button class="big-btn" id="start-btn">START</button>
+        <h1 id="msg-title">BÉKA KALAND</h1>
+        <p id="msg-text">Kerüld ki az autókat és a vonatot!</p>
+        <button class="big-btn" id="start-btn">JÁTÉK INDÍTÁSA</button>
     </div>
 </div>
 
@@ -93,7 +96,7 @@
 <canvas id="game"></canvas>
 
 <script>
-// --- VÁLTOZÓK ---
+// --- KONFIGURÁCIÓ & VÁLTOZÓK ---
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const uiLayer = document.getElementById("ui-layer");
@@ -109,7 +112,7 @@ let level = 1;
 let state = "menu";
 let gpTimer = 0;
 
-// --- ADAPTÍV PÁLYA ---
+// Zónák beállítása (mobil vs asztali)
 let isMobile = window.innerWidth < 800;
 let lanes = isMobile ? 7 : 10;
 let zWaterStart, zWaterEnd, zTrain, zRoadStart, zRoadEnd;
@@ -123,14 +126,10 @@ setZones();
 let frog = { x:0, y:0, lane:0, size:30 };
 let cars = [];
 let logs = [];
-let train = { active:false, x:-1000, lane:zTrain, speed:20, width:800 };
+let train = { active:false, x:-1000, lane:zTrain, speed:20, width:1200 };
 let trainLight = "green";
 
-// --- MENTÉS ---
-try { const saved = localStorage.getItem('frog_level_v3'); if(saved) level = parseInt(saved); } catch(e) {}
-lvlNum.textContent = level;
-
-// --- ÁTMÉRETEZÉS ---
+// --- PÁLYA GENERÁLÁS ---
 function resize() {
     width = window.innerWidth; height = window.innerHeight;
     canvas.width = width; canvas.height = height;
@@ -143,7 +142,6 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// --- INDÍTÁS ---
 startBtn.addEventListener("click", startGame);
 document.addEventListener("keydown", e => { if(e.key === "Enter" && state !== "playing") startGame(); });
 
@@ -155,26 +153,34 @@ function startGame() {
 
 function generateLevel() {
     cars = []; logs = [];
-    let speedMult = 1 + (level * 0.1);
-    // Autók
+    let speedMult = 1 + (level * 0.15);
+    
+    // Autók generálása
     for(let i=zRoadStart; i<=zRoadEnd; i++) {
         let count = isMobile ? 2 : 2 + Math.floor(Math.random()*2);
         let dir = (i%2===0) ? 1 : -1;
-        let speed = (3 + Math.random()) * speedMult * dir * (isMobile ? 0.8 : 1);
+        let speed = (3 + Math.random()*2) * speedMult * dir * (isMobile ? 0.7 : 1);
         for(let j=0; j<count; j++) {
-            cars.push({ x: Math.random()*width, lane: i, w: isMobile?70:60, h: frog.size, speed: speed });
+            cars.push({ 
+                x: Math.random()*width, 
+                lane: i, 
+                w: isMobile?70:80, 
+                h: frog.size, 
+                speed: speed,
+                color: ["#e74c3c", "#f39c12", "#9b59b6", "#3498db"][Math.floor(Math.random()*4)]
+            });
         }
     }
-    // Deszkák
+    // Farönkök generálása
     for(let i=zWaterStart; i<=zWaterEnd; i++) {
         let count = 3;
         let dir = (i%2===0) ? 1 : -1;
-        let speed = (2 + Math.random()) * speedMult * dir * (isMobile ? 0.8 : 1);
+        let speed = (2 + Math.random()) * speedMult * dir * (isMobile ? 0.7 : 1);
         for(let j=0; j<count; j++) {
-            logs.push({ x: Math.random()*width, lane: i, w: isMobile?120:100+Math.random()*50, h: frog.size*0.8, speed: speed });
+            logs.push({ x: Math.random()*width, lane: i, w: isMobile?110:120+Math.random()*60, h: frog.size*0.85, speed: speed });
         }
     }
-    train.speed = (20 + level);
+    train.speed = (25 + level*2);
 }
 
 function updateFrogY() { frog.y = frog.lane * laneH + (laneH - frog.size)/2; }
@@ -182,14 +188,14 @@ function updateFrogY() { frog.y = frog.lane * laneH + (laneH - frog.size)/2; }
 function gameOver(win, reason) {
     state = "menu"; uiLayer.style.display = "flex";
     if(win) {
-        level++; try { localStorage.setItem('frog_level_v3', level); } catch(e){}
-        lvlNum.textContent = level;
+        level++; lvlNum.textContent = level;
         msgTitle.textContent = "SZINT TELJESÍTVE!"; msgTitle.style.color = "#2ecc71";
         msgText.textContent = "Gratulálok! Jöhet a " + level + ". szint?";
     } else {
+        level = 1; lvlNum.textContent = level;
         msgTitle.textContent = "VESZTETTÉL!"; msgTitle.style.color = "#e74c3c"; msgText.textContent = reason;
     }
-    startBtn.textContent = "KÖVETKEZŐ KÖR";
+    startBtn.textContent = win ? "KÖVETKEZŐ SZINT" : "ÚJRAKEZDÉS";
 }
 
 // --- IRÁNYÍTÁS ---
@@ -197,9 +203,10 @@ function move(dir) {
     if(state !== "playing") return;
     if(dir === 'up') { frog.lane--; updateFrogY(); }
     else if(dir === 'down') { if(frog.lane < lanes-1) { frog.lane++; updateFrogY(); } }
-    else if(dir === 'left') frog.x -= (frog.size + 10);
-    else if(dir === 'right') frog.x += (frog.size + 10);
+    else if(dir === 'left') frog.x -= (frog.size + 15);
+    else if(dir === 'right') frog.x += (frog.size + 15);
 }
+
 document.addEventListener("keydown", e => {
     if(state !== "playing") return;
     if(e.key==="ArrowUp"||e.key==="w") { move('up'); highlight("btn-up"); }
@@ -207,105 +214,184 @@ document.addEventListener("keydown", e => {
     if(e.key==="ArrowLeft"||e.key==="a") { move('left'); highlight("btn-left"); }
     if(e.key==="ArrowRight"||e.key==="d") { move('right'); highlight("btn-right"); }
 });
+
 function setupBtn(id, dir) {
     const btn = document.getElementById(id);
     btn.addEventListener("mousedown", (e) => { e.preventDefault(); move(dir); });
-    btn.addEventListener("touchstart", (e) => {
-        e.preventDefault(); move(dir); btn.classList.add("active-key"); setTimeout(()=>btn.classList.remove("active-key"), 100);
-    }, {passive: false});
+    btn.addEventListener("touchstart", (e) => { e.preventDefault(); move(dir); highlight(id); }, {passive: false});
 }
 setupBtn("btn-up", "up"); setupBtn("btn-down", "down"); setupBtn("btn-left", "left"); setupBtn("btn-right", "right");
-function highlight(id) { const b = document.getElementById(id); b.classList.add("active-key"); setTimeout(()=>b.classList.remove("active-key"), 100); }
 
-// --- KONTROLLER ---
+function highlight(id) { 
+    const b = document.getElementById(id); 
+    b.classList.add("active-key"); 
+    setTimeout(()=>b.classList.remove("active-key"), 100); 
+}
+
+// Gamepad kezelés
 function checkGamepad() {
     const gamepads = navigator.getGamepads(); const gp = gamepads[0];
     if (!gp) { gpStatus.style.display = 'none'; return; }
-    gpStatus.style.display = 'block'; if (gpTimer > 0) { gpTimer--; return; }
-    if (state !== "playing") { if (gp.buttons[0].pressed || gp.buttons[9].pressed) { startGame(); gpTimer = 30; } return; }
-    const dz = 0.5;
-    if (gp.buttons[12].pressed || gp.axes[1] < -dz) { move('up'); highlight("btn-up"); gpTimer=10; }
-    else if (gp.buttons[13].pressed || gp.axes[1] > dz) { move('down'); highlight("btn-down"); gpTimer=10; }
-    else if (gp.buttons[14].pressed || gp.axes[0] < -dz) { move('left'); highlight("btn-left"); gpTimer=10; }
-    else if (gp.buttons[15].pressed || gp.axes[0] > dz) { move('right'); highlight("btn-right"); gpTimer=10; }
+    gpStatus.style.display = 'block'; 
+    if (gpTimer > 0) { gpTimer--; return; }
+    
+    if (state !== "playing") { 
+        if (gp.buttons[0].pressed || gp.buttons[9].pressed) { startGame(); gpTimer = 30; } 
+        return; 
+    }
+    const dz = 0.5; // Deadzone
+    if (gp.buttons[12].pressed || gp.axes[1] < -dz) { move('up'); highlight("btn-up"); gpTimer=8; }
+    else if (gp.buttons[13].pressed || gp.axes[1] > dz) { move('down'); highlight("btn-down"); gpTimer=8; }
+    else if (gp.buttons[14].pressed || gp.axes[0] < -dz) { move('left'); highlight("btn-left"); gpTimer=8; }
+    else if (gp.buttons[15].pressed || gp.axes[0] > dz) { move('right'); highlight("btn-right"); gpTimer=8; }
 }
 
-// --- FŐ CIKLUS ---
+// --- JÁTÉK CIKLUS ÉS RAJZOLÁS ---
 function loop() {
     checkGamepad();
+    
     if(state === "playing") {
+        // Mozgatás
         cars.forEach(c => {
             c.x += c.speed;
-            if(c.speed > 0 && c.x > width) c.x = -c.w; if(c.speed < 0 && c.x < -c.w) c.x = width;
-            if(frog.lane === c.lane && frog.x < c.x + c.w && frog.x + frog.size > c.x) gameOver(false, "Elütött az autó!");
+            if(c.speed > 0 && c.x > width) c.x = -c.w; 
+            if(c.speed < 0 && c.x < -c.w) c.x = width;
+            // Ütközés
+            if(frog.lane === c.lane && frog.x < c.x + c.w - 5 && frog.x + frog.size > c.x + 5) gameOver(false, "Elütött egy autó!");
         });
+
         let onLog = false; let logSpeed = 0;
         logs.forEach(l => {
             l.x += l.speed;
-            if(l.speed > 0 && l.x > width) l.x = -l.w; if(l.speed < 0 && l.x < -l.w) l.x = width;
+            if(l.speed > 0 && l.x > width) l.x = -l.w; 
+            if(l.speed < 0 && l.x < -l.w) l.x = width;
             if(frog.lane === l.lane && frog.x + frog.size/2 > l.x && frog.x + frog.size/2 < l.x + l.w) { onLog = true; logSpeed = l.speed; }
         });
-        if(frog.lane >= zWaterStart && frog.lane <= zWaterEnd) { if(onLog) frog.x += logSpeed; else gameOver(false, "Beleestél a vízbe!"); }
-        if(!train.active) { if(Math.random()<0.005+(level*0.001)) { train.active=true; train.x=-train.width; trainLight="red"; } else trainLight="green"; }
-        else { train.x+=train.speed; if(train.x>width+500) { train.active=false; trainLight="green"; } if(frog.lane===train.lane&&frog.x<train.x+train.width&&frog.x+frog.size>train.x) gameOver(false, "Elgázolt a vonat!"); }
-        if(frog.x<0) frog.x=0; if(frog.x>width-frog.size) frog.x=width-frog.size;
-        if(frog.lane<0) gameOver(true, "");
+
+        if(frog.lane >= zWaterStart && frog.lane <= zWaterEnd) { 
+            if(onLog) frog.x += logSpeed; 
+            else gameOver(false, "Beleestél a vízbe!"); 
+        }
+
+        // Vonat
+        if(!train.active) { 
+            if(Math.random() < 0.005 + (level*0.001)) { train.active=true; train.x=-train.width; trainLight="red"; } 
+            else trainLight="green"; 
+        } else { 
+            train.x+=train.speed; 
+            if(train.x > width + 500) { train.active=false; trainLight="green"; } 
+            if(frog.lane===train.lane && frog.x<train.x+train.width && frog.x+frog.size>train.x) gameOver(false, "Elgázolt a vonat!"); 
+        }
+
+        // Képernyő szélek
+        if(frog.x < 0) frog.x = 0; 
+        if(frog.x > width - frog.size) frog.x = width - frog.size;
+        if(frog.lane < 0) gameOver(true, "");
     }
 
-    // RAJZOLÁS
-    ctx.fillStyle = "#222"; ctx.fillRect(0, 0, width, height);
+    // --- RAJZOLÁS ---
+    // Háttér
+    ctx.fillStyle = "#2c3e50"; ctx.fillRect(0, 0, width, height);
+
     for(let i=0; i<lanes; i++) {
         let y = i*laneH;
-        if(i>=zWaterStart&&i<=zWaterEnd) ctx.fillStyle="#3498db"; else if(i===zTrain) ctx.fillStyle="#34495e"; 
-        else if(i===0||i===lanes-1||(!isMobile&&i===1)) ctx.fillStyle="#7f8c8d"; else ctx.fillStyle="#555"; 
-        ctx.fillRect(0, y, width, laneH);
-        ctx.strokeStyle="rgba(255,255,255,0.1)"; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(width,y); ctx.stroke();
+        // Aszfalt
+        if(i >= zRoadStart && i <= zRoadEnd) {
+            ctx.fillStyle = "#34495e"; ctx.fillRect(0, y, width, laneH);
+            // Sávok
+            if(i !== zRoadStart) {
+                ctx.strokeStyle = "#7f8c8d"; ctx.setLineDash([20, 20]); ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); ctx.setLineDash([]);
+            }
+        } 
+        // Víz
+        else if(i >= zWaterStart && i <= zWaterEnd) { ctx.fillStyle = "#3498db"; ctx.fillRect(0, y, width, laneH); } 
+        // Sín
+        else if(i === zTrain) { 
+            ctx.fillStyle = "#555"; ctx.fillRect(0, y, width, laneH); 
+            let tY = zTrain*laneH+laneH/2; 
+            ctx.strokeStyle="#111"; ctx.lineWidth=4;
+            ctx.beginPath(); ctx.moveTo(0,tY-12); ctx.lineTo(width,tY-12); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0,tY+12); ctx.lineTo(width,tY+12); ctx.stroke();
+            // Talpfák
+            ctx.fillStyle = "#2a1b0a";
+            for(let tx=0; tx<width; tx+=40) ctx.fillRect(tx, tY-18, 10, 36);
+        }
+        // Járda / Fű
+        else { ctx.fillStyle = "#27ae60"; ctx.fillRect(0, y, width, laneH); }
     }
-    let tY = zTrain*laneH+laneH/2; ctx.strokeStyle="#95a5a6"; ctx.lineWidth=4;
-    ctx.beginPath(); ctx.moveTo(0,tY-10); ctx.lineTo(width,tY-10); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0,tY+10); ctx.lineTo(width,tY+10); ctx.stroke();
-    ctx.fillStyle=(trainLight==="red")?"#c0392b":"#440000"; ctx.beginPath(); ctx.arc(width-30,tY-25,8,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle=(trainLight==="green")?"#2ecc71":"#004400"; ctx.beginPath(); ctx.arc(width-30,tY-8,8,0,Math.PI*2); ctx.fill();
 
-    ctx.fillStyle = "#d35400"; logs.forEach(l => ctx.fillRect(l.x, l.lane*laneH+(laneH-l.h)/2, l.w, l.h));
+    // Vonat lámpa
+    let tY = zTrain*laneH+laneH/2;
+    ctx.fillStyle = "#111"; ctx.fillRect(width-40, tY-30, 30, 60);
+    ctx.fillStyle = (trainLight==="red") ? "#e74c3c" : "#550000"; ctx.beginPath(); ctx.arc(width-25, tY-15, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = (trainLight==="green") ? "#2ecc71" : "#005500"; ctx.beginPath(); ctx.arc(width-25, tY+15, 8, 0, Math.PI*2); ctx.fill();
 
-    // --- AUTÓK ÉS KEREKEK ---
-    cars.forEach(c => {
-        let cy = c.lane*laneH + (laneH-c.h)/2;
-        // Kerekek (sötétszürke)
-        ctx.fillStyle = "#333"; 
-        let wSize = c.h * 0.5; // kerék méret
-        ctx.fillRect(c.x+5, cy+c.h-5, wSize, 8); // bal
-        ctx.fillRect(c.x+c.w-5-wSize, cy+c.h-5, wSize, 8); // jobb
-        // Test
-        ctx.fillStyle = "#e74c3c"; ctx.fillRect(c.x, cy, c.w, c.h);
-        ctx.fillStyle = "#ecf0f1"; ctx.fillRect(c.x+5, cy+5, c.w-10, c.h/2);
+    // Rönkök
+    ctx.fillStyle = "#d35400"; 
+    logs.forEach(l => {
+        let ly = l.lane*laneH+(laneH-l.h)/2;
+        ctx.fillRect(l.x, ly, l.w, l.h);
+        // Fa textúra
+        ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fillRect(l.x+10, ly+5, l.w-20, 5); ctx.fillStyle = "#d35400";
     });
 
+    // Autók
+    cars.forEach(c => {
+        let cy = c.lane*laneH + (laneH-c.h)/2;
+        
+        // --- KEREKEK (A kérés szerint) ---
+        ctx.fillStyle = "#111"; // Fekete gumi
+        let wheelW = c.w * 0.25;
+        let wheelH = 8;
+        // Bal első/hátsó
+        ctx.fillRect(c.x + 5, cy - 2, wheelW, wheelH); 
+        ctx.fillRect(c.x + c.w - 5 - wheelW, cy - 2, wheelW, wheelH);
+        // Jobb első/hátsó
+        ctx.fillRect(c.x + 5, cy + c.h - 6, wheelW, wheelH);
+        ctx.fillRect(c.x + c.w - 5 - wheelW, cy + c.h - 6, wheelW, wheelH);
+
+        // Kasztni
+        ctx.fillStyle = c.color;
+        ctx.fillRect(c.x, cy, c.w, c.h);
+        
+        // Ablak/Tető
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.fillRect(c.x + c.w*0.15, cy + 5, c.w*0.7, c.h - 10);
+    });
+
+    // Vonat
     if(train.active) {
-        let trainY = zTrain*laneH+(laneH-40)/2; ctx.fillStyle="#8e44ad"; ctx.fillRect(train.x, trainY, train.width, 40);
-        ctx.fillStyle="#f1c40f"; for(let k=20; k<train.width; k+=60) ctx.fillRect(train.x+k, trainY+5, 40, 15);
+        let trainY = zTrain*laneH+(laneH-45)/2;
+        ctx.fillStyle = "#8e44ad"; ctx.fillRect(train.x, trainY, train.width, 45);
+        ctx.fillStyle = "#f1c40f"; // Ablakok
+        for(let k=20; k<train.width; k+=70) ctx.fillRect(train.x+k, trainY+8, 40, 15);
     }
 
-    // --- BÉKA ÓRIÁS SZEMEKKEL ---
+    // --- BÉKA (Nagy szemekkel) ---
     if(state === "playing" || state === "menu") {
         // Test
-        ctx.fillStyle = "#2ecc71"; ctx.fillRect(frog.x, frog.y, frog.size, frog.size);
+        ctx.fillStyle = "#2ecc71"; 
+        ctx.fillRect(frog.x, frog.y, frog.size, frog.size);
         
-        // Hatalmas, kidülledő szemek
-        let eyeRadius = frog.size * 0.4; // Nagyon nagy sugár
-        let eyeY = frog.y; // A test tetejénél kezdődik
+        // --- HATALMAS SZEMEK ---
+        let eyeR = frog.size * 0.35; // Nagy sugár
+        let eyeY = frog.y - eyeR * 0.3; // Kicsit kilóg a testből
         
-        // Fehér rész (kilóg a testből felfelé)
+        // Szemfehérje
         ctx.fillStyle = "white";
-        ctx.beginPath(); ctx.arc(frog.x + eyeRadius*0.8, eyeY, eyeRadius, 0, Math.PI*2); ctx.fill(); // Bal
-        ctx.beginPath(); ctx.arc(frog.x + frog.size - eyeRadius*0.8, eyeY, eyeRadius, 0, Math.PI*2); ctx.fill(); // Jobb
-        
-        // Fekete pupilla
+        // Bal
+        ctx.beginPath(); ctx.arc(frog.x + eyeR, eyeY, eyeR, 0, Math.PI*2); ctx.fill();
+        // Jobb
+        ctx.beginPath(); ctx.arc(frog.x + frog.size - eyeR, eyeY, eyeR, 0, Math.PI*2); ctx.fill();
+
+        // Pupilla
         ctx.fillStyle = "black";
-        let pupilRadius = eyeRadius * 0.4;
-        ctx.beginPath(); ctx.arc(frog.x + eyeRadius*0.8, eyeY-pupilRadius/2, pupilRadius, 0, Math.PI*2); ctx.fill(); // Bal
-        ctx.beginPath(); ctx.arc(frog.x + frog.size - eyeRadius*0.8, eyeY-pupilRadius/2, pupilRadius, 0, Math.PI*2); ctx.fill(); // Jobb
+        let pupR = eyeR * 0.4;
+        // Bal
+        ctx.beginPath(); ctx.arc(frog.x + eyeR, eyeY - 2, pupR, 0, Math.PI*2); ctx.fill();
+        // Jobb
+        ctx.beginPath(); ctx.arc(frog.x + frog.size - eyeR, eyeY - 2, pupR, 0, Math.PI*2); ctx.fill();
     }
 
     requestAnimationFrame(loop);
