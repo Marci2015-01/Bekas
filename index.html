@@ -2,186 +2,424 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<title>Szuper Állatos Útkelő 5.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Szuper Állatos Útkelő - Hibrid</title>
 <style>
-html, body {margin:0; padding:0; height:100%; overflow:hidden; background:#111; font-family:Arial;}
-canvas {display:block;}
-#menu, #help {position:absolute; top:20px; left:50%; transform:translateX(-50%); text-align:center; display:none; background:rgba(0,0,0,0.85); padding:20px; border-radius:8px; max-height:80vh; overflow-y:auto; color:white;}
-button {margin:3px; padding:5px 10px; font-size:14px; cursor:pointer;}
-.locked {opacity:0.3; cursor:not-allowed;}
+    html, body {
+        margin: 0; padding: 0; 
+        height: 100%; width: 100%;
+        overflow: hidden; 
+        background-color: #222;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        user-select: none; /* Szövegkijelölés tiltása */
+    }
+    canvas {
+        display: block;
+        background-color: #333;
+        cursor: crosshair;
+    }
+    
+    /* UI RÉTEG */
+    #ui-layer {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none;
+        display: flex; justify-content: center; align-items: center;
+        z-index: 10;
+    }
+    #msg-box {
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        display: none;
+        pointer-events: auto;
+        border: 4px solid white;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    h1 { margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; }
+    p { font-size: 18px; margin: 5px 0; }
+    
+    button.start-btn {
+        background: #27ae60; color: white; border: none; padding: 15px 30px; 
+        font-size: 20px; border-radius: 8px; cursor: pointer; margin-top: 20px;
+        font-weight: bold; transition: background 0.2s;
+    }
+    button.start-btn:hover { background: #2ecc71; }
+
+    /* --- VEZÉRLŐ GOMBOK (MOBILRA ÉS EGÉRHEZ) --- */
+    #controls {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        width: 180px;
+        height: 120px;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 8px;
+        pointer-events: none; /* Hogy átlátszó legyen a kattintásnak, a gombok majd aktívak lesznek */
+    }
+
+    .ctrl-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        border-radius: 12px;
+        color: white;
+        font-size: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        pointer-events: auto; /* A gomb maga kattintható */
+        transition: background 0.1s, transform 0.1s;
+    }
+    .ctrl-btn:active, .ctrl-btn.active-key {
+        background: rgba(255, 255, 255, 0.6);
+        transform: scale(0.95);
+    }
+
+    /* Elrendezés */
+    #btn-up { grid-column: 2; grid-row: 1; }
+    #btn-left { grid-column: 1; grid-row: 2; }
+    #btn-down { grid-column: 2; grid-row: 2; }
+    #btn-right { grid-column: 3; grid-row: 2; }
+
+    /* Info panel bal felül */
+    #info {
+        position: absolute; top: 10px; left: 10px; color: white;
+        font-size: 16px; font-weight: bold; text-shadow: 1px 1px 2px black;
+        z-index: 5;
+    }
+
+    /* Laptopon kicsit elrejtjük a gombokat, ha nem kellenek, de ott hagyjuk őket */
+    @media (min-width: 1024px) {
+        #controls { opacity: 0.3; }
+        #controls:hover { opacity: 1; }
+    }
 </style>
 </head>
 <body>
-<div id="menu"></div>
-<div id="help"></div>
+
+<div id="info">Szint: <span id="level-disp">1</span></div>
+
+<div id="ui-layer">
+    <div id="msg-box">
+        <h1 id="msg-title">Szuper Útkelő</h1>
+        <p id="msg-sub">Juss át a túloldalra!</p>
+        <p style="font-size: 14px; color: #aaa;">Irányítás: Nyilak / WASD / Gombok</p>
+        <button class="start-btn" onclick="startGame()">START (Enter)</button>
+    </div>
+</div>
+
+<div id="controls">
+    <div class="ctrl-btn" id="btn-up">▲</div>
+    <div class="ctrl-btn" id="btn-left">◀</div>
+    <div class="ctrl-btn" id="btn-down">▼</div>
+    <div class="ctrl-btn" id="btn-right">▶</div>
+</div>
+
 <canvas id="game"></canvas>
+
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+// --- ALAP BEÁLLÍTÁSOK ---
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const msgBox = document.getElementById("msg-box");
+const msgTitle = document.getElementById("msg-title");
+const msgSub = document.getElementById("msg-sub");
+const levelDisp = document.getElementById("level-disp");
 
-// Teljes képernyő
-function resizeCanvas(){canvas.width=window.innerWidth; canvas.height=window.innerHeight;}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+let width, height, laneH;
+let lanes = 10;
+let level = 1;
+let gameState = "menu"; // menu, playing, win, lose
 
-// ---------- ALAP ----------
-const baseLaneHeight=canvas.height/10; 
-let maxLevel=10, level=parseInt(localStorage.getItem('level'))||1;
-let lanes, worldHeight, cars=[], logs=[], houses=[];
-let frog={x:185,y:0,size:30,speed:50,stepFrame:0};
-let cameraY=0,startTime,elapsedTime=0;
-let gameState="playing",loseReason="",starsEarned=0;
+// Játék objektumok
+let frog = { x: 0, y: 0, lane: 0, size: 30 };
+let cars = [];
+let logs = [];
+let train = { active: false, x: -1000, lane: 4, speed: 25, width: 800 };
+let trainLight = "green";
 
-// Hangok
-const sounds={jump:new Audio('https://www.soundjay.com/button/sounds/button-16.mp3'),
-              crash:new Audio('https://www.soundjay.com/button/sounds/button-10.mp3'),
-              win:new Audio('https://www.soundjay.com/button/sounds/button-3.mp3')};
-
-// ---------- ÁLLATOK ----------
-const animalNames=["Béka","Tehén","Malac","Kutya","Macska","Süni","Nyúl","Mókus","Kacsa","Csirke"];
-const animals=[],colors=["#2ecc71","#f08080","#fff","#ff0","#ff8000","#00ffff","#ff00ff","#aaa","#88f","#f88"];
-for(let i=0;i<100;i++){
-    const name=animalNames[i%animalNames.length]+(i>=animalNames.length?i:"");
-    animals.push({name:name,unlock:(i*2)+1,color:colors[i%colors.length],anim:stepSimpleAnimal});
+// --- ÁTMÉRETEZÉS KEZELÉSE ---
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    laneH = height / lanes;
+    
+    // Ha játék közben méretezünk át, a békát a helyére rakjuk
+    if(gameState === "playing") updateFrogPos();
+    draw(); // Azonnal újrarajzolás
 }
-let selectedAnimal="Béka",unlockedAnimals=["Béka"];
+window.addEventListener('resize', resize);
+resize();
 
-// ---------- MENÜ ----------
-const menuDiv=document.getElementById("menu");
-let menuVisible=false;
-function toggleMenu(){menuVisible=!menuVisible; menuDiv.style.display=menuVisible?'block':'none'; if(menuVisible) updateMenu();}
-function updateMenu(){
-    menuDiv.innerHTML="<h3>Válaszd ki az állatod:</h3>";
-    animals.forEach(a=>{
-        const btn=document.createElement("button");
-        btn.textContent=a.name;
-        if(!unlockedAnimals.includes(a.name)){
-            btn.classList.add("locked");
-            btn.disabled=true;
+// --- BÉKA POZÍCIÓ FRISSÍTÉS ---
+function updateFrogPos() {
+    frog.y = frog.lane * laneH + (laneH - frog.size)/2;
+}
+
+// --- JÁTÉK INDÍTÁSA ---
+function startGame() {
+    if(gameState === "playing") return;
+    
+    gameState = "playing";
+    msgBox.style.display = "none";
+    
+    // Reset
+    frog.lane = lanes - 1; // Alsó sáv
+    frog.x = width / 2 - frog.size / 2;
+    updateFrogPos();
+    
+    cars = [];
+    logs = [];
+    
+    // Autók generálása
+    for(let i=5; i<lanes-1; i++) {
+        let count = 2 + Math.floor(Math.random() * 2);
+        let speed = (3 + level * 0.5) * (i%2==0 ? 1 : -1);
+        for(let j=0; j<count; j++) {
+            cars.push({ x: Math.random()*width, lane: i, w: 60, h: 30, speed: speed });
         }
-        btn.onclick=()=>{selectedAnimal=a.name; toggleMenu();};
-        menuDiv.appendChild(btn);
-    });
+    }
+    
+    // Deszkák (Víz: 2-es, 3-as sáv)
+    for(let i=2; i<=3; i++) {
+        let count = 3;
+        let speed = (2 + level * 0.3) * (i%2==0 ? 1 : -1);
+        for(let j=0; j<count; j++) {
+            logs.push({ x: Math.random()*width, lane: i, w: 100+Math.random()*60, h: 25, speed: speed });
+        }
+    }
+
+    loop();
 }
 
-// ---------- SEGÍTSÉG ----------
-const helpDiv=document.getElementById("help");
-function toggleHelp(){helpDiv.style.display=helpDiv.style.display==='block'?'none':'block';
-if(helpDiv.style.display==='block'){
-helpDiv.innerHTML="<h3>Játékszabályok és irányítás</h3>"+
-"<p>🕹️ Mozgatás: W/A/S/D vagy nyilak</p>"+
-"<p>Shift/E – Állat választó menü</p>"+
-"<p>Q vagy 0 – Segítség menü</p>"+
-"<p>Feladat: Juss át a folyón és az autósávokon, kerüld az ütközést és a vizet.</p>"+
-"<p>🚗 Autók elütnek, 🌊 Vízbe esés a deszkáról, 🚂 Vonat átgázol.</p>";}}
-
-// ---------- CSILLAG IDŐK ----------
-function starTimes(){const base=20; return {5:base,4:base+3,3:base+6,2:base+9,1:base+12};}
-
-// ---------- PÁLYA ----------
-function createCars(){cars=[]; for(let i=5;i<lanes-1;i++){const count=1+Math.floor(level/3); const dir=i%2===0?1:-1; const speedFactor=0.7+level*0.1; for(let j=0;j<count;j++){const speed=(Math.random()*0.3+speedFactor)*dir; cars.push({lane:i,x:Math.random()*canvas.width,y:i*baseLaneHeight+15,width:50,height:28,speed,baseSpeed:speed});}}}
-function createLogs(){logs=[]; for(let i=2;i<4;i++){const count=3; const dir=i%2===0?1:-1; for(let j=0;j<count;j++){logs.push({lane:i, x:Math.random()*canvas.width, y:i*baseLaneHeight+10, width:80, height:20, speed:0.5*dir});}}}
-function createHouses(){houses=[]; for(let i=0;i<lanes;i+=2){houses.push({x:Math.random()*canvas.width, y:i*baseLaneHeight+10, width:50, height:40});}}
-
-// Vonatsáv
-const trainLane = 4;
-let train={x:-300, y:trainLane*baseLaneHeight+5, width:300, height:30, speed:6, active:false};
-let trainLight={x:canvas.width-50, y:train.y-15, state:"green"};
-
-function setupLevel(){
-    lanes=10; worldHeight=lanes*baseLaneHeight; frog.x=canvas.width/2-15; frog.y=worldHeight-50; frog.stepFrame=0;
-    createCars(); createLogs(); createHouses(); cameraY=0; startTime=performance.now(); gameState="playing"; loseReason=""; starsEarned=0;
-    animals.forEach(a=>{if(level>=a.unlock && level%2===0 && !unlockedAnimals.includes(a.name)){unlockedAnimals.push(a.name); showUnlockAnimation(a.name);}});
+function stopGame(reason, win) {
+    gameState = win ? "win" : "lose";
+    msgTitle.textContent = win ? "SZINT TELJESÍTVE!" : "JÁTÉK VÉGE";
+    msgTitle.style.color = win ? "#2ecc71" : "#e74c3c";
+    msgSub.textContent = reason;
+    msgBox.style.display = "block";
+    
+    if(win) {
+        level++;
+        levelDisp.textContent = level;
+    }
 }
 
-// ---------- IRÁNYÍTÁS ----------
-document.addEventListener("keydown", e=>{
-    if(e.key==="Shift"||e.key.toLowerCase()==="e") toggleMenu();
-    if(e.key.toLowerCase()==="q"||e.key==="0") toggleHelp();
-    if(gameState!=="playing" && e.key==="Enter"){setupLevel(); return;}
-    if(gameState!=="playing") return;
-    if(e.key==="ArrowUp"||e.key.toLowerCase()==="w"){ frog.y-=frog.speed; frog.stepFrame++; sounds.jump.play();}
-    if(e.key==="ArrowDown"||e.key.toLowerCase()==="s"){ frog.y+=frog.speed; frog.stepFrame++; sounds.jump.play();}
-    if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a"){ frog.x-=frog.speed; frog.stepFrame++; sounds.jump.play();}
-    if(e.key==="ArrowRight"||e.key.toLowerCase()==="d"){ frog.x+=frog.speed; frog.stepFrame++; sounds.jump.play();}
+// --- IRÁNYÍTÁS (Billentyűzet + Egér + Érintés) ---
+
+function move(dir) {
+    if(gameState !== "playing") return;
+    
+    if(dir === 'up') {
+        frog.lane--;
+        updateFrogPos();
+    }
+    else if(dir === 'down') {
+        if(frog.lane < lanes - 1) {
+            frog.lane++;
+            updateFrogPos();
+        }
+    }
+    else if(dir === 'left') frog.x -= 40;
+    else if(dir === 'right') frog.x += 40;
+}
+
+// 1. BILLENTYŰZET
+document.addEventListener("keydown", (e) => {
+    // Enter kezelés
+    if((e.key === "Enter" || e.code === "Space") && gameState !== "playing") {
+        startGame();
+        return;
+    }
+
+    // Mozgás
+    if(gameState === "playing") {
+        if(e.key === "ArrowUp" || e.key.toLowerCase() === "w") { move('up'); highlightBtn('btn-up'); }
+        if(e.key === "ArrowDown" || e.key.toLowerCase() === "s") { move('down'); highlightBtn('btn-down'); }
+        if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a") { move('left'); highlightBtn('btn-left'); }
+        if(e.key === "ArrowRight" || e.key.toLowerCase() === "d") { move('right'); highlightBtn('btn-right'); }
+    }
 });
 
-// ---------- KAMERA ----------
-function updateCamera(){const targetY=frog.y-canvas.height/2; cameraY+=(targetY-cameraY)*0.05; cameraY=Math.max(0,Math.min(cameraY,worldHeight-canvas.height));}
+// 2. GOMBOK (Egér + Érintés)
+function setupBtn(id, dir) {
+    const btn = document.getElementById(id);
+    
+    // Egér kattintás
+    btn.addEventListener("mousedown", (e) => {
+        e.preventDefault(); // Ne jelöljön ki szöveget
+        move(dir);
+    });
+    
+    // Érintés (hogy mobilon gyors legyen)
+    btn.addEventListener("touchstart", (e) => {
+        e.preventDefault(); 
+        move(dir);
+        btn.classList.add("active-key");
+        setTimeout(() => btn.classList.remove("active-key"), 100);
+    }, {passive: false});
+}
 
-// ---------- MOZGÁS ----------
-function updateCars(){for(let car of cars){let front=cars.find(o=>o!==car&&o.lane===car.lane&&Math.abs(o.x-car.x)<car.width+10&&Math.sign(o.speed)===Math.sign(car.speed)); car.speed=front?front.speed:car.baseSpeed; car.x+=car.speed; if(car.speed>0&&car.x>canvas.width+car.width) car.x=-car.width; if(car.speed<0&&car.x<-car.width) car.x=canvas.width+car.width;}}
-function updateLogs(){
-    let onLog = null;
-    for(let log of logs){ 
-        log.x += log.speed; 
-        if(log.speed>0 && log.x>canvas.width) log.x=-log.width; 
-        if(log.speed<0 && log.x<-log.width) log.x=canvas.width+log.width;
-        if(frog.y+frog.size > log.y && frog.y < log.y + log.height &&
-           frog.x+frog.size > log.x && frog.x < log.x + log.width){ onLog = log; }
+setupBtn("btn-up", "up");
+setupBtn("btn-down", "down");
+setupBtn("btn-left", "left");
+setupBtn("btn-right", "right");
+
+// Vizuális visszajelzés billentyűzetnél
+function highlightBtn(id) {
+    const btn = document.getElementById(id);
+    btn.classList.add("active-key");
+    setTimeout(() => btn.classList.remove("active-key"), 100);
+}
+
+// --- JÁTÉK LOGIKA ---
+function update() {
+    if(gameState !== "playing") return;
+
+    // Autók
+    cars.forEach(c => {
+        c.x += c.speed;
+        if(c.speed > 0 && c.x > width) c.x = -c.w;
+        if(c.speed < 0 && c.x < -c.w) c.x = width;
+        // Ütközés
+        if(frog.lane === c.lane && frog.x < c.x + c.w && frog.x + frog.size > c.x) {
+            stopGame("Elütött az autó! 🚗", false);
+        }
+    });
+
+    // Deszkák
+    let onLog = false; let logSpeed = 0;
+    logs.forEach(l => {
+        l.x += l.speed;
+        if(l.speed > 0 && l.x > width) l.x = -l.w;
+        if(l.speed < 0 && l.x < -l.w) l.x = width;
+        // Rajta vagyunk?
+        if(frog.lane === l.lane && frog.x + frog.size/2 > l.x && frog.x + frog.size/2 < l.x + l.w) {
+            onLog = true;
+            logSpeed = l.speed;
+        }
+    });
+
+    // Víz szabály
+    if(frog.lane === 2 || frog.lane === 3) {
+        if(onLog) frog.x += logSpeed;
+        else stopGame("Beleestél a vízbe! 🌊", false);
     }
-    if(frogInWater(frog.y)){
-        if(onLog){ frog.x += onLog.speed; } 
-        else { gameState = "lose"; loseReason = "víz"; sounds.crash.play(); }
+
+    // Vonat
+    if(!train.active) {
+        if(Math.random() < 0.005) { train.active = true; train.x = -train.width; trainLight = "red"; }
+        else trainLight = "green";
+    } else {
+        train.x += train.speed;
+        if(train.x > width + 500) { train.active = false; trainLight = "green"; }
+        if(frog.lane === train.lane && frog.x < train.x + train.width && frog.x + frog.size > train.x) {
+            stopGame("A vonat elgázolt! 🚂", false);
+        }
+    }
+
+    // Pálya határok
+    if(frog.x < 0) frog.x = 0;
+    if(frog.x > width - frog.size) frog.x = width - frog.size;
+
+    // Győzelem
+    if(frog.lane < 0) {
+        stopGame("Szép munka! Jöhet a következő!", true);
     }
 }
-function frogInWater(y){ return y>=2*baseLaneHeight && y<4*baseLaneHeight; }
 
-function updateTrain(){
-    if(!train.active && Math.random()<0.001){ train.active=true; train.x=-train.width; trainLight.state="red"; }
-    if(train.active){ train.x += train.speed; if(train.x>canvas.width){ train.active=false; trainLight.state="green"; } 
-        if(frog.y+frog.size>train.y && frog.y<train.y+train.height && frog.x+frog.size>train.x && frog.x<train.x+train.width){ gameState="lose"; loseReason="vonat"; sounds.crash.play();}
+// --- RAJZOLÁS ---
+function draw() {
+    // Háttér
+    ctx.fillStyle = "#222";
+    ctx.fillRect(0, 0, width, height);
+
+    // Sávok
+    for(let i=0; i<lanes; i++) {
+        let y = i * laneH;
+        if(i===2 || i===3) ctx.fillStyle = "#3498db"; // Víz
+        else if(i===4) ctx.fillStyle = "#2c3e50"; // Sín alap
+        else if(i===0 || i===lanes-1) ctx.fillStyle = "#7f8c8d"; // Járda
+        else ctx.fillStyle = "#555"; // Út
+        
+        ctx.fillRect(0, y, width, laneH);
+        
+        // Elválasztó vonalak
+        ctx.strokeStyle = "rgba(255,255,255,0.1)";
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(width,y); ctx.stroke();
+    }
+
+    // Sín (4-es sáv)
+    let ty = 4 * laneH + laneH/2;
+    ctx.strokeStyle = "#95a5a6"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(0, ty-10); ctx.lineTo(width, ty-10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, ty+10); ctx.lineTo(width, ty+10); ctx.stroke();
+    for(let x=0; x<width; x+=40) { ctx.beginPath(); ctx.moveTo(x, ty-15); ctx.lineTo(x, ty+15); ctx.stroke(); }
+    
+    // Lámpa
+    ctx.fillStyle = (trainLight==="red") ? "#e74c3c" : "#550000"; ctx.beginPath(); ctx.arc(width-40, ty-25, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = (trainLight==="green") ? "#2ecc71" : "#005500"; ctx.beginPath(); ctx.arc(width-40, ty-8, 8, 0, Math.PI*2); ctx.fill();
+
+    // Deszkák
+    ctx.fillStyle = "#d35400";
+    logs.forEach(l => {
+        let ly = l.lane * laneH + (laneH - l.h)/2;
+        ctx.fillRect(l.x, ly, l.w, l.h);
+        ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fillRect(l.x, ly+5, l.w, 5); ctx.fillStyle = "#d35400"; // Árnyék
+    });
+
+    // Autók
+    cars.forEach(c => {
+        let cy = c.lane * laneH + (laneH - c.h)/2;
+        ctx.fillStyle = "#e74c3c"; // Piros autó
+        ctx.fillRect(c.x, cy, c.w, c.h);
+        ctx.fillStyle = "#ecf0f1"; // Ablak
+        ctx.fillRect(c.x+5, cy+5, c.w-10, c.h/2);
+        // Kerék
+        ctx.fillStyle="black"; ctx.fillRect(c.x+10, cy+c.h, 10, 4); ctx.fillRect(c.x+c.w-20, cy+c.h, 10, 4);
+    });
+
+    // Vonat
+    if(train.active) {
+        let ty = train.lane * laneH + (laneH - 40)/2;
+        ctx.fillStyle = "#8e44ad";
+        ctx.fillRect(train.x, ty, train.width, 40);
+        ctx.fillStyle = "#f1c40f"; // Ablakok
+        for(let k=20; k<train.width; k+=60) ctx.fillRect(train.x+k, ty+5, 40, 15);
+    }
+
+    // BÉKA
+    if(gameState === "playing") {
+        ctx.fillStyle = "#2ecc71";
+        ctx.fillRect(frog.x, frog.y, frog.size, frog.size);
+        // Szem
+        ctx.fillStyle = "white"; 
+        ctx.fillRect(frog.x+5, frog.y+5, 8, 8); 
+        ctx.fillRect(frog.x+17, frog.y+5, 8, 8);
+        ctx.fillStyle = "black"; 
+        ctx.fillRect(frog.x+7, frog.y+7, 4, 4); 
+        ctx.fillRect(frog.x+19, frog.y+7, 4, 4);
     }
 }
 
-// ---------- ÁLLAPOT ----------
-function checkState(){
-    elapsedTime=(performance.now()-startTime)/1000;
-    const stars=starTimes();
-    if(elapsedTime>stars[1]){gameState="lose"; loseReason="idő"; sounds.crash.play();}
-    for(let car of cars){if(frog.x<car.x+car.width&&frog.x+frog.size>car.x&&frog.y<car.y+car.height&&frog.y+frog.size>car.y){gameState="lose"; loseReason="autó"; sounds.crash.play();}}
-    if(frog.x<0||frog.x+frog.size>canvas.width||frog.y>worldHeight){gameState="lose"; loseReason="szél"; sounds.crash.play();}
-    if(frog.y<0){gameState="win"; sounds.win.play(); starsEarned=1; for(let s=5;s>=1;s--){if(elapsedTime<=stars[s]){starsEarned=s; break;}} if(level<maxLevel){level++; localStorage.setItem('level',level);}}
+// --- FŐ CIKLUS ---
+function loop() {
+    update();
+    draw();
+    if(gameState === "playing") requestAnimationFrame(loop);
 }
 
-// ---------- LAKAT ANIMÁCIÓ ----------
-let unlockAnim=null;
-function showUnlockAnimation(name){unlockAnim={name,alpha:1,timer:0};}
+// Kezdő képernyő kirajzolása egyszer
+msgBox.style.display = "block";
+resize();
 
-// ---------- RAJZ ----------
-function drawRoads(){for(let i=0;i<lanes;i++){ctx.fillStyle=(i===2||i===3)?"#1E90FF":(i===0||i===lanes-1)?"#2c3e50":"#333"; ctx.fillRect(0,i*baseLaneHeight,canvas.width,baseLaneHeight); if(i>0&&i<lanes-1){ctx.strokeStyle="#aaa"; ctx.setLineDash([20,15]); ctx.beginPath(); ctx.moveTo(0,i*baseLaneHeight+baseLaneHeight/2); ctx.lineTo(canvas.width,i*baseLaneHeight+baseLaneHeight/2); ctx.stroke(); ctx.setLineDash([]);}}}
-function drawCars(){for(let car of cars){ctx.fillStyle="red"; ctx.fillRect(car.x,car.y,car.width,car.height); ctx.fillStyle="#87CEEB"; ctx.fillRect(car.x+5,car.y+5,car.width-10,car.height/2-5); ctx.fillStyle="black"; const wheelR=6; const wheelY=car.y+car.height+wheelR/2; ctx.beginPath(); ctx.arc(car.x+10,wheelY,wheelR,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(car.x+car.width-10,wheelY,wheelR,0,Math.PI*2); ctx.fill();}}
-function drawLogs(){for(let l of logs){ctx.fillStyle="#8B4513"; ctx.fillRect(l.x,l.y,l.width,l.height);}}
-function drawHouses(){for(let h of houses){ctx.fillStyle="#964B00"; ctx.fillRect(h.x,h.y,h.width,h.height); ctx.fillStyle="#FFD700"; ctx.fillRect(h.x+10,h.y+10,h.width-20,h.height-20);}}
-function drawTrainTrack(){const y = trainLane * baseLaneHeight + baseLaneHeight/2; ctx.strokeStyle = "#888"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, y-10); ctx.lineTo(canvas.width, y-10); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, y+10); ctx.lineTo(canvas.width, y+10); ctx.stroke(); ctx.strokeStyle = "#555"; ctx.lineWidth = 2; for(let x=0; x<canvas.width; x+=20){ctx.beginPath(); ctx.moveTo(x, y-12); ctx.lineTo(x, y+12); ctx.stroke();}}
-function drawTrainLight(){ ctx.fillStyle=trainLight.state==="green"?"#0f0":"#f00"; ctx.beginPath(); ctx.arc(trainLight.x,trainLight.y,10,0,Math.PI*2); ctx.fill();}
-function drawTrain(){ if(train.active){ ctx.fillStyle="purple"; ctx.fillRect(train.x,train.y,train.width,train.height); }}
-function stepSimpleAnimal(x,y,frame){ctx.fillStyle=animals.find(a=>a.name===selectedAnimal).color; ctx.fillRect(x,y,30,30); let offset=frame%2*3; ctx.fillRect(x+5,y+30+offset,5,6); ctx.fillRect(x+20,y+30+offset,5,6);}
-function drawAnimal(){stepSimpleAnimal(frog.x,frog.y,frog.stepFrame);}
-
-// ---------- UI ----------
-function drawUI(){
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.fillStyle="white"; ctx.font="20px Arial"; ctx.textAlign="center"; ctx.fillText(`Szint ${level}`, canvas.width/2, 30);
-    const stars=starTimes(); let bestTime=stars[5]; for(let s=5;s>=1;s--){if(elapsedTime<=stars[s]){bestTime=stars[s]; break;}}
-    ctx.font="16px Arial"; ctx.textAlign="left"; ctx.fillText(`⭐ idő: ${bestTime.toFixed(1)}s`,10,55); ctx.textAlign="right"; ctx.fillText(`⏱️ ${elapsedTime.toFixed(1)}s`,canvas.width-10,55);
-    if(unlockAnim){ctx.setTransform(1,0,0,1,0,0); ctx.globalAlpha=unlockAnim.alpha; ctx.fillStyle="yellow"; ctx.font="22px Arial"; ctx.fillText(`🔓 Feloldva: ${unlockAnim.name}`, canvas.width/2, canvas.height/2); unlockAnim.timer+=0.01; unlockAnim.alpha=1-unlockAnim.timer; if(unlockAnim.alpha<=0) unlockAnim=null; ctx.globalAlpha=1;}
-    if(gameState!=="playing"){ctx.fillStyle="rgba(0,0,0,0.7)"; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle="white"; ctx.font="26px Arial"; ctx.textAlign="center"; let text=""; if(gameState==="win") text=`🎉 Szint teljesítve! ⭐${starsEarned}`; else if(gameState==="lose"){if(loseReason==="autó") text="💥 Ütköztél!"; else if(loseReason==="szél") text="❌ Kimentél a pályáról!"; else if(loseReason==="víz") text="🌊 Beleestél a vízbe!"; else if(loseReason==="vonat") text="🚂 Átütött a vonat!"; else if(loseReason==="idő") text="⏱️ Túl lassú vagy!";} ctx.fillText(text,canvas.width/2,canvas.height/2); ctx.font="16px Arial"; ctx.fillText("ENTER – folytatás",canvas.width/2,canvas.height/2+40);}
-}
-
-// ---------- LOOP ----------
-function gameLoop(){
-    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,canvas.width,canvas.height);
-    if(gameState==="playing"){
-        updateCamera(); ctx.translate(0,-cameraY);
-        drawRoads(); drawHouses(); updateCars(); drawCars(); updateLogs(); drawLogs();
-        updateTrain(); drawTrainTrack(); drawTrain(); drawTrainLight();
-        drawAnimal(); updateLogs(); checkState(); drawUI();
-    }else{ drawUI(); }
-    requestAnimationFrame(gameLoop);
-}
-
-setupLevel(); gameLoop();
 </script>
 </body>
 </html>
