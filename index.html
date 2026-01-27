@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Végtelen Béka - Skin Update</title>
+<title>Végtelen Béka - Smooth Jump</title>
 <style>
     :root { --accent: #ff9100; --bg: #050505; }
     html, body {
@@ -38,7 +38,7 @@
         color: white; padding: 30px; border-radius: 25px; text-align: center;
         width: 90%; max-width: 400px;
         box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        max-height: 80vh; overflow-y: auto; /* Görgethető, ha sok a skin */
+        max-height: 80vh; overflow-y: auto;
     }
     
     .big-btn {
@@ -51,23 +51,13 @@
     /* BOLT STÍLUSOK */
     .skin-card {
         background: rgba(255,255,255,0.05);
-        border-radius: 10px;
-        padding: 10px;
-        cursor: pointer;
-        transition: 0.2s;
-        border: 2px solid transparent;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        border-radius: 10px; padding: 10px; cursor: pointer; transition: 0.2s;
+        border: 2px solid transparent; display: flex; flex-direction: column; align-items: center;
     }
     .skin-card.active { border-color: #fff; background: rgba(255,255,255,0.1); }
     .skin-card:hover { background: rgba(255,255,255,0.15); }
     
-    .skin-preview {
-        width: 40px; height: 40px; border-radius: 50%;
-        margin-bottom: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
+    .skin-preview { width: 40px; height: 40px; border-radius: 50%; margin-bottom: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
     .skin-name { font-size: 10px; font-weight: 700; opacity: 0.8; margin-bottom: 4px; }
     .skin-price { font-size: 12px; font-weight: 900; color: var(--accent); }
     .skin-owned { font-size: 12px; font-weight: 900; color: #2ecc71; }
@@ -94,7 +84,7 @@
 <div id="ui-layer">
     <div id="msg-box" class="panel">
         <h1 id="msg-title" style="margin:0; font-weight:900; letter-spacing:4px; color:#ff9100; text-shadow:0 0 20px rgba(255,145,0,0.6);">FROGGER</h1>
-        <p style="opacity:0.8; margin-bottom:30px; font-weight:300;">SKIN UPDATE</p>
+        <p style="opacity:0.8; margin-bottom:30px; font-weight:300;">SMOOTH JUMP UPDATE</p>
         <button class="big-btn" id="start-btn">JÁTÉK INDÍTÁSA</button>
         <button class="big-btn" id="open-shop-btn" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">BOLT</button>
     </div>
@@ -119,13 +109,12 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// --- JÁTÉK ADATOK (V2 Mentés) ---
+// --- JÁTÉK ADATOK ---
 let level = parseInt(localStorage.getItem('f_v2_lvl')) || 1;
 let totalCoins = parseInt(localStorage.getItem('f_v2_coins')) || 0;
 let ownedSkins = JSON.parse(localStorage.getItem('f_v2_skins')) || ['#2ecc71'];
 let currentSkin = localStorage.getItem('f_v2_curr') || '#2ecc71';
 
-// --- ÚJ SKIN LISTA ---
 const skins = [
     { name: 'NORMÁL', c: '#2ecc71', p: 0 },
     { name: 'VÍZ',    c: '#3498db', p: 50 },
@@ -162,25 +151,38 @@ function drawCoin(x, y) {
 function drawFrog(x, y, color, jump) {
     ctx.save();
     ctx.translate(x + 25, y + 25);
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.beginPath(); ctx.ellipse(0, 20 - jump*10, 22 - jump*5, 12 - jump*5, 0, 0, Math.PI*2); ctx.fill();
     
-    ctx.translate(0, -jump * 30);
-    ctx.scale(1 + jump*0.15, 1 - jump*0.15);
+    // Árnyék (Ugráskor kicsit összemegy)
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    let shadowScale = 1 - (jump * 0.5); 
+    ctx.beginPath(); 
+    ctx.ellipse(0, 20, 22 * shadowScale, 12 * shadowScale, 0, 0, Math.PI*2); 
+    ctx.fill();
+    
+    // --- UGRÁS ANIMÁCIÓ (DEFORMÁCIÓ) ---
+    // Magasabbra ugrunk (60px)
+    ctx.translate(0, -jump * 60);
+    
+    // SQUASH & STRETCH: 
+    // Amikor jump=1 (elrugaszkodás), a test keskenyebb (X) és magasabb (Y) lesz.
+    // Ez a "kinyúlás" effektus.
+    let stretch = 1 + (jump * 0.3); // Y nyúlik
+    let squash = 1 - (jump * 0.15); // X vékonyodik
+    ctx.scale(squash, stretch);
 
-    // Test Gradiens (Különleges hatás az Aranynak)
+    // Test Gradiens
     let grad = ctx.createRadialGradient(-5, -10, 5, 0, 0, 30);
     grad.addColorStop(0, color); 
-    
-    // Ha arany vagy gyémánt, fényesebb a széle
     if(color === '#ffd700' || color === '#b9f2ff') grad.addColorStop(1, "#806000");
     else grad.addColorStop(1, "#051a05");
-    
     ctx.fillStyle = grad;
     
+    // Alapforma (Béka "Blob")
     ctx.beginPath(); ctx.moveTo(-18, 15); ctx.quadraticCurveTo(-28, -25, 0, -28);
     ctx.quadraticCurveTo(28, -25, 18, 15); ctx.quadraticCurveTo(0, 25, -18, 15); ctx.fill();
 
+    // Szemek (Ezeket nem torzítjuk annyira, visszaállítunk egy picit)
+    // De mivel az egész context skálázva van, a szemek is nyúlnak, ami vicces/jó.
     ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(-12, -20, 8, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(12, -20, 8, 0, 7); ctx.fill();
     ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(-12, -22, 4, 0, 7); ctx.fill();
@@ -192,7 +194,6 @@ function drawVehicle(e, y) {
     const isRight = e.s > 0;
     
     ctx.save();
-    // Fényszóró
     if(isRight) {
         let beam = ctx.createLinearGradient(e.x+e.w, 0, e.x+e.w+250, 0);
         beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
@@ -390,7 +391,14 @@ function loop() {
         staticCoins.forEach(c => {
             if(c.active && c.lane === frog.lane) { if(Math.abs((frog.x + 25) - c.x) < 40) { c.active = false; collectCoin(); } }
         });
-        frog.x += (frog.tX - frog.x) * 0.2; frog.y += (frog.tY - frog.y) * 0.2; frog.jump *= 0.8;
+        
+        // --- JUMP FIZIKA ---
+        frog.x += (frog.tX - frog.x) * 0.2; 
+        frog.y += (frog.tY - frog.y) * 0.2; 
+        
+        // Lassabb lecsengés a simább animációért (0.8 -> 0.85)
+        frog.jump *= 0.85; 
+
         camY += (frog.y - height/2 - camY) * 0.05;
         if(map[frog.lane].type === 'water' && !onLog) endGame();
     } else if(state === "menu") {
@@ -451,7 +459,6 @@ function draw() {
     ctx.restore();
 }
 
-// --- ÚJ BOLT LOGIKA (KÁRTYÁK) ---
 function renderShop() {
     const grid = document.getElementById("skin-grid"); grid.innerHTML = '';
     skins.forEach(s => {
@@ -461,29 +468,20 @@ function renderShop() {
         const card = document.createElement('div');
         card.className = `skin-card ${active ? 'active' : ''}`;
         
-        // Pötty a színnel
         const preview = document.createElement('div');
         preview.className = 'skin-preview';
         preview.style.background = s.c;
-        if(s.c === '#ffd700') preview.style.boxShadow = "0 0 10px #ffd700"; // Arany ragyogás
+        if(s.c === '#ffd700') preview.style.boxShadow = "0 0 10px #ffd700";
+        if(s.c === '#b9f2ff') preview.style.boxShadow = "0 0 10px #b9f2ff";
         
-        // Név
         const name = document.createElement('div');
         name.className = 'skin-name';
         name.innerText = s.name;
         
-        // Ár vagy Státusz
         const price = document.createElement('div');
-        if(active) {
-            price.className = 'skin-owned';
-            price.innerText = "KIVÁLASZTVA";
-        } else if(has) {
-            price.className = 'skin-owned';
-            price.innerText = "MEGVÉVE";
-        } else {
-            price.className = 'skin-price';
-            price.innerText = s.p + " PÉNZ";
-        }
+        if(active) { price.className = 'skin-owned'; price.innerText = "KIVÁLASZTVA"; } 
+        else if(has) { price.className = 'skin-owned'; price.innerText = "MEGVÉVE"; } 
+        else { price.className = 'skin-price'; price.innerText = s.p + " PÉNZ"; }
 
         card.appendChild(preview);
         card.appendChild(name);
