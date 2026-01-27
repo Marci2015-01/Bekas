@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Végtelen Béka - Chaos Edition</title>
+<title>Végtelen Béka - Skin Update</title>
 <style>
     :root { --accent: #ff9100; --bg: #050505; }
     html, body {
@@ -23,31 +23,54 @@
     }
     .stat-val { color: var(--accent); font-weight: 900; font-size: 24px; display: block; text-shadow: 0 0 10px rgba(255, 145, 0, 0.5); }
 
-    /* ÜVEG UI */
+    /* UI RÉTEG */
     #ui-layer {
         position: absolute; inset: 0;
         display: flex; justify-content: center; align-items: center;
         z-index: 200; 
-        background: rgba(0,0,0,0.3); 
-        backdrop-filter: blur(4px);
+        background: rgba(0,0,0,0.4); 
+        backdrop-filter: blur(5px);
     }
     
     .panel {
-        background: rgba(30, 20, 10, 0.9);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        color: white; padding: 45px; border-radius: 30px; text-align: center;
-        border: 1px solid rgba(255,255,255,0.15); 
-        width: 85%; max-width: 380px;
+        background: rgba(20, 20, 20, 0.95);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: white; padding: 30px; border-radius: 25px; text-align: center;
+        width: 90%; max-width: 400px;
         box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        max-height: 80vh; overflow-y: auto; /* Görgethető, ha sok a skin */
     }
     
     .big-btn {
-        background: rgba(255,255,255,0.9); color: #000; border: none; padding: 20px; margin: 12px 0;
-        font-size: 16px; border-radius: 15px; cursor: pointer; width: 100%; 
+        background: rgba(255,255,255,0.9); color: #000; border: none; padding: 15px; margin: 10px 0;
+        font-size: 16px; border-radius: 12px; cursor: pointer; width: 100%; 
         font-weight: 900; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
     }
-    .big-btn:hover { background: var(--accent); color: #fff; transform: scale(1.02); box-shadow: 0 0 20px var(--accent); }
+    .big-btn:hover { background: var(--accent); color: #fff; transform: scale(1.02); }
+
+    /* BOLT STÍLUSOK */
+    .skin-card {
+        background: rgba(255,255,255,0.05);
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+        transition: 0.2s;
+        border: 2px solid transparent;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .skin-card.active { border-color: #fff; background: rgba(255,255,255,0.1); }
+    .skin-card:hover { background: rgba(255,255,255,0.15); }
+    
+    .skin-preview {
+        width: 40px; height: 40px; border-radius: 50%;
+        margin-bottom: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .skin-name { font-size: 10px; font-weight: 700; opacity: 0.8; margin-bottom: 4px; }
+    .skin-price { font-size: 12px; font-weight: 900; color: var(--accent); }
+    .skin-owned { font-size: 12px; font-weight: 900; color: #2ecc71; }
 
     #controls {
         position: absolute; bottom: 35px; right: 35px;
@@ -71,14 +94,14 @@
 <div id="ui-layer">
     <div id="msg-box" class="panel">
         <h1 id="msg-title" style="margin:0; font-weight:900; letter-spacing:4px; color:#ff9100; text-shadow:0 0 20px rgba(255,145,0,0.6);">FROGGER</h1>
-        <p style="opacity:0.8; margin-bottom:30px; font-weight:300;">CHAOS EDITION</p>
+        <p style="opacity:0.8; margin-bottom:30px; font-weight:300;">SKIN UPDATE</p>
         <button class="big-btn" id="start-btn">JÁTÉK INDÍTÁSA</button>
-        <button class="big-btn" id="open-shop-btn" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">BOLT / SKINEK</button>
+        <button class="big-btn" id="open-shop-btn" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">BOLT</button>
     </div>
     
     <div id="shop-box" class="panel" style="display:none">
         <h2>SKINEK</h2>
-        <div id="skin-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin:25px 0;"></div>
+        <div id="skin-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:20px 0;"></div>
         <button class="big-btn" id="close-shop-btn">VISSZA</button>
     </div>
 </div>
@@ -96,19 +119,27 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// --- JÁTÉK ADATOK ---
-let level = parseInt(localStorage.getItem('f_lvl_chaos')) || 1;
-let totalCoins = parseInt(localStorage.getItem('f_coins_chaos')) || 0;
-let ownedSkins = JSON.parse(localStorage.getItem('f_skins_chaos')) || ['#2ecc71'];
-let currentSkin = localStorage.getItem('f_curr_chaos') || '#2ecc71';
+// --- JÁTÉK ADATOK (V2 Mentés) ---
+let level = parseInt(localStorage.getItem('f_v2_lvl')) || 1;
+let totalCoins = parseInt(localStorage.getItem('f_v2_coins')) || 0;
+let ownedSkins = JSON.parse(localStorage.getItem('f_v2_skins')) || ['#2ecc71'];
+let currentSkin = localStorage.getItem('f_v2_curr') || '#2ecc71';
+
+// --- ÚJ SKIN LISTA ---
+const skins = [
+    { name: 'NORMÁL', c: '#2ecc71', p: 0 },
+    { name: 'VÍZ',    c: '#3498db', p: 50 },
+    { name: 'SÁR',    c: '#795548', p: 50 },
+    { name: 'TŰZ',    c: '#e74c3c', p: 150 },
+    { name: 'MÉREG',  c: '#9b59b6', p: 150 },
+    { name: 'JÉG',    c: '#00d2ff', p: 300 },
+    { name: 'ÁRNY',   c: '#333333', p: 500 },
+    { name: 'ARANY',  c: '#ffd700', p: 1000 },
+    { name: 'GYÉMÁNT',c: '#b9f2ff', p: 2000 }
+];
 
 document.getElementById('lvl-num').innerText = level;
 document.getElementById('coin-num').innerText = totalCoins;
-
-const skins = [
-    { c: '#2ecc71', p: 0 }, { c: '#3498db', p: 50 }, { c: '#e74c3c', p: 80 },
-    { c: '#f1c40f', p: 120 }, { c: '#9b59b6', p: 200 }, { c: '#ffffff', p: 500 }
-];
 
 let width, height, laneH = 100, state = "menu";
 let map = [], entities = [], staticCoins = [], frame = 0, startT = 0;
@@ -137,8 +168,14 @@ function drawFrog(x, y, color, jump) {
     ctx.translate(0, -jump * 30);
     ctx.scale(1 + jump*0.15, 1 - jump*0.15);
 
+    // Test Gradiens (Különleges hatás az Aranynak)
     let grad = ctx.createRadialGradient(-5, -10, 5, 0, 0, 30);
-    grad.addColorStop(0, color); grad.addColorStop(1, "#051a05");
+    grad.addColorStop(0, color); 
+    
+    // Ha arany vagy gyémánt, fényesebb a széle
+    if(color === '#ffd700' || color === '#b9f2ff') grad.addColorStop(1, "#806000");
+    else grad.addColorStop(1, "#051a05");
+    
     ctx.fillStyle = grad;
     
     ctx.beginPath(); ctx.moveTo(-18, 15); ctx.quadraticCurveTo(-28, -25, 0, -28);
@@ -154,14 +191,14 @@ function drawFrog(x, y, color, jump) {
 function drawVehicle(e, y) {
     const isRight = e.s > 0;
     
-    // Fényszóró
     ctx.save();
+    // Fényszóró
     if(isRight) {
         let beam = ctx.createLinearGradient(e.x+e.w, 0, e.x+e.w+250, 0);
         beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
         ctx.fillStyle = beam;
-        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+15); ctx.lineTo(e.x+e.w+250, y-15); ctx.lineTo(e.x+e.w+250, y+35); ctx.fill(); // Bal
-        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+45); ctx.lineTo(e.x+e.w+250, y+25); ctx.lineTo(e.x+e.w+250, y+75); ctx.fill(); // Jobb
+        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+15); ctx.lineTo(e.x+e.w+250, y-15); ctx.lineTo(e.x+e.w+250, y+35); ctx.fill(); 
+        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+45); ctx.lineTo(e.x+e.w+250, y+25); ctx.lineTo(e.x+e.w+250, y+75); ctx.fill();
     } else {
         let beam = ctx.createLinearGradient(e.x, 0, e.x-250, 0);
         beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
@@ -171,14 +208,12 @@ function drawVehicle(e, y) {
     }
     ctx.restore();
 
-    // Kerekek
     ctx.fillStyle = "#000";
     ctx.beginPath(); ctx.roundRect(e.x+10, y-3, 25, 8, 2); ctx.fill();
     ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y-3, 25, 8, 2); ctx.fill();
     ctx.beginPath(); ctx.roundRect(e.x+10, y+50, 25, 8, 2); ctx.fill();
     ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y+50, 25, 8, 2); ctx.fill();
 
-    // Karosszéria
     ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 15;
     let carBody = ctx.createLinearGradient(e.x, y, e.x, y+55);
     carBody.addColorStop(0, e.col); carBody.addColorStop(1, "#000"); 
@@ -199,7 +234,6 @@ function drawVehicle(e, y) {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Ablakok
     let cabinX = isRight ? e.x + 20 : e.x + e.w - 70;
     let cabinW = e.w - 60;
     ctx.fillStyle = "rgba(0,0,0,0.3)";
@@ -223,7 +257,6 @@ function drawVehicle(e, y) {
         ctx.lineTo(cabinX+cabinW+5, y+43); ctx.lineTo(cabinX+cabinW-5, y+45); ctx.fill();
     }
 
-    // Lámpák
     if(isRight) {
         ctx.fillStyle = "#fff"; ctx.shadowColor="#fff"; ctx.shadowBlur=10;
         ctx.beginPath(); ctx.ellipse(e.x+e.w-2, y+15, 3, 6, 0, 0, Math.PI*2); ctx.fill();
@@ -251,21 +284,16 @@ function drawLog(e, y) {
     if(e.hasCoin) drawCoin(e.x + e.w/2, y);
 }
 
-// --- JÁTÉKMENET LOGIKA (VÁLTOZÓ SEBESSÉGEK) ---
+// --- LOGIKA ---
 function generateMap() {
     map = [{type:'goal'}];
     let len = 15 + Math.min(level, 40);
     for(let i=1; i<len-1; i++) {
         let r = Math.random();
         let type = r < 0.2 ? 'grass' : (r < 0.55 ? 'water' : 'road');
-        
-        // --- ITT AZ ÚJ SEBESSÉG LOGIKA ---
-        // Alapsebesség + Szint szorzó + Nagy véletlenszerű variancia
-        // Így minden sávnak más tempója lesz
         let baseSpeed = 1.5 + (level * 0.15); 
-        let speedVariance = Math.random() * 3.5; // Akár +3.5 sebességkülönbség
+        let speedVariance = Math.random() * 3.5;
         let finalSpeed = baseSpeed + speedVariance;
-        
         map.push({type, d:Math.random()>0.5?1:-1, s:finalSpeed, seed: Math.random()});
     }
     map.push({type:'start'});
@@ -275,19 +303,15 @@ function generateMap() {
 
     map.forEach((l, i) => {
         if(l.type==='road' || l.type==='water') {
-            // Véletlenszerű elhelyezés, hogy ne egyszerre jöjjenek
-            let count = 2 + Math.floor(Math.random() * 2); // 2 vagy 3 jármű sávonként
+            let count = 2 + Math.floor(Math.random() * 2);
             let spacing = spawnW / count;
-            
             for(let k=0; k<count; k++) {
-                // Kis random eltolás, hogy ne legyenek patikamérlegen kimérve
                 let offset = (Math.random() * 200) - 100; 
-                
                 entities.push({
                     t:l.type==='road'?'c':'l', lane:i, 
                     x: (k * spacing) + offset, 
                     w:l.type==='road'?140:220, 
-                    s:l.s*l.d, // Itt kapja meg a sáv egyedi sebességét
+                    s:l.s*l.d, 
                     col: l.t==='c' ? `hsl(${Math.random()*360}, 80%, 50%)` : '#3d2b1f',
                     hasCoin: l.type==='water' && Math.random() > 0.4
                 });
@@ -406,7 +430,6 @@ function draw() {
                 let g = ctx.createLinearGradient(0, y, 0, y+laneH);
                 g.addColorStop(0, "#004080"); g.addColorStop(1, "#0066cc");
                 ctx.fillStyle = g; ctx.fillRect(0, y, width, laneH);
-                
                 ctx.fillStyle = "rgba(100, 200, 255, 0.2)";
                 let waveOffset = frame * 1.5 + l.seed * 500;
                 for(let w=0; w<width; w+=50) {
@@ -428,28 +451,61 @@ function draw() {
     ctx.restore();
 }
 
+// --- ÚJ BOLT LOGIKA (KÁRTYÁK) ---
 function renderShop() {
     const grid = document.getElementById("skin-grid"); grid.innerHTML = '';
     skins.forEach(s => {
         const has = ownedSkins.includes(s.c);
         const active = currentSkin === s.c;
-        const div = document.createElement('div');
-        div.style.cssText = `background:${s.c}; height:60px; border-radius:15px; border:${active?'3px solid white':'1px solid rgba(255,255,255,0.3)'}; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; color:#000; font-weight:900; box-shadow:0 5px 15px rgba(0,0,0,0.3); transition:0.1s`;
-        div.innerText = has ? (active ? '✓' : 'OK') : s.p;
-        div.onclick = () => {
-            if(has) { currentSkin = s.c; frog.color = s.c; } 
-            else if(totalCoins >= s.p) { totalCoins -= s.p; ownedSkins.push(s.c); currentSkin = s.c; frog.color = s.c; }
+        
+        const card = document.createElement('div');
+        card.className = `skin-card ${active ? 'active' : ''}`;
+        
+        // Pötty a színnel
+        const preview = document.createElement('div');
+        preview.className = 'skin-preview';
+        preview.style.background = s.c;
+        if(s.c === '#ffd700') preview.style.boxShadow = "0 0 10px #ffd700"; // Arany ragyogás
+        
+        // Név
+        const name = document.createElement('div');
+        name.className = 'skin-name';
+        name.innerText = s.name;
+        
+        // Ár vagy Státusz
+        const price = document.createElement('div');
+        if(active) {
+            price.className = 'skin-owned';
+            price.innerText = "KIVÁLASZTVA";
+        } else if(has) {
+            price.className = 'skin-owned';
+            price.innerText = "MEGVÉVE";
+        } else {
+            price.className = 'skin-price';
+            price.innerText = s.p + " PÉNZ";
+        }
+
+        card.appendChild(preview);
+        card.appendChild(name);
+        card.appendChild(price);
+        
+        card.onclick = () => {
+            if(has) { 
+                currentSkin = s.c; frog.color = s.c; 
+            } else if(totalCoins >= s.p) { 
+                totalCoins -= s.p; ownedSkins.push(s.c); currentSkin = s.c; frog.color = s.c; 
+            }
             save(); renderShop(); document.getElementById('coin-num').innerText = totalCoins; draw();
         };
-        grid.appendChild(div);
+        grid.appendChild(card);
     });
 }
 
 function save() {
-    localStorage.setItem('f_lvl_chaos', level);
-    localStorage.setItem('f_coins_chaos', totalCoins);
-    localStorage.setItem('f_skins_chaos', JSON.stringify(ownedSkins));
-    localStorage.setItem('f_curr_chaos', currentSkin);
+    localStorage.setItem('f_v2_lvl', level);
+    localStorage.setItem('f_v2_coins', totalCoins);
+    localStorage.setItem('f_v2_skins', JSON.stringify(ownedSkins));
+    localStorage.setItem('f_v2_curr', currentSkin);
 }
 
 window.addEventListener('keydown', (e) => {
