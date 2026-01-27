@@ -2,81 +2,96 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Végtelen Béka - Pro Verzió</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Végtelen Béka - Stabil Verzió</title>
 <style>
+    :root { --accent: #f1c40f; --bg: #1a1a1a; --glass: rgba(0,0,0,0.9); }
     html, body {
-        margin: 0; padding: 0; 
-        height: 100%; width: 100%;
-        overflow: hidden; 
-        background-color: #1a1a1a;
-        font-family: 'Segoe UI', sans-serif;
+        margin: 0; padding: 0; height: 100%; width: 100%;
+        overflow: hidden; background: var(--bg);
+        font-family: 'Segoe UI', Roboto, sans-serif;
         touch-action: none; user-select: none;
     }
     canvas { display: block; }
     
-    #ui-layer {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        pointer-events: none; display: flex; justify-content: center; align-items: center; z-index: 50;
-    }
-    #msg-box {
-        background: rgba(20, 20, 25, 0.95); color: white; padding: 40px;
-        border-radius: 25px; text-align: center; border: 4px solid #f1c40f;
-        pointer-events: auto; min-width: 300px; box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        backdrop-filter: blur(10px);
-    }
-    h1 { margin: 0 0 10px 0; color: #f1c40f; text-shadow: 2px 2px 0px #d35400; }
-    p { margin-bottom: 25px; font-size: 18px; }
-    
-    button.big-btn {
-        background: linear-gradient(to bottom, #f39c12, #e67e22);
-        color: white; border: none; padding: 18px 35px; 
-        font-size: 22px; border-radius: 12px; cursor: pointer; width: 100%; 
-        font-weight: bold; box-shadow: 0 5px 0 #a04000; transition: 0.1s;
-    }
-    button.big-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #a04000; }
-
     #hud {
-        position: absolute; top: 20px; left: 20px;
-        background: rgba(0,0,0,0.7); color: white;
-        padding: 10px 20px; border-radius: 50px; font-weight: bold;
-        z-index: 10; border: 2px solid #f1c40f; font-size: 20px;
+        position: absolute; top: 15px; left: 15px; right: 15px;
+        display: flex; justify-content: space-between;
+        background: var(--glass); color: white; padding: 12px 20px;
+        border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);
+        z-index: 100; font-weight: bold; pointer-events: none;
     }
+
+    #ui-layer {
+        position: absolute; inset: 0;
+        display: flex; justify-content: center; align-items: center;
+        z-index: 200; pointer-events: none;
+    }
+    .panel {
+        background: #15151a; color: white; padding: 30px;
+        border-radius: 25px; text-align: center; border: 3px solid var(--accent);
+        pointer-events: auto; width: 85%; max-width: 350px;
+        box-shadow: 0 10px 50px rgba(0,0,0,1);
+    }
+    
+    .big-btn {
+        background: linear-gradient(135deg, #f39c12, #d35400);
+        color: white; border: none; padding: 15px; margin: 10px 0;
+        font-size: 18px; border-radius: 12px; cursor: pointer; width: 100%; 
+        font-weight: bold; box-shadow: 0 5px 0 #a04000;
+    }
+
+    .skin-grid { 
+        display: grid !important; grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 10px; margin: 20px 0; 
+    }
+    .skin-item { 
+        background: #252525; padding: 10px; border-radius: 12px; 
+        border: 2px solid transparent; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center;
+    }
+    .skin-item.active { border-color: var(--accent); background: #333; }
+    .preview-box { width: 35px; height: 35px; border-radius: 8px; margin-bottom: 5px; }
 
     #controls {
-        position: absolute; bottom: 30px; right: 30px;
-        width: 180px; height: 130px; z-index: 100;
-        display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px;
+        position: absolute; bottom: 20px; right: 20px;
+        display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; z-index: 150;
     }
     .ctrl-btn {
-        background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4);
-        border-radius: 15px; color: white; display: flex; justify-content: center; align-items: center;
-        font-size: 24px; pointer-events: auto;
+        background: rgba(255,255,255,0.1); border-radius: 15px;
+        color: white; height: 60px; display: flex; justify-content: center; align-items: center;
+        font-size: 24px; backdrop-filter: blur(5px);
     }
-    .ctrl-btn:active { background: rgba(241, 196, 15, 0.6); }
-    #btn-up { grid-column: 2; grid-row: 1; }
-    #btn-left { grid-column: 1; grid-row: 2; }
-    #btn-down { grid-column: 2; grid-row: 2; }
-    #btn-right { grid-column: 3; grid-row: 2; }
 </style>
 </head>
 <body>
 
-<div id="hud">SZINT: <span id="lvl-num" style="color:#f1c40f">1</span></div>
+<div id="hud">
+    <div>SZINT: <span id="lvl-num">1</span></div>
+    <div>PÉNZ: <span id="coin-num">0</span> 💰</div>
+    <div>⏱ <span id="timer-num">0.0</span>s</div>
+</div>
 
 <div id="ui-layer">
-    <div id="msg-box">
-        <h1 id="msg-title">BÉKA KALAND</h1>
-        <p id="msg-text">A haladásod elmentve!</p>
-        <button class="big-btn" id="start-btn">JÁTÉK INDÍTÁSA</button>
+    <div id="msg-box" class="panel">
+        <h1 id="msg-title" style="color:var(--accent); margin:0">BÉKA KALAND</h1>
+        <p id="msg-text">Laptopon használd a nyilakat!</p>
+        <button class="big-btn" id="start-btn">JÁTÉK</button>
+        <button class="big-btn" id="open-shop-btn" style="background:#3498db; box-shadow:0 5px 0 #2980b9;">BOLT</button>
+    </div>
+
+    <div id="shop-box" class="panel" style="display:none">
+        <h1 style="color:var(--accent); margin:0">BÉKA BOLT</h1>
+        <div class="skin-grid" id="skin-grid"></div>
+        <button class="big-btn" id="close-shop-btn" style="background:#e74c3c; box-shadow:0 5px 0 #c0392b;">VISSZA</button>
     </div>
 </div>
 
 <div id="controls">
-    <div class="ctrl-btn" id="btn-up">▲</div>
-    <div class="ctrl-btn" id="btn-left">◀</div>
-    <div class="ctrl-btn" id="btn-down">▼</div>
-    <div class="ctrl-btn" id="btn-right">▶</div>
+    <div class="ctrl-btn" id="btn-up" style="grid-column:2">▲</div>
+    <div class="ctrl-btn" id="btn-left" style="grid-column:1; grid-row:2">◀</div>
+    <div class="ctrl-btn" id="btn-down" style="grid-column:2; grid-row:2">▼</div>
+    <div class="ctrl-btn" id="btn-right" style="grid-column:3; grid-row:2">▶</div>
 </div>
 
 <canvas id="game"></canvas>
@@ -84,178 +99,134 @@
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-const uiLayer = document.getElementById("ui-layer");
-const msgTitle = document.getElementById("msg-title");
-const msgText = document.getElementById("msg-text");
-const startBtn = document.getElementById("start-btn");
-const lvlNum = document.getElementById("lvl-num");
 
-let width, height;
-const laneH = 85; 
-let level = 1;
-let state = "menu";
-let map = [];
-let frog = { x:0, y:0, targetX:0, targetY:0, lane:0, size:50 };
-let entities = [];
-let trains = [];
-let cameraY = 0;
-let frameCount = 0;
+// --- ADATOK ---
+let level = parseInt(localStorage.getItem('f_lvl')) || 1;
+let totalCoins = parseInt(localStorage.getItem('f_coins')) || 0;
+let ownedSkins = JSON.parse(localStorage.getItem('f_skins')) || ['#2ecc71'];
+let currentSkin = localStorage.getItem('f_curr') || '#2ecc71';
 
-function generateMapLayout(lvl) {
-    map = [];
-    map.push({ type: 'goal' });
-    let totalLanes = 10 + Math.min(lvl * 2, 40); // Ne legyen végtelenül hosszú, de nehéz igen
+const skins = [
+    { c: '#2ecc71', p: 0 }, { c: '#3498db', p: 20 }, { c: '#e74c3c', p: 40 },
+    { c: '#f1c40f', p: 70 }, { c: '#9b59b6', p: 100 }, { c: '#ffffff', p: 150 }
+];
 
-    for(let i=1; i < totalLanes - 1; i++) {
-        let rnd = Math.random();
-        if (rnd < 0.15) map.push({ type: 'grass' });
-        else if (rnd < 0.45) map.push({ type: 'water', dir: (Math.random()>0.5?1:-1), speed: (1.5 + lvl*0.08) + Math.random() });
-        else if (rnd < 0.55 && lvl > 1) map.push({ type: 'train', active: false, cooldown: 100 });
-        else map.push({ type: 'road', dir: (Math.random()>0.5?1:-1), speed: (2.0 + lvl*0.15) + Math.random() });
-    }
-    map.push({ type: 'start' });
-    return map.length;
+let width, height, laneH = 80, state = "menu";
+let map = [], entities = [], trains = [], coins = [];
+let frog = { x:0, y:0, tX:0, tY:0, lane:0, scaleX:1, scaleY:1, color: currentSkin };
+let camY = 0, frame = 0, startT = 0;
+
+function save() {
+    localStorage.setItem('f_lvl', level);
+    localStorage.setItem('f_coins', totalCoins);
+    localStorage.setItem('f_skins', JSON.stringify(ownedSkins));
+    localStorage.setItem('f_curr', currentSkin);
 }
 
-function resize() {
-    width = window.innerWidth; height = window.innerHeight;
-    canvas.width = width; canvas.height = height;
-    if(state === "playing") updateFrogPos(true);
-}
-window.addEventListener('resize', resize);
-
-function startGame() {
-    generateMapLayout(level);
-    frog.lane = map.length - 1;
-    frog.targetX = width/2 - frog.size/2;
-    updateFrogPos(true);
-
-    entities = []; trains = [];
-    map.forEach((lane, index) => {
-        let count = 2 + Math.floor(Math.random() * 2);
-        if(lane.type === 'road') {
-            for(let k=0; k<count; k++) {
-                entities.push({
-                    type: 'car', lane: index, x: Math.random() * width, 
-                    w: 110, h: 55, speed: lane.speed * lane.dir,
-                    color: ["#e74c3c", "#f1c40f", "#3498db", "#e67e22", "#9b59b6"][Math.floor(Math.random()*5)]
-                });
-            }
-        } else if(lane.type === 'water') {
-            for(let k=0; k<count; k++) {
-                entities.push({
-                    type: 'log', lane: index, x: Math.random() * width,
-                    w: 170, h: 50, speed: lane.speed * lane.dir
-                });
-            }
-        } else if(lane.type === 'train') {
-            trains.push({ lane: index, x: -3000, active: false, cooldown: 100 + Math.random()*200 });
-        }
-    });
-
-    state = "playing";
-    uiLayer.style.display = "none";
-}
-
-function updateFrogPos(instant = false) {
-    frog.targetY = frog.lane * laneH + (laneH - frog.size)/2;
-    if(instant) { 
-        frog.y = frog.targetY; 
-        frog.x = frog.targetX;
-        cameraY = frog.y - height/2;
-    }
-}
-
-function gameOver(win, reason) {
-    state = "menu";
-    uiLayer.style.display = "flex";
-    if(win) {
-        level++;
-        lvlNum.textContent = level;
-        msgTitle.textContent = "SZINT TELJESÍTVE!";
-        msgTitle.style.color = "#2ecc71";
-        msgText.textContent = "Gratulálok! Jöhet a(z) " + level + ". szint?";
-        startBtn.textContent = "KÖVETKEZŐ SZINT";
-    } else {
-        // NEM esik vissza az 1. szintre!
-        msgTitle.textContent = "ELTÉVEDTÉL!";
-        msgTitle.style.color = "#e74c3c";
-        msgText.textContent = reason + " De a(z) " + level + ". szinten maradsz!";
-        startBtn.textContent = "ÚJRAKEZDÉS";
-    }
-}
-
-function move(dir) {
+// --- MOZGÁS ---
+function move(d) {
     if(state !== "playing") return;
-    if(dir === 'up' && frog.lane > 0) frog.lane--;
-    else if(dir === 'down' && frog.lane < map.length-1) frog.lane++;
-    else if(dir === 'left') frog.targetX -= 80;
-    else if(dir === 'right') frog.targetX += 80;
+    frog.scaleX = 1.3; frog.scaleY = 0.7;
+    setTimeout(() => { frog.scaleX = 1; frog.scaleY = 1; }, 150);
+
+    if(d==='up' && frog.lane > 0) frog.lane--;
+    else if(d==='down' && frog.lane < map.length-1) frog.lane++;
+    else if(d==='left') { frog.tX -= 70; if(frog.tX < -40) { frog.tX += width; frog.x += width; } }
+    else if(d==='right') { frog.tX += 70; if(frog.tX > width) { frog.tX -= width; frog.x -= width; } }
     
-    updateFrogPos();
-    if(frog.lane === 0) gameOver(true, "");
+    frog.tY = frog.lane * laneH + (laneH-45)/2;
+    if(frog.lane === 0) { 
+        state = "menu"; level++; totalCoins += 10; save(); 
+        document.getElementById('ui-layer').style.display = "flex"; 
+        document.getElementById('msg-title').innerText = "SZINT KÉSZ!"; 
+        document.getElementById('msg-text').innerText = "Szép volt! Jöhet a következő?";
+    }
 }
 
-// Controls
-document.addEventListener("keydown", e => {
-    if(e.key.includes("Up") || e.key === "w") move('up');
-    if(e.key.includes("Down") || e.key === "s") move('down');
-    if(e.key.includes("Left") || e.key === "a") move('left');
-    if(e.key.includes("Right") || e.key === "d") move('right');
-});
+function start() {
+    state = "playing";
+    generateMap();
+    frog.lane = map.length - 1;
+    frog.tX = width/2 - 22; frog.tY = frog.lane * laneH + (laneH-45)/2;
+    frog.x = frog.tX; frog.y = frog.tY;
+    
+    document.getElementById('coin-num').innerText = totalCoins;
+    document.getElementById('lvl-num').innerText = level;
+    document.getElementById('ui-layer').style.display = "none";
+    startT = Date.now();
+}
 
-const setupBtn = (id, dir) => {
-    const b = document.getElementById(id);
-    b.addEventListener("touchstart", (e) => { e.preventDefault(); move(dir); }, {passive:false});
-    b.addEventListener("mousedown", (e) => { e.preventDefault(); move(dir); });
-};
-setupBtn("btn-up", "up"); setupBtn("btn-down", "down"); setupBtn("btn-left", "left"); setupBtn("btn-right", "right");
+function generateMap() {
+    map = [{type:'goal'}];
+    let len = 15 + Math.min(level * 2, 40);
+    for(let i=1; i<len-1; i++) {
+        let r = Math.random();
+        let type = r < 0.2 ? 'grass' : (r < 0.5 ? 'water' : (r < 0.6 && level > 1 ? 'train' : 'road'));
+        map.push({type, d:Math.random()>0.5?1:-1, s:1.5 + level*0.05});
+    }
+    map.push({type:'start'});
 
+    entities = []; trains = []; coins = [];
+    map.forEach((l, i) => {
+        if(l.type==='road' || l.type==='water') {
+            for(let k=0; k<2; k++) entities.push({t:l.type==='road'?'c':'l', lane:i, x:Math.random()*width, w:l.type==='road'?100:180, s:l.s*l.d, col:['#e74c3c','#f1c40f','#3498db'][Math.floor(Math.random()*3)]});
+        }
+        if(l.type==='train') trains.push({lane:i, x:-3000, active:false, cd:120});
+        if((l.type==='grass'||l.type==='road') && Math.random()<0.2) coins.push({lane:i, x:50+Math.random()*(width-100)});
+    });
+}
+
+function endGame(reason) {
+    if (state !== "playing") return; // Dupla hívás megakadályozása
+    state = "dead";
+    save();
+    document.getElementById('ui-layer').style.display = "flex";
+    document.getElementById('msg-box').style.display = "block";
+    document.getElementById('shop-box').style.display = "none";
+    document.getElementById('msg-title').innerText = "VÉGE!";
+    document.getElementById('msg-text').innerText = reason + "\nPróbáld újra!";
+}
+
+// --- FŐ CIKLUS ---
 function loop() {
-    frameCount++;
+    frame++;
     if(state === "playing") {
-        // SMOOTH MOVEMENT (INTERPOLATION)
-        frog.y += (frog.targetY - frog.y) * 0.22;
-        frog.x += (frog.targetX - frog.x) * 0.22;
-
-        let targetCam = frog.y - height / 2;
-        cameraY += (targetCam - cameraY) * 0.1;
-        const maxScroll = (map.length * laneH) - height;
-        if(cameraY < 0) cameraY = 0;
-        if(cameraY > maxScroll) cameraY = maxScroll;
-
-        entities.forEach(e => {
-            e.x += e.speed;
-            if(e.speed > 0 && e.x > width) e.x = -e.w;
-            if(e.speed < 0 && e.x < -e.w) e.x = width;
-        });
-
-        trains.forEach(t => {
-            if(!t.active) {
-                t.cooldown--;
-                if(t.cooldown <= 0) { t.active = true; t.x = -2500; }
-            } else {
-                t.x += 45;
-                if(t.x > width + 1000) { t.active = false; t.cooldown = 200 + Math.random()*300; }
-                if(frog.lane === t.lane && frog.x < t.x + 1500 && frog.x + frog.size > t.x) gameOver(false, "Elütött a gyorsvonat!");
-            }
-        });
-
+        document.getElementById('timer-num').innerText = ((Date.now()-startT)/1000).toFixed(1);
+        
         let onLog = false;
         entities.forEach(e => {
-            if(e.lane === frog.lane) {
-                if(e.type === 'car' && frog.x < e.x + e.w - 15 && frog.x + frog.size > e.x + 15) gameOver(false, "Vigyázz az autókkal!");
-                if(e.type === 'log' && frog.x + frog.size/2 > e.x && frog.x + frog.size/2 < e.x + e.w) {
-                    onLog = true; 
-                    // Ha rönkön vagy, a célpontod is sodródik!
-                    frog.targetX += e.speed;
+            let prevX = e.x;
+            e.x += e.s;
+            if(e.s > 0 && e.x > width) e.x = -e.w;
+            if(e.s < 0 && e.x < -e.w) e.x = width;
+
+            if(e.t === 'l' && e.lane === frog.lane) {
+                if(frog.x + 22 > e.x && frog.x + 22 < e.x + e.w) {
+                    onLog = true;
+                    frog.tX += e.s;
+                    // Azonnali teleport rönkön
+                    if(Math.abs(e.x - prevX) > 100) {
+                        let diff = e.x - prevX;
+                        frog.tX += diff; frog.x += diff;
+                    }
                 }
             }
+            if(e.t === 'c' && e.lane === frog.lane && frog.x < e.x + e.w - 10 && frog.x + 45 > e.x + 10) endGame("Elütött egy autó!");
         });
 
-        if(map[frog.lane].type === 'water' && !onLog) gameOver(false, "Vigyázz, mély a víz!");
-        if(frog.targetX < 0) frog.targetX = 0;
-        if(frog.targetX > width - frog.size) frog.targetX = width - frog.size;
+        frog.x += (frog.tX - frog.x) * 0.3;
+        frog.y += (frog.tY - frog.y) * 0.3;
+        camY += (frog.y - height/2 - camY) * 0.1;
+        camY = Math.max(0, Math.min(map.length * laneH - height, camY));
+
+        trains.forEach(t => { if(!t.active){ t.cd--; if(t.cd<=0){ t.active=true; t.x=-3000; } } else { t.x+=75; if(t.x>width+2000){ t.active=false; t.cd=150; } if(frog.lane===t.lane && frog.x < t.x+2000 && frog.x+45 > t.x) endGame("Elütött a vonat!"); } });
+        coins.forEach(c => { if(!c.u && frog.lane===c.lane && Math.abs(frog.x+22-c.x)<35){ c.u=true; totalCoins++; document.getElementById('coin-num').innerText=totalCoins; } });
+
+        if(map[frog.lane].type === 'water' && !onLog) endGame("Beleestél a vízbe!");
+
+        // Szabad teleport
+        if(frog.tX < -100) { frog.tX += width + 100; frog.x += width + 100; }
+        if(frog.tX > width + 100) { frog.tX -= width + 100; frog.x -= width + 100; }
     }
     draw();
     requestAnimationFrame(loop);
@@ -264,73 +235,93 @@ function loop() {
 function draw() {
     ctx.clearRect(0,0,width,height);
     ctx.save();
-    ctx.translate(0, -cameraY);
-
-    map.forEach((lane, i) => {
+    ctx.translate(0, -camY);
+    
+    map.forEach((l, i) => {
         let y = i * laneH;
-        if (y + laneH < cameraY || y > cameraY + height) return;
-        let grad = ctx.createLinearGradient(0, y, 0, y + laneH);
-        if(lane.type === 'grass' || lane.type === 'start') {
-            grad.addColorStop(0, "#2ecc71"); grad.addColorStop(1, "#27ae60");
-        } else if(lane.type === 'road') {
-            grad.addColorStop(0, "#34495e"); grad.addColorStop(1, "#2c3e50");
-        } else if(lane.type === 'water') {
-            grad.addColorStop(0, "#2980b9"); grad.addColorStop(1, "#3498db");
-        } else if(lane.type === 'train') {
-            grad.addColorStop(0, "#1a1a1a"); grad.addColorStop(1, "#222");
-        } else if(lane.type === 'goal') {
-            grad.addColorStop(0, "#f1c40f"); grad.addColorStop(1, "#f39c12");
-        }
-        ctx.fillStyle = grad;
+        if (y+laneH < camY || y > camY+height) return;
+        ctx.fillStyle = l.type==='grass'||l.type==='start' ? '#2ecc71' : l.type==='goal' ? '#f1c40f' : l.type==='road' ? '#34495e' : l.type==='water' ? '#2980b9' : '#1a1a1a';
         ctx.fillRect(0, y, width, laneH);
-        
-        if(lane.type === 'road') {
-            ctx.strokeStyle = "rgba(255,255,255,0.1)"; ctx.setLineDash([30, 30]);
-            ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, y+laneH/2); ctx.lineTo(width, y+laneH/2); ctx.stroke(); ctx.setLineDash([]);
-        }
     });
 
     entities.forEach(e => {
-        let y = e.lane * laneH + (laneH - e.h)/2;
-        if (y + e.h < cameraY || y > cameraY + height) return;
-        ctx.fillStyle = e.type === 'car' ? e.color : "#7e4a35";
-        roundRect(ctx, e.x, y, e.w, e.h, 10, true);
-    });
-
-    trains.forEach(t => {
-        if(t.active) {
-            let ty = t.lane * laneH + (laneH - 50)/2;
-            ctx.fillStyle = "#34495e"; ctx.fillRect(t.x, ty, 2000, 50);
-            ctx.fillStyle = "#f1c40f"; for(let w=0; w<2000; w+=100) ctx.fillRect(t.x+w+10, ty+10, 50, 10);
+        let y = e.lane*laneH + (laneH-45)/2;
+        ctx.fillStyle = e.t==='c' ? e.col : "#6d4c41";
+        ctx.beginPath(); ctx.roundRect(e.x, y, e.w, 45, 10); ctx.fill();
+        if(e.t==='c') { // Kerekek és ablak
+            ctx.fillStyle="rgba(255,255,255,0.3)"; ctx.fillRect(e.s>0?e.x+e.w-25:e.x+5, y+5, 20, 35);
         }
     });
 
-    // BÉKA
-    ctx.shadowBlur = 15; ctx.shadowColor = "rgba(0,0,0,0.4)";
-    ctx.fillStyle = "#2ecc71";
-    roundRect(ctx, frog.x, frog.y, frog.size, frog.size, 15, true);
+    coins.forEach(c => { if(c.u) return; ctx.fillStyle="#f1c40f"; ctx.beginPath(); ctx.arc(c.x, c.lane*laneH+laneH/2, 12, 0, 7); ctx.fill(); });
+    trains.forEach(t => { if(t.active){ ctx.fillStyle="#444"; ctx.fillRect(t.x, t.lane*laneH+15, 2000, 50); } });
+
+    // BÉKA (Pupillákkal)
+    ctx.save();
+    ctx.translate(frog.x + 22.5, frog.y + 22.5);
+    ctx.scale(frog.scaleX, frog.scaleY);
+    ctx.fillStyle = frog.color;
+    ctx.beginPath(); ctx.roundRect(-22.5, -22.5, 45, 45, 12); ctx.fill();
     ctx.fillStyle = "white"; 
-    ctx.beginPath(); ctx.arc(frog.x+15, frog.y+15, 8, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(frog.x+frog.size-15, frog.y+15, 8, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = "black";
-    ctx.beginPath(); ctx.arc(frog.x+15, frog.y+13, 4, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(frog.x+frog.size-15, frog.y+13, 4, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(-10, -10, 8, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(10, -10, 8, 0, 7); ctx.fill();
+    ctx.fillStyle = "black"; 
+    ctx.beginPath(); ctx.arc(-10, -10, 4, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(10, -10, 4, 0, 7); ctx.fill();
+    ctx.restore();
 
     ctx.restore();
 }
 
-function roundRect(ctx, x, y, width, height, radius, fill) {
-    ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius); ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height); ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius); ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
-    if (fill) ctx.fill();
+function renderShop() {
+    const grid = document.getElementById("skin-grid");
+    grid.innerHTML = '';
+    skins.forEach(s => {
+        const has = ownedSkins.includes(s.c);
+        const active = currentSkin === s.c;
+        const div = document.createElement('div');
+        div.className = `skin-item ${active?'active':''}`;
+        div.innerHTML = `<div class="preview-box" style="background:${s.c}"></div><div style="font-size:10px; font-weight:bold">${has ? 'OK' : s.p+'💰'}</div>`;
+        div.onclick = (e) => {
+            e.stopPropagation();
+            if(has) { currentSkin = s.c; frog.color = s.c; }
+            else if(totalCoins >= s.p) { totalCoins -= s.p; ownedSkins.push(s.c); currentSkin = s.c; frog.color = s.c; }
+            save(); renderShop(); document.getElementById('coin-num').innerText = totalCoins;
+        };
+        grid.appendChild(div);
+    });
 }
 
-startBtn.addEventListener("click", startGame);
-resize();
-loop();
+// --- VEZÉRLÉS ---
+window.addEventListener('keydown', (e) => {
+    if(state === "menu" && e.code === "Space") start();
+    if(state !== "playing") return;
+    const k = e.key.toLowerCase();
+    if(k === "arrowup" || k === "w") move('up');
+    if(k === "arrowdown" || k === "s") move('down');
+    if(k === "arrowleft" || k === "a") move('left');
+    if(k === "arrowright" || k === "d") move('right');
+});
+
+const setupBtn = (id, d) => {
+    const el = document.getElementById(id);
+    const trigger = (e) => { e.preventDefault(); move(d); };
+    el.onmousedown = trigger; el.ontouchstart = trigger;
+};
+setupBtn('btn-up','up'); setupBtn('btn-down','down'); setupBtn('btn-left','left'); setupBtn('btn-right','right');
+
+document.getElementById('start-btn').onclick = start;
+document.getElementById('open-shop-btn').onclick = () => { 
+    document.getElementById('msg-box').style.display='none'; 
+    document.getElementById('shop-box').style.display='block'; 
+    renderShop(); 
+};
+document.getElementById('close-shop-btn').onclick = () => { 
+    document.getElementById('msg-box').style.display='block'; 
+    document.getElementById('shop-box').style.display='none'; 
+};
+
+window.onresize = () => { width=canvas.width=window.innerWidth; height=canvas.height=window.innerHeight; };
+window.onresize(); loop();
+renderShop();
 </script>
 </body>
 </html>
