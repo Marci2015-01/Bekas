@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Végtelen Béka - Hardcore Economy</title>
+<title>Végtelen Béka - Sound Fix</title>
 <style>
-    :root { --accent: #ff9100; --bg: #050505; }
+    :root { --accent: #ff9100; --bg: #101010; }
     html, body {
         margin: 0; padding: 0; height: 100%; width: 100%;
         overflow: hidden; background: var(--bg);
@@ -19,58 +19,73 @@
         display: flex; justify-content: space-between;
         color: white; z-index: 100; pointer-events: none;
         font-size: 14px; letter-spacing: 2px; text-transform: uppercase;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        text-shadow: 0 2px 10px rgba(0,0,0,1);
     }
-    .stat-val { color: var(--accent); font-weight: 900; font-size: 24px; display: block; text-shadow: 0 0 10px rgba(255, 145, 0, 0.5); }
+    .stat-val { color: var(--accent); font-weight: 900; font-size: 26px; display: block; text-shadow: 0 0 15px var(--accent); }
 
     /* UI RÉTEG */
     #ui-layer {
         position: absolute; inset: 0;
         display: flex; justify-content: center; align-items: center;
         z-index: 200; 
-        background: rgba(0,0,0,0.4); 
-        backdrop-filter: blur(5px);
+        background: rgba(0,0,0,0.7); 
+        backdrop-filter: blur(8px);
     }
     
     .panel {
-        background: rgba(20, 20, 20, 0.95);
-        border: 1px solid rgba(255,255,255,0.15);
-        color: white; padding: 30px; border-radius: 25px; text-align: center;
-        width: 90%; max-width: 400px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        max-height: 80vh; overflow-y: auto;
+        background: linear-gradient(145deg, rgba(30,30,30,0.95), rgba(10,10,10,0.98));
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white; padding: 40px; border-radius: 30px; text-align: center;
+        width: 85%; max-width: 420px;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(255,255,255,0.05);
+        max-height: 85vh; overflow-y: auto;
+    }
+    
+    h1 {
+        background: linear-gradient(to right, #ff9100, #ff5e00);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 5px;
     }
     
     .big-btn {
-        background: rgba(255,255,255,0.9); color: #000; border: none; padding: 15px; margin: 10px 0;
-        font-size: 16px; border-radius: 12px; cursor: pointer; width: 100%; 
-        font-weight: 900; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
+        background: linear-gradient(to bottom, #fff, #ccc); 
+        color: #000; border: none; padding: 18px; margin: 12px 0;
+        font-size: 16px; border-radius: 16px; cursor: pointer; width: 100%; 
+        font-weight: 900; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;
+        box-shadow: 0 5px 15px rgba(255,255,255,0.2);
     }
-    .big-btn:hover { background: var(--accent); color: #fff; transform: scale(1.02); }
+    .big-btn:hover { 
+        background: linear-gradient(to bottom, var(--accent), #e68200); 
+        color: #fff; transform: translateY(-3px); 
+        box-shadow: 0 10px 25px rgba(255, 145, 0, 0.4);
+    }
+    .big-btn:active { transform: scale(0.95); }
 
-    /* BOLT STÍLUSOK */
     .skin-card {
-        background: rgba(255,255,255,0.05);
-        border-radius: 10px; padding: 10px; cursor: pointer; transition: 0.2s;
+        background: rgba(255,255,255,0.03);
+        border-radius: 15px; padding: 15px; cursor: pointer; transition: 0.3s;
         border: 2px solid transparent; display: flex; flex-direction: column; align-items: center;
     }
-    .skin-card.active { border-color: #fff; background: rgba(255,255,255,0.1); }
-    .skin-card:hover { background: rgba(255,255,255,0.15); }
+    .skin-card.active { border-color: var(--accent); background: rgba(255, 145, 0, 0.1); box-shadow: 0 0 15px rgba(255,145,0,0.2); }
+    .skin-card:hover { background: rgba(255,255,255,0.08); transform: translateY(-5px); }
     
-    .skin-preview { width: 40px; height: 40px; border-radius: 50%; margin-bottom: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-    .skin-name { font-size: 10px; font-weight: 700; opacity: 0.8; margin-bottom: 4px; }
-    .skin-price { font-size: 12px; font-weight: 900; color: var(--accent); }
-    .skin-owned { font-size: 12px; font-weight: 900; color: #2ecc71; }
+    .skin-preview { width: 45px; height: 45px; border-radius: 50%; margin-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.1); }
+    .skin-name { font-size: 11px; font-weight: 700; opacity: 0.8; margin-bottom: 5px; letter-spacing: 1px; }
+    .skin-price { font-size: 13px; font-weight: 900; color: var(--accent); }
+    .skin-owned { font-size: 13px; font-weight: 900; color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.4); }
 
     #controls {
         position: absolute; bottom: 35px; right: 35px;
-        display: grid; grid-template-columns: repeat(3, 70px); gap: 15px; z-index: 150;
+        display: grid; grid-template-columns: repeat(3, 75px); gap: 15px; z-index: 150;
     }
     .ctrl-btn {
-        background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 50%; color: white; height: 70px; display: flex; 
-        justify-content: center; align-items: center; font-size: 26px; backdrop-filter: blur(5px);
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 50%; color: white; height: 75px; display: flex; 
+        justify-content: center; align-items: center; font-size: 28px; backdrop-filter: blur(10px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3); transition: 0.1s;
     }
+    .ctrl-btn:active { background: rgba(255,255,255,0.2); transform: scale(0.95); }
 </style>
 </head>
 <body>
@@ -83,16 +98,21 @@
 
 <div id="ui-layer">
     <div id="msg-box" class="panel">
-        <h1 id="msg-title" style="margin:0; font-weight:900; letter-spacing:4px; color:#ff9100; text-shadow:0 0 20px rgba(255,145,0,0.6);">FROGGER</h1>
-        <p style="opacity:0.8; margin-bottom:10px; font-weight:300;">TRABANT UPDATE</p>
-        <p style="font-size:12px; color:#aaa; margin-bottom:30px;">Minden 4. szinten vigyázz a száguldó Trabanttal!<br>Kipufogó: +5 pénz | Érme: +1 pénz</p>
+        <h1 id="msg-title" style="margin:0; font-weight:900; letter-spacing:4px; font-size: 40px;">FROGGER</h1>
+        <p style="opacity:0.8; margin-bottom:10px; font-weight:300; letter-spacing: 2px;">ULTIMATE EDITION</p>
+        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1);">
+            <p style="font-size:12px; color:#ccc; margin:0; line-height: 1.6;">
+                <span style="color:#3498db">🔊 HANGOK</span> | <span style="color:#e74c3c">🏎️ SPORTAUTÓK</span> | <span style="color:#95a5a6">🪨 SZIKLÁK</span><br>
+                Kattints a gombra a hang aktiválásához!
+            </p>
+        </div>
         <button class="big-btn" id="start-btn">JÁTÉK INDÍTÁSA</button>
-        <button class="big-btn" id="open-shop-btn" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">BOLT</button>
+        <button class="big-btn" id="open-shop-btn" style="background:transparent; border:1px solid rgba(255,255,255,0.3); color:#fff; box-shadow:none;">BOLT</button>
     </div>
     
     <div id="shop-box" class="panel" style="display:none">
-        <h2>SKINEK</h2>
-        <div id="skin-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:20px 0;"></div>
+        <h2 style="letter-spacing:2px; margin-top:0;">SKINEK</h2>
+        <div id="skin-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin:20px 0;"></div>
         <button class="big-btn" id="close-shop-btn">VISSZA</button>
     </div>
 </div>
@@ -110,11 +130,72 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// --- JAVÍTOTT AUDIO MOTOR ---
+const Sound = {
+    ctx: null,
+    // Inicializálás felhasználói interakcióra
+    init: function() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        // Ha "felfüggesztett" állapotban van (böngésző policy), ébresszük fel
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    },
+    playTone: function(freq, type, duration, vol=0.1) {
+        if(!this.ctx) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type; 
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            
+            osc.connect(gain); 
+            gain.connect(this.ctx.destination);
+            
+            osc.start(); 
+            osc.stop(this.ctx.currentTime + duration);
+        } catch(e) { console.log("Audio error:", e); }
+    },
+    jump: function() { this.playTone(300, 'sine', 0.1, 0.15); },
+    coin: function() { 
+        this.playTone(1200, 'sine', 0.1, 0.05); 
+        setTimeout(()=>this.playTone(1800, 'square', 0.1, 0.05), 50); 
+    },
+    splash: function() {
+        if(!this.ctx) return;
+        try {
+            const bufferSize = this.ctx.sampleRate * 0.5;
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass'; filter.frequency.value = 400;
+            noise.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+            noise.start();
+        } catch(e) {}
+    },
+    crash: function() { this.playTone(80, 'sawtooth', 0.4, 0.3); },
+    win: function() { 
+        this.playTone(400, 'triangle', 0.1); setTimeout(()=>this.playTone(600, 'triangle', 0.1), 100);
+        setTimeout(()=>this.playTone(800, 'triangle', 0.3), 200);
+    }
+};
+
 // --- JÁTÉK ADATOK ---
-let level = parseInt(localStorage.getItem('f_v2_lvl')) || 1;
-let totalCoins = parseInt(localStorage.getItem('f_v2_coins')) || 0;
-let ownedSkins = JSON.parse(localStorage.getItem('f_v2_skins')) || ['#2ecc71'];
-let currentSkin = localStorage.getItem('f_v2_curr') || '#2ecc71';
+let level = parseInt(localStorage.getItem('f_v4_lvl')) || 1;
+let totalCoins = parseInt(localStorage.getItem('f_v4_coins')) || 0;
+let ownedSkins = JSON.parse(localStorage.getItem('f_v4_skins')) || ['#2ecc71'];
+let currentSkin = localStorage.getItem('f_v4_curr') || '#2ecc71';
 
 const skins = [
     { name: 'NORMÁL', c: '#2ecc71', p: 0 },
@@ -132,53 +213,95 @@ document.getElementById('lvl-num').innerText = level;
 document.getElementById('coin-num').innerText = totalCoins;
 
 let width, height, laneH = 100, state = "menu";
-let map = [], entities = [], staticCoins = [], frame = 0, startT = 0;
-let frog = { x:0, y:0, tX:0, tY:0, lane:0, jump:0, color: currentSkin };
+let map = [], entities = [], staticCoins = [], rocks = [], particles = [], frame = 0, startT = 0;
+let frog = { x:0, y:0, tX:0, tY:0, lane:0, jump:0, color: currentSkin, blinkTimer: 0, rot: 0 };
 let camY = 0;
 
-// --- RAJZOLÓ MOTOR ---
+// --- RÉSZECSKE RENDSZER ---
+class Particle {
+    constructor(x, y, color, type) {
+        this.x = x; this.y = y;
+        this.color = color; this.type = type;
+        this.life = 1.0;
+        let angle = Math.random() * Math.PI * 2;
+        let speed = Math.random() * 3;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        if(type === 'smoke') { this.vy = -1 - Math.random(); this.vx *= 0.5; }
+        if(type === 'splash') { this.vy = -Math.random()*4; }
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        this.life -= 0.03;
+        if(this.type === 'smoke') { this.vx *= 0.95; this.life -= 0.01; } 
+        if(this.type === 'splash') { this.vy += 0.2; }
+    }
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        if(this.type === 'sparkle') {
+            ctx.shadowColor = this.color; ctx.shadowBlur = 10;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 3 * this.life, 0, Math.PI*2); ctx.fill();
+        } else if(this.type === 'smoke') {
+            ctx.beginPath(); ctx.arc(this.x, this.y, 8 * (2-this.life), 0, Math.PI*2); ctx.fill();
+        } else {
+            ctx.fillRect(this.x, this.y, 4, 4);
+        }
+        ctx.restore();
+    }
+}
+
+function spawnParticles(x, y, color, count, type) {
+    for(let i=0; i<count; i++) particles.push(new Particle(x, y, color, type));
+}
+
+// --- RAJZOLÁS ---
+
+function drawRock(x, y) {
+    ctx.save();
+    ctx.translate(x + 25, y + 25);
+    ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 10;
+    
+    // Szikla alap
+    let g = ctx.createLinearGradient(-15, -15, 10, 10);
+    g.addColorStop(0, "#888"); g.addColorStop(1, "#444");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(-15, 10); ctx.lineTo(-10, -10); ctx.lineTo(10, -15); 
+    ctx.lineTo(20, 5); ctx.lineTo(10, 15); ctx.lineTo(-10, 20);
+    ctx.fill();
+    
+    // Fényes oldal
+    ctx.fillStyle = "rgba(255,255,255,0.1)";
+    ctx.beginPath(); ctx.arc(-5, -5, 8, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+}
 
 function drawCoin(x, y) {
-    let w = 15 * Math.abs(Math.sin(frame * 0.08)); 
+    let floatY = Math.sin(frame * 0.1) * 3;
+    let w = 15 * Math.abs(Math.sin(frame * 0.05)); 
     ctx.save();
-    ctx.translate(x, y + 25);
-    ctx.shadowColor = "#f1c40f"; ctx.shadowBlur = 15;
-    ctx.fillStyle = "#c27c0e"; ctx.beginPath(); ctx.ellipse(0, 0, w, 16, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.ellipse(0, -2, w, 16, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = "#fff"; if (w > 5) ctx.fillRect(-w/2, -8, w/4, 10);
+    ctx.translate(x, y + 25 + floatY);
+    ctx.shadowColor = "#f1c40f"; ctx.shadowBlur = 20;
+    ctx.fillStyle = "#e67e22"; ctx.beginPath(); ctx.ellipse(0, 0, w, 16, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.ellipse(0, -2, w*0.8, 14, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#fff"; if (w > 5) { ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.ellipse(-w*0.3, -5, w*0.2, 4, 0, 0, Math.PI*2); ctx.fill(); }
     ctx.restore();
 }
 
 function drawExhaustPipe(x, y) {
-    // Rozsdás kipufogó rajzolása
+    let floatY = Math.sin(frame * 0.1) * 2;
     ctx.save();
-    ctx.translate(x, y + 35);
-    ctx.rotate(Math.sin(frame * 0.05) * 0.1); // Kicsit billeg
-    
-    ctx.shadowColor = "#555"; ctx.shadowBlur = 10;
-    
-    // Cső test
+    ctx.translate(x, y + 35 + floatY);
+    ctx.rotate(Math.sin(frame * 0.05) * 0.1); 
+    ctx.shadowColor = "#000"; ctx.shadowBlur = 15;
     let grad = ctx.createLinearGradient(-15, -5, 15, 5);
-    grad.addColorStop(0, "#5a4a42"); // Rozsda
-    grad.addColorStop(0.5, "#888");   // Fém
-    grad.addColorStop(1, "#4a3b35");  // Rozsda
-    
+    grad.addColorStop(0, "#5a4a42"); grad.addColorStop(0.5, "#999"); grad.addColorStop(1, "#3e2723");
     ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.moveTo(-20, -5); ctx.lineTo(15, -8); 
-    ctx.lineTo(20, 5); ctx.lineTo(-15, 8); 
-    ctx.fill();
-    
-    // Korom a végén
-    ctx.fillStyle = "#222";
-    ctx.beginPath(); ctx.ellipse(18, -1, 4, 7, 0, 0, Math.PI*2); ctx.fill();
-    
-    // Füst pamacsok (jelzi hogy friss)
-    if(Math.random() > 0.5) {
-        ctx.fillStyle = "rgba(100,100,100,0.5)";
-        ctx.beginPath(); ctx.arc(20 + Math.random()*10, -5 + Math.random()*10, 3, 0, Math.PI*2); ctx.fill();
-    }
-    
+    ctx.beginPath(); ctx.moveTo(-20, -6); ctx.lineTo(18, -9); ctx.lineTo(22, 6); ctx.lineTo(-15, 9); ctx.fill();
+    ctx.fillStyle = "#1a1a1a"; ctx.beginPath(); ctx.ellipse(20, -1, 5, 8, 0, 0, Math.PI*2); ctx.fill();
+    if(frame % 10 === 0) spawnParticles(x+20, y+35, "rgba(50,50,50,0.5)", 1, "smoke");
     ctx.restore();
 }
 
@@ -186,153 +309,145 @@ function drawFrog(x, y, color, jump) {
     ctx.save();
     ctx.translate(x + 25, y + 25);
     
-    // Árnyék
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    let shadowScale = 1 - (jump * 0.5); 
-    ctx.beginPath(); 
-    ctx.ellipse(0, 20, 22 * shadowScale, 12 * shadowScale, 0, 0, Math.PI*2); 
-    ctx.fill();
+    // Elfordulás ugráskor
+    if(jump > 0.1) ctx.rotate(frog.rot * 0.1);
+
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    let shadowScale = 1 - (jump * 0.6); 
+    ctx.beginPath(); ctx.ellipse(0, 20, 22 * shadowScale, 10 * shadowScale, 0, 0, Math.PI*2); ctx.fill();
     
-    // Ugrás deformáció
-    ctx.translate(0, -jump * 60);
-    let stretch = 1 + (jump * 0.3);
-    let squash = 1 - (jump * 0.15); 
+    ctx.translate(0, -jump * 70);
+    let stretch = 1 + (jump * 0.4);
+    let squash = 1 - (jump * 0.2);
+    if(jump < 0.1 && jump > 0) { squash = 1.2; stretch = 0.8; }
     ctx.scale(squash, stretch);
 
-    // Test Gradiens
-    let grad = ctx.createRadialGradient(-5, -10, 5, 0, 0, 30);
+    let grad = ctx.createRadialGradient(-5, -10, 5, 0, 0, 35);
     grad.addColorStop(0, color); 
-    if(color === '#ffd700' || color === '#b9f2ff') grad.addColorStop(1, "#806000");
-    else grad.addColorStop(1, "#051a05");
+    if(color === '#ffd700') { grad.addColorStop(1, "#b8860b"); ctx.shadowColor="#ffd700"; ctx.shadowBlur=15; }
+    else if(color === '#b9f2ff') { grad.addColorStop(1, "#00bcd4"); ctx.shadowColor="#00bcd4"; ctx.shadowBlur=20; }
+    else { grad.addColorStop(1, "rgba(0,0,0,0.3)"); }
     ctx.fillStyle = grad;
     
-    // Alapforma
-    ctx.beginPath(); ctx.moveTo(-18, 15); ctx.quadraticCurveTo(-28, -25, 0, -28);
-    ctx.quadraticCurveTo(28, -25, 18, 15); ctx.quadraticCurveTo(0, 25, -18, 15); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-18, 15); ctx.quadraticCurveTo(-30, -25, 0, -28);
+    ctx.quadraticCurveTo(30, -25, 18, 15); ctx.quadraticCurveTo(0, 28, -18, 15); ctx.fill();
 
-    // Szemek
-    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(-12, -20, 8, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(12, -20, 8, 0, 7); ctx.fill();
-    ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(-12, -22, 4, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(12, -22, 4, 0, 7); ctx.fill();
+    frog.blinkTimer--;
+    if(frog.blinkTimer < -10) frog.blinkTimer = Math.random() * 200 + 50;
+    let eyesOpen = frog.blinkTimer > 0;
+
+    if(eyesOpen) {
+        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(-12, -20, 8, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(12, -20, 8, 0, 7); ctx.fill();
+        ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(-12, -22, 3.5, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(12, -22, 3.5, 0, 7); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(-10, -24, 1.5, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(14, -24, 1.5, 0, 7); ctx.fill();
+    } else {
+        ctx.strokeStyle = color === '#333333' ? '#888' : '#333'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-18, -20); ctx.lineTo(-6, -20); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(6, -20); ctx.lineTo(18, -20); ctx.stroke();
+    }
+    
+    if(jump > 0.1) {
+        ctx.strokeStyle = color; ctx.lineWidth = 6; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(-15, 10); ctx.quadraticCurveTo(-25, 20, -30, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(15, 10); ctx.quadraticCurveTo(25, 20, 30, 0); ctx.stroke();
+    }
     ctx.restore();
 }
 
 function drawVehicle(e, y) {
     const isRight = e.s > 0;
     const isTrabant = e.t === 'trabant';
+    const isSport = e.subtype === 'sport';
+    const isTruck = e.subtype === 'truck';
     
     ctx.save();
-    // Fényszóró
+    
+    // FÉNYEK
     if(isRight) {
-        let beam = ctx.createLinearGradient(e.x+e.w, 0, e.x+e.w+250, 0);
-        beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
+        let beam = ctx.createLinearGradient(e.x+e.w, y+25, e.x+e.w+300, y+25);
+        beam.addColorStop(0, "rgba(255,255,220,0.6)"); beam.addColorStop(1, "rgba(255,255,220,0)");
         ctx.fillStyle = beam;
-        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+15); ctx.lineTo(e.x+e.w+250, y-15); ctx.lineTo(e.x+e.w+250, y+35); ctx.fill(); 
-        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+45); ctx.lineTo(e.x+e.w+250, y+25); ctx.lineTo(e.x+e.w+250, y+75); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+10); ctx.lineTo(e.x+e.w+300, y-20); ctx.lineTo(e.x+e.w+300, y+70); ctx.lineTo(e.x+e.w, y+40); ctx.fill();
     } else {
-        let beam = ctx.createLinearGradient(e.x, 0, e.x-250, 0);
-        beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
+        let beam = ctx.createLinearGradient(e.x, y+25, e.x-300, y+25);
+        beam.addColorStop(0, "rgba(255,255,220,0.6)"); beam.addColorStop(1, "rgba(255,255,220,0)");
         ctx.fillStyle = beam;
-        ctx.beginPath(); ctx.moveTo(e.x, y+15); ctx.lineTo(e.x-250, y-15); ctx.lineTo(e.x-250, y+35); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(e.x, y+45); ctx.lineTo(e.x-250, y+25); ctx.lineTo(e.x-250, y+75); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(e.x, y+10); ctx.lineTo(e.x-300, y-20); ctx.lineTo(e.x-300, y+70); ctx.lineTo(e.x, y+40); ctx.fill();
     }
 
-    // TRABANT FÜST (Extra effekt)
-    if(isTrabant) {
+    if(isTrabant && state === 'playing') {
         let smokeX = isRight ? e.x : e.x + e.w;
-        for(let i=0; i<5; i++) {
-             ctx.fillStyle = `rgba(100,100,100,${Math.random()*0.5})`;
-             let r = Math.random() * 20;
-             ctx.beginPath();
-             ctx.arc(smokeX + (isRight ? -r*3 : r*3) - (Math.random()*50), y + 40 + (Math.random()*10), r, 0, Math.PI*2);
-             ctx.fill();
-        }
+        spawnParticles(smokeX + (isRight?-10:10), y+40, `rgba(180,180,180,0.4)`, 2, 'smoke');
     }
 
-    ctx.restore();
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.beginPath(); ctx.roundRect(e.x+5, y+45, e.w-10, 15, 5); ctx.fill();
 
-    // Kerekek
-    ctx.fillStyle = "#000";
-    ctx.beginPath(); ctx.roundRect(e.x+10, y-3, 25, 8, 2); ctx.fill();
-    ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y-3, 25, 8, 2); ctx.fill();
-    ctx.beginPath(); ctx.roundRect(e.x+10, y+50, 25, 8, 2); ctx.fill();
-    ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y+50, 25, 8, 2); ctx.fill();
-
-    // Kasztni
-    ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 15;
-    let carBody = ctx.createLinearGradient(e.x, y, e.x, y+55);
-    carBody.addColorStop(0, e.col); carBody.addColorStop(1, "#000"); 
+    let carBody = ctx.createLinearGradient(e.x, y, e.x, y+50);
+    carBody.addColorStop(0, e.col); carBody.addColorStop(1, "rgba(0,0,0,0.4)"); 
     ctx.fillStyle = carBody;
     
-    ctx.beginPath();
-    if(isRight) {
-        ctx.moveTo(e.x, y+5); ctx.lineTo(e.x+e.w-15, y+5); 
-        ctx.quadraticCurveTo(e.x+e.w, y+5, e.x+e.w, y+27); 
-        ctx.quadraticCurveTo(e.x+e.w, y+50, e.x+e.w-15, y+50);
-        ctx.lineTo(e.x, y+50); ctx.quadraticCurveTo(e.x-5, y+27, e.x, y+5); 
+    // KASZTNI TÍPUSOK
+    if(isTruck) {
+        // Kamion
+        ctx.fillRect(e.x, y-10, e.w, 60);
+        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.fillRect(e.x, y-10, e.w, 20); // Teteje
+    } else if(isSport) {
+        // Sportautó (laposabb, áramvonalas)
+        ctx.beginPath(); 
+        if(isRight) {
+            ctx.moveTo(e.x, y+15); ctx.lineTo(e.x+30, y+5); ctx.lineTo(e.x+e.w-10, y+10); 
+            ctx.lineTo(e.x+e.w, y+25); ctx.lineTo(e.x+e.w, y+50); ctx.lineTo(e.x, y+50);
+        } else {
+            ctx.moveTo(e.x+e.w, y+15); ctx.lineTo(e.x+e.w-30, y+5); ctx.lineTo(e.x+10, y+10); 
+            ctx.lineTo(e.x, y+25); ctx.lineTo(e.x, y+50); ctx.lineTo(e.x+e.w, y+50);
+        }
+        ctx.fill();
+        // Spoiler
+        ctx.fillStyle = "#111";
+        if(isRight) ctx.fillRect(e.x, y, 10, 20); else ctx.fillRect(e.x+e.w-10, y, 10, 20);
     } else {
-        ctx.moveTo(e.x+e.w, y+5); ctx.lineTo(e.x+15, y+5);
-        ctx.quadraticCurveTo(e.x, y+5, e.x, y+27);
-        ctx.quadraticCurveTo(e.x, y+50, e.x+15, y+50);
-        ctx.lineTo(e.x+e.w, y+50); ctx.quadraticCurveTo(e.x+e.w+5, y+27, e.x+e.w, y+5);
+        // Normál / Trabant
+        ctx.beginPath(); ctx.roundRect(e.x, y+5, e.w, 45, 8); ctx.fill();
+        let cabinMargin = isTrabant ? 10 : 25;
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.beginPath(); ctx.roundRect(e.x + cabinMargin, y, e.w - cabinMargin*2, 40, 5); ctx.fill();
+        
+        let glassGrad = ctx.createLinearGradient(0, y, 0, y+30);
+        glassGrad.addColorStop(0, "#aaccff"); glassGrad.addColorStop(1, "#557799");
+        ctx.fillStyle = glassGrad;
+        ctx.beginPath(); ctx.roundRect(e.x + cabinMargin + 5, y+5, e.w - cabinMargin*2 - 10, 25, 3); ctx.fill();
     }
-    ctx.fill();
-    ctx.shadowBlur = 0;
 
-    // Utastér
-    let cabinX = isRight ? e.x + 20 : e.x + e.w - 70;
-    let cabinW = e.w - 60;
-    // Trabant kicsit kockább
-    if(isTrabant) { cabinX = isRight ? e.x + 10 : e.x + e.w - 90; cabinW = e.w - 30; }
-
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.beginPath(); ctx.roundRect(cabinX, y+8, cabinW, 39, 8); ctx.fill();
-
-    let glassGrad = ctx.createLinearGradient(0, y, 0, y+50);
-    glassGrad.addColorStop(0, "#112"); glassGrad.addColorStop(0.5, "#446"); glassGrad.addColorStop(1, "#112");
-    ctx.fillStyle = glassGrad;
+    // Kerekek
+    ctx.fillStyle = "#111";
+    ctx.beginPath(); ctx.roundRect(e.x+15, y+40, 12, 12, 3); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(e.x+e.w-27, y+40, 12, 12, 3); ctx.fill();
     
-    if(isRight) {
-        ctx.beginPath(); ctx.moveTo(cabinX+cabinW-5, y+10); ctx.lineTo(cabinX+cabinW+10, y+12); 
-        ctx.lineTo(cabinX+cabinW+10, y+43); ctx.lineTo(cabinX+cabinW-5, y+45); ctx.fill();
-        ctx.fillStyle = "#111";
-        ctx.beginPath(); ctx.moveTo(cabinX+5, y+10); ctx.lineTo(cabinX-5, y+12); 
-        ctx.lineTo(cabinX-5, y+43); ctx.lineTo(cabinX+5, y+45); ctx.fill();
-    } else {
-        ctx.beginPath(); ctx.moveTo(cabinX+5, y+10); ctx.lineTo(cabinX-10, y+12); 
-        ctx.lineTo(cabinX-10, y+43); ctx.lineTo(cabinX+5, y+45); ctx.fill();
-        ctx.fillStyle = "#111";
-        ctx.beginPath(); ctx.moveTo(cabinX+cabinW-5, y+10); ctx.lineTo(cabinX+cabinW+5, y+12); 
-        ctx.lineTo(cabinX+cabinW+5, y+43); ctx.lineTo(cabinX+cabinW-5, y+45); ctx.fill();
-    }
-
-    // Lámpák
-    if(isRight) {
-        ctx.fillStyle = "#fff"; ctx.shadowColor="#fff"; ctx.shadowBlur=10;
-        ctx.beginPath(); ctx.ellipse(e.x+e.w-2, y+15, 3, 6, 0, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(e.x+e.w-2, y+40, 3, 6, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#f00"; ctx.shadowColor="#f00"; ctx.shadowBlur=10;
-        ctx.fillRect(e.x, y+10, 4, 35);
-    } else {
-        ctx.fillStyle = "#fff"; ctx.shadowColor="#fff"; ctx.shadowBlur=10;
-        ctx.beginPath(); ctx.ellipse(e.x+2, y+15, 3, 6, 0, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(e.x+2, y+40, 3, 6, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#f00"; ctx.shadowColor="#f00"; ctx.shadowBlur=10;
-        ctx.fillRect(e.x+e.w-4, y+10, 4, 35);
-    }
-    ctx.shadowBlur = 0;
+    ctx.restore();
 }
 
 function drawLog(e, y) {
-    ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(e.x+5, y+15, e.w, 40);
-    let g = ctx.createLinearGradient(0, y, 0, y+55);
-    g.addColorStop(0, "#4a3020"); g.addColorStop(0.5, "#754d35"); g.addColorStop(1, "#362316");
+    let bob = Math.sin(frame * 0.05 + e.x*0.01) * 3; // Úszás effekt
+    y += bob;
+
+    ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.beginPath(); ctx.roundRect(e.x+10, y+25, e.w, 30, 15); ctx.fill();
+    
+    let g = ctx.createLinearGradient(e.x, y, e.x, y+55);
+    g.addColorStop(0, "#5d4037"); g.addColorStop(0.5, "#795548"); g.addColorStop(1, "#3e2723");
     ctx.fillStyle = g;
-    ctx.beginPath(); ctx.roundRect(e.x, y+5, e.w, 45, 20); ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(e.x+10, y+20); ctx.lineTo(e.x+e.w-10, y+20); ctx.stroke();
-    if(e.hasCoin) drawCoin(e.x + e.w/2, y);
+    ctx.beginPath(); ctx.roundRect(e.x, y+10, e.w, 35, 10); ctx.fill();
+    
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath(); ctx.ellipse(e.x+10, y+27, 3, 8, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(e.x+e.w-10, y+27, 3, 8, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillRect(e.x+30, y+20, e.w-60, 2);
+
+    if(e.hasCoin) drawCoin(e.x + e.w/2, y-bob); // Coin ne mozogjon a rönkkel
 }
 
 // --- LOGIKA ---
@@ -349,22 +464,32 @@ function generateMap() {
     }
     map.push({type:'start'});
 
-    entities = []; staticCoins = [];
+    entities = []; staticCoins = []; rocks = [];
     let spawnW = width > 0 ? width : window.innerWidth;
 
-    // Normál entitások generálása
     map.forEach((l, i) => {
         if(l.type==='road' || l.type==='water') {
             let count = 2 + Math.floor(Math.random() * 2);
             let spacing = spawnW / count;
             for(let k=0; k<count; k++) {
                 let offset = (Math.random() * 200) - 100; 
+                let subtype = 'sedan';
+                let vehicleWidth = 140;
+                let vehicleColor = `hsl(${Math.random()*360}, 70%, 50%)`;
+                
+                // Jármű variációk
+                if(l.type === 'road') {
+                    let rnd = Math.random();
+                    if(rnd > 0.7) { subtype = 'sport'; vehicleWidth = 130; vehicleColor = '#e74c3c'; l.s *= 1.2; }
+                    else if(rnd < 0.2) { subtype = 'truck'; vehicleWidth = 180; vehicleColor = '#555'; l.s *= 0.8; }
+                }
+
                 entities.push({
-                    t:l.type==='road'?'c':'l', lane:i, 
+                    t:l.type==='road'?'c':'l', subtype: subtype, lane:i, 
                     x: (k * spacing) + offset, 
-                    w:l.type==='road'?140:220, 
+                    w:l.type==='road'?vehicleWidth:220, 
                     s:l.s*l.d, 
-                    col: l.t==='c' ? `hsl(${Math.random()*360}, 80%, 50%)` : '#3d2b1f',
+                    col: l.t==='c' ? vehicleColor : '#3d2b1f',
                     hasCoin: l.type==='water' && Math.random() > 0.4
                 });
             }
@@ -372,29 +497,30 @@ function generateMap() {
         if(l.type === 'grass' || l.type === 'road') {
             if(Math.random() > 0.3) staticCoins.push({ lane: i, x: Math.random() * (spawnW - 50) + 25, active: true, type: 'coin' });
         }
+        // Sziklák generálása a füvön
+        if(l.type === 'grass') {
+            let rockCount = Math.floor(Math.random() * 3);
+            for(let r=0; r<rockCount; r++) {
+                rocks.push({ lane: i, x: Math.random() * (spawnW - 50) + 25 });
+            }
+        }
     });
 
-    // --- TRABANT EVENT GENERÁLÁSA ---
-    // Minden 4. szinten (4, 8, 12...)
+    // TRABANT EVENT
     if(level % 4 === 0) {
-        // Keressünk egy megfelelő aszfalt utat (lehetőleg középtájt)
         let roadIndices = [];
         map.forEach((l, i) => { if(l.type==='road') roadIndices.push(i); });
         
         if(roadIndices.length > 0) {
-            // Véletlenszerű út kiválasztása
             let trabiLane = roadIndices[Math.floor(Math.random() * roadIndices.length)];
-            let direction = map[trabiLane].d; // Kövesse a sáv irányát
-            
-            // Hozzáadjuk a Trabantot
-            // s = 35 (nagyon gyors)
+            let direction = map[trabiLane].d; 
             entities.push({
                 t: 'trabant',
                 lane: trabiLane,
-                x: direction === 1 ? -1000 : spawnW + 1000, // Messziről indul
+                x: direction === 1 ? -1000 : spawnW + 1000, 
                 w: 135,
                 s: 35 * direction, 
-                col: '#B5C2B7', // Piszkosfehér/Zöldes Trabant szín
+                col: '#B5C2B7', 
                 droppedExhaust: false
             });
         }
@@ -412,31 +538,77 @@ function start() {
     document.getElementById('lvl-num').innerText = level;
     document.getElementById('coin-num').innerText = totalCoins;
     startT = Date.now();
+    particles = [];
 }
 
 function move(d) {
     if(state !== "playing") return;
+    
+    // Cél pozíció kiszámítása ütközésvizsgálathoz
+    let targetLane = frog.lane;
+    let targetX = frog.tX;
+    
+    if(d==='up') targetLane--;
+    else if(d==='down') targetLane++;
+    else if(d==='left') targetX -= 85;
+    else if(d==='right') targetX += 85;
+
+    // Pálya szél kezelése
+    if(targetX < -50) targetX += width;
+    if(targetX > width) targetX -= width;
+
+    // Szikla ütközés ellenőrzés
+    let hitRock = false;
+    rocks.forEach(r => {
+        if(r.lane === targetLane) {
+            // Ha a tervezett ugrás kb. a sziklára esne (40px ráhagyás)
+            if(Math.abs((targetX + 25) - (r.x + 25)) < 40) hitRock = true;
+        }
+    });
+
+    if(hitRock) {
+        // Blokkolt mozgás hang/effekt
+        Sound.playTone(100, 'square', 0.1); 
+        return; // Nem mozdulunk
+    }
+
+    // Érvényes mozgás végrehajtása
+    Sound.jump();
+    if(map[frog.lane].type === 'grass' || map[frog.lane].type === 'start') {
+        spawnParticles(frog.x + 25, frog.y + 50, "#3a5f0b", 5, "smoke");
+    }
+    
     frog.jump = 1;
-    if(d==='up' && frog.lane > 0) frog.lane--;
-    else if(d==='down' && frog.lane < map.length-1) frog.lane++;
-    else if(d==='left') { frog.tX -= 85; if(frog.tX < -50) { frog.tX += width; frog.x += width; } }
-    else if(d==='right') { frog.tX += 85; if(frog.tX > width) { frog.tX -= width; frog.x -= width; } }
+    frog.lane = targetLane;
+    frog.tX = targetX;
+    
+    // Rotáció beállítása
+    if(d==='left') frog.rot = -1;
+    else if(d==='right') frog.rot = 1;
+    else frog.rot = 0;
+    
+    if(d==='up' && frog.lane < 0) return; // Biztonság
+    if(d==='down' && frog.lane >= map.length) return; 
+
     frog.tY = frog.lane * laneH + (laneH-55)/2;
     
     if(frog.lane === 0) {
         state = "menu"; level++; totalCoins += 100; save();
+        Sound.win();
         document.getElementById('lvl-num').innerText = level;
         document.getElementById('coin-num').innerText = totalCoins;
         document.getElementById('ui-layer').style.display = "flex";
         document.getElementById('msg-title').innerText = "KÜLDETÉS TELJESÍTVE";
         document.getElementById('msg-title').style.color = "#2ecc71";
+        spawnParticles(width/2, height/2, "#ffd700", 50, "sparkle");
     }
 }
 
-// MÓDOSÍTVA: Alapértelmezett érték 1
-function collectCoin(amount = 1) {
+function collectCoin(amount = 1, x, y) {
     totalCoins += amount;
+    Sound.coin();
     document.getElementById('coin-num').innerText = totalCoins;
+    spawnParticles(x, y, "#ffd700", 10, "sparkle");
 }
 
 function loop() {
@@ -446,19 +618,14 @@ function loop() {
         entities.forEach(e => {
              let px = e.x; e.x += e.s;
              
-             // TRABANT LOGIKA
              if(e.t === 'trabant') {
-                 // Ha a Trabant átlépi a képernyő közepét, eldobjuk a kipufogót
                  if(!e.droppedExhaust) {
                      let centerX = width / 2;
                      if ((e.s > 0 && e.x > centerX) || (e.s < 0 && e.x + e.w < centerX)) {
-                         staticCoins.push({ 
-                             lane: e.lane, 
-                             x: e.x + (e.w/2), 
-                             active: true, 
-                             type: 'exhaust' 
-                         });
+                         staticCoins.push({ lane: e.lane, x: e.x + (e.w/2), active: true, type: 'exhaust' });
                          e.droppedExhaust = true;
+                         spawnParticles(e.x + e.w/2, e.lane*laneH+50, "#555", 10, "smoke");
+                         Sound.playTone(150, 'sawtooth', 0.2); // Pöffenés hang
                      }
                  }
              } else {
@@ -470,7 +637,12 @@ function loop() {
                     if(frog.x + 25 > e.x && frog.x + 25 < e.x + e.w) {
                         frog.tX += e.s;
                         if(Math.abs(e.x - px) > 100) { let d = e.x - px; frog.tX += d; frog.x += d; }
-                        if(e.hasCoin) { let coinX = e.x + e.w/2; if(Math.abs((frog.x + 25) - coinX) < 40) { e.hasCoin = false; collectCoin(); } }
+                        if(e.hasCoin) { 
+                            let coinX = e.x + e.w/2; 
+                            if(Math.abs((frog.x + 25) - coinX) < 40) { 
+                                e.hasCoin = false; collectCoin(1, coinX, e.lane*laneH+50); 
+                            } 
+                        }
                     }
                 }
                 if((e.t === 'c' || e.t === 'trabant') && e.lane === frog.lane && frog.x + 15 < e.x + e.w && frog.x + 35 > e.x) endGame();
@@ -485,42 +657,48 @@ function loop() {
             if(e.t === 'l' && e.lane === frog.lane && frog.x + 25 > e.x && frog.x + 25 < e.x + e.w) onLog = true;
         });
         
-        // Tárgyak felvétele (Pénz vagy Kipufogó)
         staticCoins.forEach(c => {
             if(c.active && c.lane === frog.lane) { 
                 if(Math.abs((frog.x + 25) - c.x) < 40) { 
                     c.active = false; 
-                    if(c.type === 'exhaust') {
-                        collectCoin(5); // Kipufogó 5 pénz marad
-                    } else {
-                        collectCoin(1); // Sima érme mostantól 1 pénz
-                    }
+                    collectCoin(c.type === 'exhaust' ? 5 : 1, c.x, c.lane*laneH+50);
                 } 
             }
         });
         
-        // --- JUMP FIZIKA ---
         frog.x += (frog.tX - frog.x) * 0.2; 
         frog.y += (frog.tY - frog.y) * 0.2; 
+        
+        if(frog.jump > 0.1 && frog.jump * 0.85 <= 0.1 && map[frog.lane].type === 'water' && onLog) {
+             spawnParticles(frog.x+25, frog.y+50, "#aaccff", 8, "splash");
+             Sound.playTone(600, 'sine', 0.05); // Finom landolás hang
+        }
         
         frog.jump *= 0.85; 
 
         camY += (frog.y - height/2 - camY) * 0.05;
-        if(map[frog.lane].type === 'water' && !onLog) endGame();
+        if(map[frog.lane].type === 'water' && !onLog) {
+            Sound.splash(); // Vízbe esés hang
+            endGame();
+        }
     } else if(state === "menu") {
         camY += (frog.y - height/2 - camY) * 0.05;
     }
+    
+    particles.forEach((p, i) => { p.update(); if(p.life <= 0) particles.splice(i, 1); });
 
     draw();
     requestAnimationFrame(loop);
 }
 
 function endGame() {
+    if(state !== 'dead') Sound.crash();
     state = "dead"; save();
+    spawnParticles(frog.x+25, frog.y+25, frog.color, 30, "splash");
     setTimeout(() => {
         document.getElementById('ui-layer').style.display = "flex";
         document.getElementById('msg-title').innerText = "MEGSEMMISÜLTÉL";
-        document.getElementById('msg-title').style.color = "#ff9100";
+        document.getElementById('msg-title').style.color = "#ff4444";
     }, 500);
 }
 
@@ -534,27 +712,67 @@ function draw() {
             let y = i * laneH;
             if (y+laneH < camY || y > camY+height) return;
 
+            // FŰ
             if(l.type === 'grass' || l.type === 'start') {
-                ctx.fillStyle = "#1e3c00"; ctx.fillRect(0, y, width, laneH);
-                ctx.fillStyle = "#3a5f0b"; for(let j=0; j<width; j+=15) ctx.fillRect(j + (l.seed*10), y + 15 + Math.sin(j)*5, 4, 12);
-            } else if(l.type === 'road') {
-                ctx.fillStyle = "#111"; ctx.fillRect(0, y, width, laneH);
-                ctx.fillStyle = "#444"; for(let j=0; j<width; j+=80) ctx.fillRect(j, y + laneH/2-2, 40, 4);
-            } else if(l.type === 'water') {
                 let g = ctx.createLinearGradient(0, y, 0, y+laneH);
-                g.addColorStop(0, "#004080"); g.addColorStop(1, "#0066cc");
+                g.addColorStop(0, "#1a3300"); g.addColorStop(1, "#2b4d08");
                 ctx.fillStyle = g; ctx.fillRect(0, y, width, laneH);
-                ctx.fillStyle = "rgba(100, 200, 255, 0.2)";
-                let waveOffset = frame * 1.5 + l.seed * 500;
-                for(let w=0; w<width; w+=50) {
-                    let wx = (w + waveOffset) % width;
-                    ctx.beginPath(); ctx.arc(wx, y + 20 + Math.sin(wx/50 + frame/20)*10, 20, 0, Math.PI); ctx.fill();
-                    ctx.beginPath(); ctx.arc(wx + 25, y + 60 + Math.sin(wx/50 + frame/25)*10, 15, Math.PI, 0); ctx.fill();
+                ctx.fillStyle = "#3a5f0b"; 
+                for(let j=0; j<width; j+=25) {
+                    let h = 8 + Math.sin(j + frame*0.1)*3;
+                    ctx.fillRect(j + (l.seed*20), y + 15, 3, h);
                 }
-            } else if(l.type === 'goal') { ctx.fillStyle = "#2ecc71"; ctx.fillRect(0, y, width, laneH); }
+            } 
+            // ÚT
+            else if(l.type === 'road') {
+                ctx.fillStyle = "#1b1b1b"; ctx.fillRect(0, y, width, laneH);
+                ctx.fillStyle = "rgba(255,255,255,0.03)";
+                for(let k=0; k<20; k++) ctx.fillRect(Math.random()*width, y+Math.random()*laneH, 2, 2);
+                ctx.fillStyle = "#d4af37"; 
+                ctx.shadowColor = "#d4af37"; ctx.shadowBlur = 5;
+                for(let j=0; j<width; j+=80) ctx.fillRect(j, y + laneH/2-2, 40, 4);
+                ctx.shadowBlur = 0;
+            } 
+            // VÍZ
+            else if(l.type === 'water') {
+                let g = ctx.createLinearGradient(0, y, 0, y+laneH);
+                g.addColorStop(0, "#001a33"); g.addColorStop(1, "#003366");
+                ctx.fillStyle = g; ctx.fillRect(0, y, width, laneH);
+                ctx.fillStyle = "rgba(100, 200, 255, 0.1)";
+                let waveOffset = frame * 1 + l.seed * 500;
+                ctx.beginPath();
+                for(let w=0; w<=width; w+=20) {
+                     ctx.lineTo(w, y + 20 + Math.sin((w + waveOffset)/50)*10);
+                }
+                ctx.lineTo(width, y+laneH); ctx.lineTo(0, y+laneH);
+                ctx.fill();
+                ctx.fillStyle = "rgba(255,255,255,0.2)";
+                for(let s=0; s<5; s++) {
+                     let sx = (frame*2 + s*200 + l.seed*1000) % width;
+                     ctx.fillRect(sx, y+10+Math.random()*80, 2, 2);
+                }
+            } 
+            // CÉL
+            else if(l.type === 'goal') { 
+                let g = ctx.createLinearGradient(0, y, 0, y+laneH);
+                g.addColorStop(0, "#145a32"); g.addColorStop(1, "#27ae60");
+                ctx.fillStyle = g; ctx.fillRect(0, y, width, laneH);
+                ctx.fillStyle = "rgba(0,0,0,0.2)";
+                for(let j=0; j<width; j+=40) ctx.fillRect(j, y+20, 20, 20);
+            }
             
-            let fog = Math.abs(y - (frog.y)) / 1200; 
-            if(fog>0) { ctx.fillStyle = `rgba(5,5,5,${Math.min(0.5, fog)})`; ctx.fillRect(0, y, width, laneH); }
+            let dist = Math.abs(y - frog.y);
+            let fog = dist / 1500; 
+            if(fog>0) { 
+                ctx.fillStyle = `rgba(10,10,10,${Math.min(0.7, fog)})`; 
+                ctx.fillRect(0, y, width, laneH); 
+            }
+        });
+
+        // SZIKLÁK RAJZOLÁSA
+        rocks.forEach(r => {
+             let y = r.lane * laneH + (laneH-55)/2;
+             drawRock(r.x, y);
         });
 
         staticCoins.forEach(c => { 
@@ -565,10 +783,18 @@ function draw() {
             }
         });
         entities.forEach(e => { let y = e.lane*laneH + (laneH-55)/2; if(e.t === 'c' || e.t === 'trabant') drawVehicle(e, y); else drawLog(e, y); });
+        
+        particles.forEach(p => p.draw(ctx));
     }
 
     drawFrog(frog.x, frog.y, frog.color, frog.jump);
+    
     ctx.restore();
+    let grad = ctx.createRadialGradient(width/2, height/2, height/3, width/2, height/2, height);
+    grad.addColorStop(0, "rgba(0,0,0,0)");
+    grad.addColorStop(1, "rgba(0,0,0,0.5)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,width,height);
 }
 
 function renderShop() {
@@ -576,30 +802,23 @@ function renderShop() {
     skins.forEach(s => {
         const has = ownedSkins.includes(s.c);
         const active = currentSkin === s.c;
-        
         const card = document.createElement('div');
         card.className = `skin-card ${active ? 'active' : ''}`;
-        
         const preview = document.createElement('div');
         preview.className = 'skin-preview';
         preview.style.background = s.c;
-        if(s.c === '#ffd700') preview.style.boxShadow = "0 0 10px #ffd700";
-        if(s.c === '#b9f2ff') preview.style.boxShadow = "0 0 10px #b9f2ff";
-        
+        if(s.c === '#ffd700') preview.style.boxShadow = "0 0 15px #ffd700";
+        if(s.c === '#b9f2ff') preview.style.boxShadow = "0 0 15px #b9f2ff";
         const name = document.createElement('div');
         name.className = 'skin-name';
         name.innerText = s.name;
-        
         const price = document.createElement('div');
-        if(active) { price.className = 'skin-owned'; price.innerText = "KIVÁLASZTVA"; } 
+        if(active) { price.className = 'skin-owned'; price.innerText = "AKTÍV"; } 
         else if(has) { price.className = 'skin-owned'; price.innerText = "MEGVÉVE"; } 
-        else { price.className = 'skin-price'; price.innerText = s.p + " PÉNZ"; }
-
-        card.appendChild(preview);
-        card.appendChild(name);
-        card.appendChild(price);
-        
+        else { price.className = 'skin-price'; price.innerText = s.p + " $"; }
+        card.appendChild(preview); card.appendChild(name); card.appendChild(price);
         card.onclick = () => {
+            Sound.coin();
             if(has) { 
                 currentSkin = s.c; frog.color = s.c; 
             } else if(totalCoins >= s.p) { 
@@ -612,14 +831,17 @@ function renderShop() {
 }
 
 function save() {
-    localStorage.setItem('f_v2_lvl', level);
-    localStorage.setItem('f_v2_coins', totalCoins);
-    localStorage.setItem('f_v2_skins', JSON.stringify(ownedSkins));
-    localStorage.setItem('f_v2_curr', currentSkin);
+    localStorage.setItem('f_v4_lvl', level);
+    localStorage.setItem('f_v4_coins', totalCoins);
+    localStorage.setItem('f_v4_skins', JSON.stringify(ownedSkins));
+    localStorage.setItem('f_v4_curr', currentSkin);
 }
 
 window.addEventListener('keydown', (e) => {
-    if(state === "menu" && e.code === "Space") start();
+    if(state === "menu" && e.code === "Space") {
+        Sound.init(); // Hang engedélyezése Space-re is
+        start();
+    }
     if(state !== "playing") return;
     const k = e.key.toLowerCase();
     if(k === "arrowup" || k === "w") move('up'); if(k === "arrowdown" || k === "s") move('down');
@@ -633,7 +855,11 @@ const setupBtn = (id, d) => {
 };
 setupBtn('btn-up','up'); setupBtn('btn-down','down'); setupBtn('btn-left','left'); setupBtn('btn-right','right');
 
-document.getElementById('start-btn').onclick = start;
+// ITT A LÉNYEG: Kattintásra engedélyezzük a hangot!
+document.getElementById('start-btn').onclick = () => {
+    Sound.init(); 
+    start();
+};
 document.getElementById('open-shop-btn').onclick = () => { document.getElementById('msg-box').style.display='none'; document.getElementById('shop-box').style.display='block'; renderShop(); };
 document.getElementById('close-shop-btn').onclick = () => { document.getElementById('msg-box').style.display='block'; document.getElementById('shop-box').style.display='none'; };
 
