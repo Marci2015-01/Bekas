@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Végtelen Béka - Turbo Edition</title>
+<title>Végtelen Béka - Chaos Edition</title>
 <style>
-    :root { --accent: #ff0055; --bg: #050505; }
+    :root { --accent: #ff9100; --bg: #050505; }
     html, body {
         margin: 0; padding: 0; height: 100%; width: 100%;
         overflow: hidden; background: var(--bg);
@@ -21,7 +21,7 @@
         font-size: 14px; letter-spacing: 2px; text-transform: uppercase;
         text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }
-    .stat-val { color: var(--accent); font-weight: 900; font-size: 24px; display: block; text-shadow: 0 0 10px rgba(255, 0, 85, 0.5); }
+    .stat-val { color: var(--accent); font-weight: 900; font-size: 24px; display: block; text-shadow: 0 0 10px rgba(255, 145, 0, 0.5); }
 
     /* ÜVEG UI */
     #ui-layer {
@@ -33,7 +33,7 @@
     }
     
     .panel {
-        background: rgba(20, 10, 20, 0.9);
+        background: rgba(30, 20, 10, 0.9);
         backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
         color: white; padding: 45px; border-radius: 30px; text-align: center;
@@ -70,8 +70,8 @@
 
 <div id="ui-layer">
     <div id="msg-box" class="panel">
-        <h1 id="msg-title" style="margin:0; font-weight:900; letter-spacing:4px; color:#ff0055; text-shadow:0 0 20px rgba(255,0,85,0.6);">FROGGER</h1>
-        <p style="opacity:0.8; margin-bottom:30px; font-weight:300;">TURBO EDITION</p>
+        <h1 id="msg-title" style="margin:0; font-weight:900; letter-spacing:4px; color:#ff9100; text-shadow:0 0 20px rgba(255,145,0,0.6);">FROGGER</h1>
+        <p style="opacity:0.8; margin-bottom:30px; font-weight:300;">CHAOS EDITION</p>
         <button class="big-btn" id="start-btn">JÁTÉK INDÍTÁSA</button>
         <button class="big-btn" id="open-shop-btn" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">BOLT / SKINEK</button>
     </div>
@@ -97,10 +97,10 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 // --- JÁTÉK ADATOK ---
-let level = parseInt(localStorage.getItem('f_lvl_turbo')) || 1;
-let totalCoins = parseInt(localStorage.getItem('f_coins_turbo')) || 0;
-let ownedSkins = JSON.parse(localStorage.getItem('f_skins_turbo')) || ['#2ecc71'];
-let currentSkin = localStorage.getItem('f_curr_turbo') || '#2ecc71';
+let level = parseInt(localStorage.getItem('f_lvl_chaos')) || 1;
+let totalCoins = parseInt(localStorage.getItem('f_coins_chaos')) || 0;
+let ownedSkins = JSON.parse(localStorage.getItem('f_skins_chaos')) || ['#2ecc71'];
+let currentSkin = localStorage.getItem('f_curr_chaos') || '#2ecc71';
 
 document.getElementById('lvl-num').innerText = level;
 document.getElementById('coin-num').innerText = totalCoins;
@@ -154,14 +154,14 @@ function drawFrog(x, y, color, jump) {
 function drawVehicle(e, y) {
     const isRight = e.s > 0;
     
-    // 1. Fényszóró Kúpok (Volumetrikus)
+    // Fényszóró
     ctx.save();
     if(isRight) {
         let beam = ctx.createLinearGradient(e.x+e.w, 0, e.x+e.w+250, 0);
         beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
         ctx.fillStyle = beam;
-        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+15); ctx.lineTo(e.x+e.w+250, y-15); ctx.lineTo(e.x+e.w+250, y+35); ctx.fill(); // Bal lámpa
-        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+45); ctx.lineTo(e.x+e.w+250, y+25); ctx.lineTo(e.x+e.w+250, y+75); ctx.fill(); // Jobb lámpa
+        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+15); ctx.lineTo(e.x+e.w+250, y-15); ctx.lineTo(e.x+e.w+250, y+35); ctx.fill(); // Bal
+        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+45); ctx.lineTo(e.x+e.w+250, y+25); ctx.lineTo(e.x+e.w+250, y+75); ctx.fill(); // Jobb
     } else {
         let beam = ctx.createLinearGradient(e.x, 0, e.x-250, 0);
         beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
@@ -171,89 +171,69 @@ function drawVehicle(e, y) {
     }
     ctx.restore();
 
-    // 2. Kerekek (Fekete oválisok)
+    // Kerekek
     ctx.fillStyle = "#000";
-    // Bal oldal
     ctx.beginPath(); ctx.roundRect(e.x+10, y-3, 25, 8, 2); ctx.fill();
     ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y-3, 25, 8, 2); ctx.fill();
-    // Jobb oldal
     ctx.beginPath(); ctx.roundRect(e.x+10, y+50, 25, 8, 2); ctx.fill();
     ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y+50, 25, 8, 2); ctx.fill();
 
-    // 3. Karosszéria Alap (Árnyékkal)
+    // Karosszéria
     ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 15;
     let carBody = ctx.createLinearGradient(e.x, y, e.x, y+55);
-    carBody.addColorStop(0, e.col); carBody.addColorStop(1, "#000"); // Metallic hatás
+    carBody.addColorStop(0, e.col); carBody.addColorStop(1, "#000"); 
     ctx.fillStyle = carBody;
     
-    // Sportos forma (lekerekített, de áramvonalas)
     ctx.beginPath();
     if(isRight) {
-        // Jobbra megy
-        ctx.moveTo(e.x, y+5);
-        ctx.lineTo(e.x+e.w-15, y+5); // Orr eleje
-        ctx.quadraticCurveTo(e.x+e.w, y+5, e.x+e.w, y+27); // Orr ív
+        ctx.moveTo(e.x, y+5); ctx.lineTo(e.x+e.w-15, y+5); 
+        ctx.quadraticCurveTo(e.x+e.w, y+5, e.x+e.w, y+27); 
         ctx.quadraticCurveTo(e.x+e.w, y+50, e.x+e.w-15, y+50);
-        ctx.lineTo(e.x, y+50);
-        ctx.quadraticCurveTo(e.x-5, y+27, e.x, y+5); // Hátulja
+        ctx.lineTo(e.x, y+50); ctx.quadraticCurveTo(e.x-5, y+27, e.x, y+5); 
     } else {
-        // Balra megy
-        ctx.moveTo(e.x+e.w, y+5);
-        ctx.lineTo(e.x+15, y+5);
+        ctx.moveTo(e.x+e.w, y+5); ctx.lineTo(e.x+15, y+5);
         ctx.quadraticCurveTo(e.x, y+5, e.x, y+27);
         ctx.quadraticCurveTo(e.x, y+50, e.x+15, y+50);
-        ctx.lineTo(e.x+e.w, y+50);
-        ctx.quadraticCurveTo(e.x+e.w+5, y+27, e.x+e.w, y+5);
+        ctx.lineTo(e.x+e.w, y+50); ctx.quadraticCurveTo(e.x+e.w+5, y+27, e.x+e.w, y+5);
     }
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // 4. Tető és Ablakok (Kabin)
+    // Ablakok
     let cabinX = isRight ? e.x + 20 : e.x + e.w - 70;
     let cabinW = e.w - 60;
-    
-    // Tető színe (sötétebb)
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.beginPath(); ctx.roundRect(cabinX, y+8, cabinW, 39, 8); ctx.fill();
 
-    // Szélvédő (Első)
     let glassGrad = ctx.createLinearGradient(0, y, 0, y+50);
     glassGrad.addColorStop(0, "#112"); glassGrad.addColorStop(0.5, "#446"); glassGrad.addColorStop(1, "#112");
     ctx.fillStyle = glassGrad;
     
     if(isRight) {
-        // Első szélvédő
         ctx.beginPath(); ctx.moveTo(cabinX+cabinW-5, y+10); ctx.lineTo(cabinX+cabinW+10, y+12); 
         ctx.lineTo(cabinX+cabinW+10, y+43); ctx.lineTo(cabinX+cabinW-5, y+45); ctx.fill();
-        // Hátsó szélvédő
         ctx.fillStyle = "#111";
         ctx.beginPath(); ctx.moveTo(cabinX+5, y+10); ctx.lineTo(cabinX-5, y+12); 
         ctx.lineTo(cabinX-5, y+43); ctx.lineTo(cabinX+5, y+45); ctx.fill();
     } else {
-        // Első szélvédő
         ctx.beginPath(); ctx.moveTo(cabinX+5, y+10); ctx.lineTo(cabinX-10, y+12); 
         ctx.lineTo(cabinX-10, y+43); ctx.lineTo(cabinX+5, y+45); ctx.fill();
-        // Hátsó szélvédő
         ctx.fillStyle = "#111";
         ctx.beginPath(); ctx.moveTo(cabinX+cabinW-5, y+10); ctx.lineTo(cabinX+cabinW+5, y+12); 
         ctx.lineTo(cabinX+cabinW+5, y+43); ctx.lineTo(cabinX+cabinW-5, y+45); ctx.fill();
     }
 
-    // 5. Izzó Fények (Neon)
+    // Lámpák
     if(isRight) {
-        // Első lámpák (Fehér/Sárga)
         ctx.fillStyle = "#fff"; ctx.shadowColor="#fff"; ctx.shadowBlur=10;
         ctx.beginPath(); ctx.ellipse(e.x+e.w-2, y+15, 3, 6, 0, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.ellipse(e.x+e.w-2, y+40, 3, 6, 0, 0, Math.PI*2); ctx.fill();
-        // Hátsó lámpák (Piros csík)
         ctx.fillStyle = "#f00"; ctx.shadowColor="#f00"; ctx.shadowBlur=10;
         ctx.fillRect(e.x, y+10, 4, 35);
     } else {
-        // Első lámpák
         ctx.fillStyle = "#fff"; ctx.shadowColor="#fff"; ctx.shadowBlur=10;
         ctx.beginPath(); ctx.ellipse(e.x+2, y+15, 3, 6, 0, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.ellipse(e.x+2, y+40, 3, 6, 0, 0, Math.PI*2); ctx.fill();
-        // Hátsó lámpák
         ctx.fillStyle = "#f00"; ctx.shadowColor="#f00"; ctx.shadowBlur=10;
         ctx.fillRect(e.x+e.w-4, y+10, 4, 35);
     }
@@ -271,14 +251,22 @@ function drawLog(e, y) {
     if(e.hasCoin) drawCoin(e.x + e.w/2, y);
 }
 
-// --- JÁTÉKMENET LOGIKA ---
+// --- JÁTÉKMENET LOGIKA (VÁLTOZÓ SEBESSÉGEK) ---
 function generateMap() {
     map = [{type:'goal'}];
     let len = 15 + Math.min(level, 40);
     for(let i=1; i<len-1; i++) {
         let r = Math.random();
         let type = r < 0.2 ? 'grass' : (r < 0.55 ? 'water' : 'road');
-        map.push({type, d:Math.random()>0.5?1:-1, s:2.5 + level*0.1, seed: Math.random()});
+        
+        // --- ITT AZ ÚJ SEBESSÉG LOGIKA ---
+        // Alapsebesség + Szint szorzó + Nagy véletlenszerű variancia
+        // Így minden sávnak más tempója lesz
+        let baseSpeed = 1.5 + (level * 0.15); 
+        let speedVariance = Math.random() * 3.5; // Akár +3.5 sebességkülönbség
+        let finalSpeed = baseSpeed + speedVariance;
+        
+        map.push({type, d:Math.random()>0.5?1:-1, s:finalSpeed, seed: Math.random()});
     }
     map.push({type:'start'});
 
@@ -287,11 +275,20 @@ function generateMap() {
 
     map.forEach((l, i) => {
         if(l.type==='road' || l.type==='water') {
-            for(let k=0; k<2; k++) {
+            // Véletlenszerű elhelyezés, hogy ne egyszerre jöjjenek
+            let count = 2 + Math.floor(Math.random() * 2); // 2 vagy 3 jármű sávonként
+            let spacing = spawnW / count;
+            
+            for(let k=0; k<count; k++) {
+                // Kis random eltolás, hogy ne legyenek patikamérlegen kimérve
+                let offset = (Math.random() * 200) - 100; 
+                
                 entities.push({
                     t:l.type==='road'?'c':'l', lane:i, 
-                    x:Math.random()*spawnW, w:l.type==='road'?140:220, // Autó szélesség növelve
-                    s:l.s*l.d, col: l.t==='c' ? `hsl(${Math.random()*360}, 80%, 50%)` : '#3d2b1f',
+                    x: (k * spacing) + offset, 
+                    w:l.type==='road'?140:220, 
+                    s:l.s*l.d, // Itt kapja meg a sáv egyedi sebességét
+                    col: l.t==='c' ? `hsl(${Math.random()*360}, 80%, 50%)` : '#3d2b1f',
                     hasCoin: l.type==='water' && Math.random() > 0.4
                 });
             }
@@ -385,7 +382,7 @@ function endGame() {
     setTimeout(() => {
         document.getElementById('ui-layer').style.display = "flex";
         document.getElementById('msg-title').innerText = "MEGSEMMISÜLTÉL";
-        document.getElementById('msg-title').style.color = "#ff0055";
+        document.getElementById('msg-title').style.color = "#ff9100";
     }, 500);
 }
 
@@ -449,10 +446,10 @@ function renderShop() {
 }
 
 function save() {
-    localStorage.setItem('f_lvl_turbo', level);
-    localStorage.setItem('f_coins_turbo', totalCoins);
-    localStorage.setItem('f_skins_turbo', JSON.stringify(ownedSkins));
-    localStorage.setItem('f_curr_turbo', currentSkin);
+    localStorage.setItem('f_lvl_chaos', level);
+    localStorage.setItem('f_coins_chaos', totalCoins);
+    localStorage.setItem('f_skins_chaos', JSON.stringify(ownedSkins));
+    localStorage.setItem('f_curr_chaos', currentSkin);
 }
 
 window.addEventListener('keydown', (e) => {
