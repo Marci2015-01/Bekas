@@ -3,53 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Végtelen Béka - Cinema Edition v2</title>
+<title>Végtelen Béka - Turbo Edition</title>
 <style>
-    :root { --accent: #2ecc71; --bg: #050505; }
+    :root { --accent: #ff0055; --bg: #050505; }
     html, body {
         margin: 0; padding: 0; height: 100%; width: 100%;
         overflow: hidden; background: var(--bg);
         font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
         touch-action: none; user-select: none;
     }
-    canvas { display: block; filter: contrast(1.1) brightness(0.9); }
+    canvas { display: block; }
     
     #hud {
         position: absolute; top: 25px; left: 25px; right: 25px;
         display: flex; justify-content: space-between;
         color: white; z-index: 100; pointer-events: none;
         font-size: 14px; letter-spacing: 2px; text-transform: uppercase;
-        text-shadow: 0 4px 8px rgba(0,0,0,0.8);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }
-    .stat-val { color: var(--accent); font-weight: 900; font-size: 22px; display: block; }
+    .stat-val { color: var(--accent); font-weight: 900; font-size: 24px; display: block; text-shadow: 0 0 10px rgba(255, 0, 85, 0.5); }
 
+    /* ÜVEG UI */
     #ui-layer {
         position: absolute; inset: 0;
         display: flex; justify-content: center; align-items: center;
-        z-index: 200; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+        z-index: 200; 
+        background: rgba(0,0,0,0.3); 
+        backdrop-filter: blur(4px);
     }
+    
     .panel {
-        background: linear-gradient(145deg, #151515, #0a0a0a);
+        background: rgba(20, 10, 20, 0.9);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
         color: white; padding: 45px; border-radius: 30px; text-align: center;
-        border: 1px solid rgba(255,255,255,0.1); width: 85%; max-width: 380px;
-        box-shadow: 0 30px 100px rgba(0,0,0,1);
+        border: 1px solid rgba(255,255,255,0.15); 
+        width: 85%; max-width: 380px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
     }
     
     .big-btn {
-        background: #fff; color: #000; border: none; padding: 20px; margin: 12px 0;
+        background: rgba(255,255,255,0.9); color: #000; border: none; padding: 20px; margin: 12px 0;
         font-size: 16px; border-radius: 15px; cursor: pointer; width: 100%; 
         font-weight: 900; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
     }
-    .big-btn:hover { background: var(--accent); color: white; }
+    .big-btn:hover { background: var(--accent); color: #fff; transform: scale(1.02); box-shadow: 0 0 20px var(--accent); }
 
     #controls {
         position: absolute; bottom: 35px; right: 35px;
         display: grid; grid-template-columns: repeat(3, 70px); gap: 15px; z-index: 150;
     }
     .ctrl-btn {
-        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
         border-radius: 50%; color: white; height: 70px; display: flex; 
-        justify-content: center; align-items: center; font-size: 26px; backdrop-filter: blur(10px);
+        justify-content: center; align-items: center; font-size: 26px; backdrop-filter: blur(5px);
     }
 </style>
 </head>
@@ -63,14 +70,14 @@
 
 <div id="ui-layer">
     <div id="msg-box" class="panel">
-        <h1 id="msg-title" style="margin:0; font-weight:900; letter-spacing:4px;">FROGGER</h1>
-        <p style="opacity:0.5; margin-bottom:30px;">ULTRA REALISTIC SIMULATION</p>
-        <button class="big-btn" id="start-btn">SZIMULÁCIÓ INDÍTÁSA</button>
-        <button class="big-btn" id="open-shop-btn" style="background:transparent; border:1px solid #444; color:#fff;">TESTRESZABÁS</button>
+        <h1 id="msg-title" style="margin:0; font-weight:900; letter-spacing:4px; color:#ff0055; text-shadow:0 0 20px rgba(255,0,85,0.6);">FROGGER</h1>
+        <p style="opacity:0.8; margin-bottom:30px; font-weight:300;">TURBO EDITION</p>
+        <button class="big-btn" id="start-btn">JÁTÉK INDÍTÁSA</button>
+        <button class="big-btn" id="open-shop-btn" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">BOLT / SKINEK</button>
     </div>
     
     <div id="shop-box" class="panel" style="display:none">
-        <h2>BÉKA TÍPUSOK</h2>
+        <h2>SKINEK</h2>
         <div id="skin-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin:25px 0;"></div>
         <button class="big-btn" id="close-shop-btn">VISSZA</button>
     </div>
@@ -90,10 +97,13 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 // --- JÁTÉK ADATOK ---
-let level = parseInt(localStorage.getItem('f_lvl_ult')) || 1;
-let totalCoins = parseInt(localStorage.getItem('f_coins_ult')) || 0;
-let ownedSkins = JSON.parse(localStorage.getItem('f_skins_ult')) || ['#2ecc71'];
-let currentSkin = localStorage.getItem('f_curr_ult') || '#2ecc71';
+let level = parseInt(localStorage.getItem('f_lvl_turbo')) || 1;
+let totalCoins = parseInt(localStorage.getItem('f_coins_turbo')) || 0;
+let ownedSkins = JSON.parse(localStorage.getItem('f_skins_turbo')) || ['#2ecc71'];
+let currentSkin = localStorage.getItem('f_curr_turbo') || '#2ecc71';
+
+document.getElementById('lvl-num').innerText = level;
+document.getElementById('coin-num').innerText = totalCoins;
 
 const skins = [
     { c: '#2ecc71', p: 0 }, { c: '#3498db', p: 50 }, { c: '#e74c3c', p: 80 },
@@ -101,156 +111,164 @@ const skins = [
 ];
 
 let width, height, laneH = 100, state = "menu";
-let map = [], entities = [], frame = 0, startT = 0;
+let map = [], entities = [], staticCoins = [], frame = 0, startT = 0;
 let frog = { x:0, y:0, tX:0, tY:0, lane:0, jump:0, color: currentSkin };
 let camY = 0;
 
 // --- RAJZOLÓ MOTOR ---
 
+function drawCoin(x, y) {
+    let w = 15 * Math.abs(Math.sin(frame * 0.08)); 
+    ctx.save();
+    ctx.translate(x, y + 25);
+    ctx.shadowColor = "#f1c40f"; ctx.shadowBlur = 15;
+    ctx.fillStyle = "#c27c0e"; ctx.beginPath(); ctx.ellipse(0, 0, w, 16, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.ellipse(0, -2, w, 16, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#fff"; if (w > 5) ctx.fillRect(-w/2, -8, w/4, 10);
+    ctx.restore();
+}
+
 function drawFrog(x, y, color, jump) {
     ctx.save();
     ctx.translate(x + 25, y + 25);
-    
-    // Árnyék
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.beginPath(); ctx.ellipse(0, 20 - jump*10, 22 - jump*5, 12 - jump*5, 0, 0, Math.PI*2); ctx.fill();
-
+    
     ctx.translate(0, -jump * 30);
     ctx.scale(1 + jump*0.15, 1 - jump*0.15);
 
-    // Organikus Test
     let grad = ctx.createRadialGradient(-5, -10, 5, 0, 0, 30);
     grad.addColorStop(0, color); grad.addColorStop(1, "#051a05");
     ctx.fillStyle = grad;
     
-    ctx.beginPath();
-    ctx.moveTo(-18, 15);
-    ctx.quadraticCurveTo(-28, -25, 0, -28);
-    ctx.quadraticCurveTo(28, -25, 18, 15);
-    ctx.quadraticCurveTo(0, 25, -18, 15);
-    ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-18, 15); ctx.quadraticCurveTo(-28, -25, 0, -28);
+    ctx.quadraticCurveTo(28, -25, 18, 15); ctx.quadraticCurveTo(0, 25, -18, 15); ctx.fill();
 
-    // Szemek
-    ctx.fillStyle = "#fff";
-    ctx.beginPath(); ctx.arc(-12, -20, 8, 0, 7); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(-12, -20, 8, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(12, -20, 8, 0, 7); ctx.fill();
-    ctx.fillStyle = "#000";
-    ctx.beginPath(); ctx.arc(-12, -22, 4, 0, 7); ctx.fill();
+    ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(-12, -22, 4, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(12, -22, 4, 0, 7); ctx.fill();
-    
-    ctx.fillStyle = "rgba(255,255,255,0.2)";
-    ctx.beginPath(); ctx.ellipse(-8, -10, 5, 12, 0.4, 0, 7); ctx.fill();
-
     ctx.restore();
 }
 
 function drawVehicle(e, y) {
     const isRight = e.s > 0;
     
-    // DUPLA FÉNYSZÓRÓ RENDSZER
-    // Bal és jobb lámpa pozíciója (relative Y)
-    const lights = [10, 40]; 
-    
-    lights.forEach(offset => {
-        let ly = y + offset;
-        
-        // Fénycsóva (két különálló kúp)
-        let beam = ctx.createLinearGradient(isRight ? e.x+e.w : e.x, 0, isRight ? e.x+e.w+250 : e.x-250, 0);
-        beam.addColorStop(0, "rgba(255,255,200,0.4)");
-        beam.addColorStop(1, "rgba(255,255,200,0)");
-        
+    // 1. Fényszóró Kúpok (Volumetrikus)
+    ctx.save();
+    if(isRight) {
+        let beam = ctx.createLinearGradient(e.x+e.w, 0, e.x+e.w+250, 0);
+        beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
         ctx.fillStyle = beam;
-        ctx.beginPath();
-        // A lámpa kezdőpontja
-        ctx.moveTo(isRight ? e.x+e.w : e.x, ly);
-        // A fénycsóva vége (szélesedő)
-        ctx.lineTo(isRight ? e.x+e.w+250 : e.x-250, ly - 20);
-        ctx.lineTo(isRight ? e.x+e.w+250 : e.x-250, ly + 20);
-        ctx.fill();
-    });
+        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+15); ctx.lineTo(e.x+e.w+250, y-15); ctx.lineTo(e.x+e.w+250, y+35); ctx.fill(); // Bal lámpa
+        ctx.beginPath(); ctx.moveTo(e.x+e.w, y+45); ctx.lineTo(e.x+e.w+250, y+25); ctx.lineTo(e.x+e.w+250, y+75); ctx.fill(); // Jobb lámpa
+    } else {
+        let beam = ctx.createLinearGradient(e.x, 0, e.x-250, 0);
+        beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
+        ctx.fillStyle = beam;
+        ctx.beginPath(); ctx.moveTo(e.x, y+15); ctx.lineTo(e.x-250, y-15); ctx.lineTo(e.x-250, y+35); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(e.x, y+45); ctx.lineTo(e.x-250, y+25); ctx.lineTo(e.x-250, y+75); ctx.fill();
+    }
+    ctx.restore();
 
-    // Jármű test (Alváz árnyék)
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.fillRect(e.x+5, y+5, e.w-10, 55);
+    // 2. Kerekek (Fekete oválisok)
+    ctx.fillStyle = "#000";
+    // Bal oldal
+    ctx.beginPath(); ctx.roundRect(e.x+10, y-3, 25, 8, 2); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y-3, 25, 8, 2); ctx.fill();
+    // Jobb oldal
+    ctx.beginPath(); ctx.roundRect(e.x+10, y+50, 25, 8, 2); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y+50, 25, 8, 2); ctx.fill();
 
-    // Kasztni Gradiens
-    let carGrad = ctx.createLinearGradient(e.x, y, e.x, y+ laneH/2);
-    carGrad.addColorStop(0, e.col); carGrad.addColorStop(1, "#111");
-    ctx.fillStyle = carGrad;
+    // 3. Karosszéria Alap (Árnyékkal)
+    ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 15;
+    let carBody = ctx.createLinearGradient(e.x, y, e.x, y+55);
+    carBody.addColorStop(0, e.col); carBody.addColorStop(1, "#000"); // Metallic hatás
+    ctx.fillStyle = carBody;
     
-    // Lekerekített karosszéria
+    // Sportos forma (lekerekített, de áramvonalas)
     ctx.beginPath();
-    ctx.moveTo(e.x + 10, y);
-    ctx.lineTo(e.x + e.w - 10, y);
-    ctx.quadraticCurveTo(e.x + e.w, y, e.x + e.w, y + 10);
-    ctx.lineTo(e.x + e.w, y + 45);
-    ctx.quadraticCurveTo(e.x + e.w, y + 55, e.x + e.w - 10, y + 55);
-    ctx.lineTo(e.x + 10, y + 55);
-    ctx.quadraticCurveTo(e.x, y + 55, e.x, y + 45);
-    ctx.lineTo(e.x, y + 10);
-    ctx.quadraticCurveTo(e.x, y, e.x + 10, y);
+    if(isRight) {
+        // Jobbra megy
+        ctx.moveTo(e.x, y+5);
+        ctx.lineTo(e.x+e.w-15, y+5); // Orr eleje
+        ctx.quadraticCurveTo(e.x+e.w, y+5, e.x+e.w, y+27); // Orr ív
+        ctx.quadraticCurveTo(e.x+e.w, y+50, e.x+e.w-15, y+50);
+        ctx.lineTo(e.x, y+50);
+        ctx.quadraticCurveTo(e.x-5, y+27, e.x, y+5); // Hátulja
+    } else {
+        // Balra megy
+        ctx.moveTo(e.x+e.w, y+5);
+        ctx.lineTo(e.x+15, y+5);
+        ctx.quadraticCurveTo(e.x, y+5, e.x, y+27);
+        ctx.quadraticCurveTo(e.x, y+50, e.x+15, y+50);
+        ctx.lineTo(e.x+e.w, y+50);
+        ctx.quadraticCurveTo(e.x+e.w+5, y+27, e.x+e.w, y+5);
+    }
     ctx.fill();
+    ctx.shadowBlur = 0;
 
-    // Szélvédő
-    ctx.fillStyle = "#0a0a0a";
-    ctx.fillRect(isRight ? e.x + e.w - 35 : e.x + 10, y + 5, 25, 45);
+    // 4. Tető és Ablakok (Kabin)
+    let cabinX = isRight ? e.x + 20 : e.x + e.w - 70;
+    let cabinW = e.w - 60;
     
-    // Fényszóró Izzók (Fizikai lámpák az autón)
-    lights.forEach(offset => {
-        let ly = y + offset;
-        ctx.fillStyle = "#ffffa0";
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "white";
-        
-        if (isRight) {
-             ctx.beginPath(); ctx.ellipse(e.x + e.w - 2, ly, 4, 8, 0, 0, Math.PI*2); ctx.fill();
-        } else {
-             ctx.beginPath(); ctx.ellipse(e.x + 2, ly, 4, 8, 0, 0, Math.PI*2); ctx.fill();
-        }
-    });
-    ctx.shadowBlur = 0; // Reset
+    // Tető színe (sötétebb)
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.beginPath(); ctx.roundRect(cabinX, y+8, cabinW, 39, 8); ctx.fill();
+
+    // Szélvédő (Első)
+    let glassGrad = ctx.createLinearGradient(0, y, 0, y+50);
+    glassGrad.addColorStop(0, "#112"); glassGrad.addColorStop(0.5, "#446"); glassGrad.addColorStop(1, "#112");
+    ctx.fillStyle = glassGrad;
+    
+    if(isRight) {
+        // Első szélvédő
+        ctx.beginPath(); ctx.moveTo(cabinX+cabinW-5, y+10); ctx.lineTo(cabinX+cabinW+10, y+12); 
+        ctx.lineTo(cabinX+cabinW+10, y+43); ctx.lineTo(cabinX+cabinW-5, y+45); ctx.fill();
+        // Hátsó szélvédő
+        ctx.fillStyle = "#111";
+        ctx.beginPath(); ctx.moveTo(cabinX+5, y+10); ctx.lineTo(cabinX-5, y+12); 
+        ctx.lineTo(cabinX-5, y+43); ctx.lineTo(cabinX+5, y+45); ctx.fill();
+    } else {
+        // Első szélvédő
+        ctx.beginPath(); ctx.moveTo(cabinX+5, y+10); ctx.lineTo(cabinX-10, y+12); 
+        ctx.lineTo(cabinX-10, y+43); ctx.lineTo(cabinX+5, y+45); ctx.fill();
+        // Hátsó szélvédő
+        ctx.fillStyle = "#111";
+        ctx.beginPath(); ctx.moveTo(cabinX+cabinW-5, y+10); ctx.lineTo(cabinX+cabinW+5, y+12); 
+        ctx.lineTo(cabinX+cabinW+5, y+43); ctx.lineTo(cabinX+cabinW-5, y+45); ctx.fill();
+    }
+
+    // 5. Izzó Fények (Neon)
+    if(isRight) {
+        // Első lámpák (Fehér/Sárga)
+        ctx.fillStyle = "#fff"; ctx.shadowColor="#fff"; ctx.shadowBlur=10;
+        ctx.beginPath(); ctx.ellipse(e.x+e.w-2, y+15, 3, 6, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(e.x+e.w-2, y+40, 3, 6, 0, 0, Math.PI*2); ctx.fill();
+        // Hátsó lámpák (Piros csík)
+        ctx.fillStyle = "#f00"; ctx.shadowColor="#f00"; ctx.shadowBlur=10;
+        ctx.fillRect(e.x, y+10, 4, 35);
+    } else {
+        // Első lámpák
+        ctx.fillStyle = "#fff"; ctx.shadowColor="#fff"; ctx.shadowBlur=10;
+        ctx.beginPath(); ctx.ellipse(e.x+2, y+15, 3, 6, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(e.x+2, y+40, 3, 6, 0, 0, Math.PI*2); ctx.fill();
+        // Hátsó lámpák
+        ctx.fillStyle = "#f00"; ctx.shadowColor="#f00"; ctx.shadowBlur=10;
+        ctx.fillRect(e.x+e.w-4, y+10, 4, 35);
+    }
+    ctx.shadowBlur = 0;
 }
 
 function drawLog(e, y) {
-    // Árnyék a vízben
-    ctx.fillStyle = "rgba(0,0,0,0.4)"; 
-    ctx.fillRect(e.x+10, y+10, e.w, 45);
-
-    // Henger hatású gradiens (3D hatás)
-    let logGrad = ctx.createLinearGradient(0, y, 0, y+55);
-    logGrad.addColorStop(0, "#2d1b0d");   // Sötét teteje
-    logGrad.addColorStop(0.3, "#654321"); // Fényesebb rész
-    logGrad.addColorStop(0.6, "#4e342e"); // Közép
-    logGrad.addColorStop(1, "#1a0f05");   // Árnyék alja
-    ctx.fillStyle = logGrad;
-
-    // Alapforma
-    ctx.beginPath();
-    ctx.moveTo(e.x+15, y); 
-    ctx.lineTo(e.x+e.w-15, y);
-    ctx.quadraticCurveTo(e.x+e.w, y, e.x+e.w, y+27); // Jobb vég
-    ctx.quadraticCurveTo(e.x+e.w, y+55, e.x+e.w-15, y+55);
-    ctx.lineTo(e.x+15, y+55);
-    ctx.quadraticCurveTo(e.x, y+55, e.x, y+27); // Bal vég
-    ctx.quadraticCurveTo(e.x, y, e.x+15, y);
-    ctx.fill();
-
-    // Faerezet (Textúra)
-    ctx.strokeStyle = "rgba(0,0,0,0.3)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    // Vízszintes repedések és erek
-    for(let i=0; i<4; i++) {
-        let ly = y + 10 + Math.random()*35;
-        ctx.moveTo(e.x + 10, ly);
-        ctx.bezierCurveTo(e.x + e.w/3, ly-5, e.x + e.w/1.5, ly+5, e.x + e.w - 10, ly);
-    }
-    ctx.stroke();
-
-    // Évgyűrűk a végeken (ha látszik)
-    ctx.fillStyle = "#3e2723";
-    ctx.beginPath(); ctx.ellipse(e.x+5, y+27, 4, 15, 0, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(e.x+e.w-5, y+27, 4, 15, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(e.x+5, y+15, e.w, 40);
+    let g = ctx.createLinearGradient(0, y, 0, y+55);
+    g.addColorStop(0, "#4a3020"); g.addColorStop(0.5, "#754d35"); g.addColorStop(1, "#362316");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.roundRect(e.x, y+5, e.w, 45, 20); ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(e.x+10, y+20); ctx.lineTo(e.x+e.w-10, y+20); ctx.stroke();
+    if(e.hasCoin) drawCoin(e.x + e.w/2, y);
 }
 
 // --- JÁTÉKMENET LOGIKA ---
@@ -260,31 +278,40 @@ function generateMap() {
     for(let i=1; i<len-1; i++) {
         let r = Math.random();
         let type = r < 0.2 ? 'grass' : (r < 0.55 ? 'water' : 'road');
-        map.push({type, d:Math.random()>0.5?1:-1, s:2.2 + level*0.06, seed: Math.random()});
+        map.push({type, d:Math.random()>0.5?1:-1, s:2.5 + level*0.1, seed: Math.random()});
     }
     map.push({type:'start'});
 
-    entities = [];
+    entities = []; staticCoins = [];
+    let spawnW = width > 0 ? width : window.innerWidth;
+
     map.forEach((l, i) => {
         if(l.type==='road' || l.type==='water') {
             for(let k=0; k<2; k++) {
                 entities.push({
                     t:l.type==='road'?'c':'l', lane:i, 
-                    x:Math.random()*width, w:l.type==='road'?130:250, 
-                    s:l.s*l.d, col: l.t==='c' ? `hsl(${Math.random()*360}, 40%, 30%)` : '#3d2b1f'
+                    x:Math.random()*spawnW, w:l.type==='road'?140:220, // Autó szélesség növelve
+                    s:l.s*l.d, col: l.t==='c' ? `hsl(${Math.random()*360}, 80%, 50%)` : '#3d2b1f',
+                    hasCoin: l.type==='water' && Math.random() > 0.4
                 });
             }
+        }
+        if(l.type === 'grass' || l.type === 'road') {
+            if(Math.random() > 0.3) staticCoins.push({ lane: i, x: Math.random() * (spawnW - 50) + 25, active: true });
         }
     });
 }
 
 function start() {
     state = "playing";
-    generateMap();
+    generateMap(); 
     frog.lane = map.length - 1;
     frog.tX = width/2 - 25; frog.tY = frog.lane * laneH + (laneH-55)/2;
     frog.x = frog.tX; frog.y = frog.tY;
+    camY = frog.y - height/2;
     document.getElementById('ui-layer').style.display = "none";
+    document.getElementById('lvl-num').innerText = level;
+    document.getElementById('coin-num').innerText = totalCoins;
     startT = Date.now();
 }
 
@@ -299,37 +326,56 @@ function move(d) {
     
     if(frog.lane === 0) {
         state = "menu"; level++; totalCoins += 100; save();
+        document.getElementById('lvl-num').innerText = level;
+        document.getElementById('coin-num').innerText = totalCoins;
         document.getElementById('ui-layer').style.display = "flex";
         document.getElementById('msg-title').innerText = "KÜLDETÉS TELJESÍTVE";
+        document.getElementById('msg-title').style.color = "#2ecc71";
     }
+}
+
+function collectCoin() {
+    totalCoins += 10;
+    document.getElementById('coin-num').innerText = totalCoins;
 }
 
 function loop() {
     frame++;
+    
+    if(state !== "dead") {
+        entities.forEach(e => {
+             let px = e.x; e.x += e.s;
+             if(e.x > width) e.x = -e.w; if(e.x < -e.w) e.x = width;
+             
+             if(state === "playing") {
+                if(e.t === 'l' && e.lane === frog.lane) {
+                    if(frog.x + 25 > e.x && frog.x + 25 < e.x + e.w) {
+                        frog.tX += e.s;
+                        if(Math.abs(e.x - px) > 100) { let d = e.x - px; frog.tX += d; frog.x += d; }
+                        if(e.hasCoin) { let coinX = e.x + e.w/2; if(Math.abs((frog.x + 25) - coinX) < 40) { e.hasCoin = false; collectCoin(); } }
+                    }
+                }
+                if(e.t === 'c' && e.lane === frog.lane && frog.x + 15 < e.x + e.w && frog.x + 35 > e.x) endGame();
+             }
+        });
+    }
+
     if(state === "playing") {
         document.getElementById('timer-num').innerText = ((Date.now()-startT)/1000).toFixed(1);
-        
         let onLog = false;
         entities.forEach(e => {
-            let px = e.x; e.x += e.s;
-            if(e.x > width) e.x = -e.w; if(e.x < -e.w) e.x = width;
-
-            if(e.t === 'l' && e.lane === frog.lane) {
-                if(frog.x + 25 > e.x && frog.x + 25 < e.x + e.w) {
-                    onLog = true; frog.tX += e.s;
-                    if(Math.abs(e.x - px) > 100) { let d = e.x - px; frog.tX += d; frog.x += d; }
-                }
-            }
-            if(e.t === 'c' && e.lane === frog.lane && frog.x + 15 < e.x + e.w && frog.x + 35 > e.x) endGame();
+            if(e.t === 'l' && e.lane === frog.lane && frog.x + 25 > e.x && frog.x + 25 < e.x + e.w) onLog = true;
         });
-
-        frog.x += (frog.tX - frog.x) * 0.2;
-        frog.y += (frog.tY - frog.y) * 0.2;
-        frog.jump *= 0.8;
+        staticCoins.forEach(c => {
+            if(c.active && c.lane === frog.lane) { if(Math.abs((frog.x + 25) - c.x) < 40) { c.active = false; collectCoin(); } }
+        });
+        frog.x += (frog.tX - frog.x) * 0.2; frog.y += (frog.tY - frog.y) * 0.2; frog.jump *= 0.8;
         camY += (frog.y - height/2 - camY) * 0.05;
-        
         if(map[frog.lane].type === 'water' && !onLog) endGame();
+    } else if(state === "menu") {
+        camY += (frog.y - height/2 - camY) * 0.05;
     }
+
     draw();
     requestAnimationFrame(loop);
 }
@@ -339,6 +385,7 @@ function endGame() {
     setTimeout(() => {
         document.getElementById('ui-layer').style.display = "flex";
         document.getElementById('msg-title').innerText = "MEGSEMMISÜLTÉL";
+        document.getElementById('msg-title').style.color = "#ff0055";
     }, 500);
 }
 
@@ -347,71 +394,67 @@ function draw() {
     ctx.save();
     ctx.translate(0, -camY);
 
-    map.forEach((l, i) => {
-        let y = i * laneH;
-        if (y+laneH < camY || y > camY+height) return;
+    if(map.length > 0) {
+        map.forEach((l, i) => {
+            let y = i * laneH;
+            if (y+laneH < camY || y > camY+height) return;
 
-        if(l.type === 'grass' || l.type === 'start') {
-            ctx.fillStyle = "#0a1f0a"; ctx.fillRect(0, y, width, laneH);
-            ctx.fillStyle = "#153315";
-            for(let j=0; j<width; j+=12) ctx.fillRect(j + (l.seed*10), y + 15, 2, 10);
-        } else if(l.type === 'road') {
-            ctx.fillStyle = "#0d0d0d"; ctx.fillRect(0, y, width, laneH);
-            ctx.fillStyle = "rgba(255,255,255,0.03)";
-            for(let j=0; j<width; j+=5) if(Math.random()>0.8) ctx.fillRect(j, y+Math.random()*laneH, 2, 2);
-            ctx.fillStyle = "rgba(255,215,0,0.2)";
-            for(let j=0; j<width; j+=100) ctx.fillRect(j, y + laneH/2-2, 50, 4);
-        } else if(l.type === 'water') {
-            let g = ctx.createLinearGradient(0, y, 0, y+laneH);
-            g.addColorStop(0, "#00050a"); g.addColorStop(1, "#001a33");
-            ctx.fillStyle = g; ctx.fillRect(0, y, width, laneH);
-            ctx.fillStyle = "rgba(255,255,255,0.05)";
-            ctx.fillRect((frame*1.5 + l.seed*width)%width, y+laneH/3, 150, 1);
-        } else if(l.type === 'goal') {
-            ctx.fillStyle = "#1a1a00"; ctx.fillRect(0, y, width, laneH);
-        }
-        
-        let fog = Math.abs(y - (frog.y)) / 1000;
-        ctx.fillStyle = `rgba(0,0,0,${Math.min(0.4, fog)})`;
-        ctx.fillRect(0, y, width, laneH);
-    });
+            if(l.type === 'grass' || l.type === 'start') {
+                ctx.fillStyle = "#1e3c00"; ctx.fillRect(0, y, width, laneH);
+                ctx.fillStyle = "#3a5f0b"; for(let j=0; j<width; j+=15) ctx.fillRect(j + (l.seed*10), y + 15 + Math.sin(j)*5, 4, 12);
+            } else if(l.type === 'road') {
+                ctx.fillStyle = "#111"; ctx.fillRect(0, y, width, laneH);
+                ctx.fillStyle = "#444"; for(let j=0; j<width; j+=80) ctx.fillRect(j, y + laneH/2-2, 40, 4);
+            } else if(l.type === 'water') {
+                let g = ctx.createLinearGradient(0, y, 0, y+laneH);
+                g.addColorStop(0, "#004080"); g.addColorStop(1, "#0066cc");
+                ctx.fillStyle = g; ctx.fillRect(0, y, width, laneH);
+                
+                ctx.fillStyle = "rgba(100, 200, 255, 0.2)";
+                let waveOffset = frame * 1.5 + l.seed * 500;
+                for(let w=0; w<width; w+=50) {
+                    let wx = (w + waveOffset) % width;
+                    ctx.beginPath(); ctx.arc(wx, y + 20 + Math.sin(wx/50 + frame/20)*10, 20, 0, Math.PI); ctx.fill();
+                    ctx.beginPath(); ctx.arc(wx + 25, y + 60 + Math.sin(wx/50 + frame/25)*10, 15, Math.PI, 0); ctx.fill();
+                }
+            } else if(l.type === 'goal') { ctx.fillStyle = "#2ecc71"; ctx.fillRect(0, y, width, laneH); }
+            
+            let fog = Math.abs(y - (frog.y)) / 1200; 
+            if(fog>0) { ctx.fillStyle = `rgba(5,5,5,${Math.min(0.5, fog)})`; ctx.fillRect(0, y, width, laneH); }
+        });
 
-    entities.forEach(e => {
-        let y = e.lane*laneH + (laneH-55)/2;
-        if(e.t === 'c') drawVehicle(e, y);
-        else drawLog(e, y);
-    });
+        staticCoins.forEach(c => { let y = c.lane * laneH + (laneH-55)/2; if(c.active) drawCoin(c.x, y); });
+        entities.forEach(e => { let y = e.lane*laneH + (laneH-55)/2; if(e.t === 'c') drawVehicle(e, y); else drawLog(e, y); });
+    }
 
     drawFrog(frog.x, frog.y, frog.color, frog.jump);
     ctx.restore();
 }
 
-// --- UI KEZELÉS ---
 function renderShop() {
     const grid = document.getElementById("skin-grid"); grid.innerHTML = '';
     skins.forEach(s => {
         const has = ownedSkins.includes(s.c);
         const active = currentSkin === s.c;
         const div = document.createElement('div');
-        div.style.cssText = `background:${s.c}; height:60px; border-radius:15px; border:${active?'3px solid white':'1px solid #333'}; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; color:#000; font-weight:900;`;
-        div.innerText = has ? 'OK' : s.p;
+        div.style.cssText = `background:${s.c}; height:60px; border-radius:15px; border:${active?'3px solid white':'1px solid rgba(255,255,255,0.3)'}; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; color:#000; font-weight:900; box-shadow:0 5px 15px rgba(0,0,0,0.3); transition:0.1s`;
+        div.innerText = has ? (active ? '✓' : 'OK') : s.p;
         div.onclick = () => {
-            if(has) { currentSkin = s.c; frog.color = s.c; }
+            if(has) { currentSkin = s.c; frog.color = s.c; } 
             else if(totalCoins >= s.p) { totalCoins -= s.p; ownedSkins.push(s.c); currentSkin = s.c; frog.color = s.c; }
-            save(); renderShop(); document.getElementById('coin-num').innerText = totalCoins;
+            save(); renderShop(); document.getElementById('coin-num').innerText = totalCoins; draw();
         };
         grid.appendChild(div);
     });
 }
 
 function save() {
-    localStorage.setItem('f_lvl_ult', level);
-    localStorage.setItem('f_coins_ult', totalCoins);
-    localStorage.setItem('f_skins_ult', JSON.stringify(ownedSkins));
-    localStorage.setItem('f_curr_ult', currentSkin);
+    localStorage.setItem('f_lvl_turbo', level);
+    localStorage.setItem('f_coins_turbo', totalCoins);
+    localStorage.setItem('f_skins_turbo', JSON.stringify(ownedSkins));
+    localStorage.setItem('f_curr_turbo', currentSkin);
 }
 
-// --- VEZÉRLÉS ---
 window.addEventListener('keydown', (e) => {
     if(state === "menu" && e.code === "Space") start();
     if(state !== "playing") return;
@@ -431,7 +474,17 @@ document.getElementById('start-btn').onclick = start;
 document.getElementById('open-shop-btn').onclick = () => { document.getElementById('msg-box').style.display='none'; document.getElementById('shop-box').style.display='block'; renderShop(); };
 document.getElementById('close-shop-btn').onclick = () => { document.getElementById('msg-box').style.display='block'; document.getElementById('shop-box').style.display='none'; };
 
-window.onresize = () => { width=canvas.width=window.innerWidth; height=canvas.height=window.innerHeight; };
+window.onresize = () => { 
+    width=canvas.width=window.innerWidth; 
+    height=canvas.height=window.innerHeight; 
+    if(map.length === 0) {
+        generateMap();
+        frog.lane = map.length - 1;
+        frog.tX = width/2 - 25; frog.tY = frog.lane * laneH + (laneH-55)/2;
+        frog.x = frog.tX; frog.y = frog.tY;
+        camY = frog.y - height/2;
+    }
+};
 window.onresize(); loop();
 </script>
 </body>
