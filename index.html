@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Végtelen Béka - Smooth Jump</title>
+<title>Végtelen Béka - Hardcore Economy</title>
 <style>
     :root { --accent: #ff9100; --bg: #050505; }
     html, body {
@@ -84,7 +84,8 @@
 <div id="ui-layer">
     <div id="msg-box" class="panel">
         <h1 id="msg-title" style="margin:0; font-weight:900; letter-spacing:4px; color:#ff9100; text-shadow:0 0 20px rgba(255,145,0,0.6);">FROGGER</h1>
-        <p style="opacity:0.8; margin-bottom:30px; font-weight:300;">SMOOTH JUMP UPDATE</p>
+        <p style="opacity:0.8; margin-bottom:10px; font-weight:300;">TRABANT UPDATE</p>
+        <p style="font-size:12px; color:#aaa; margin-bottom:30px;">Minden 4. szinten vigyázz a száguldó Trabanttal!<br>Kipufogó: +5 pénz | Érme: +1 pénz</p>
         <button class="big-btn" id="start-btn">JÁTÉK INDÍTÁSA</button>
         <button class="big-btn" id="open-shop-btn" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">BOLT</button>
     </div>
@@ -148,26 +149,54 @@ function drawCoin(x, y) {
     ctx.restore();
 }
 
+function drawExhaustPipe(x, y) {
+    // Rozsdás kipufogó rajzolása
+    ctx.save();
+    ctx.translate(x, y + 35);
+    ctx.rotate(Math.sin(frame * 0.05) * 0.1); // Kicsit billeg
+    
+    ctx.shadowColor = "#555"; ctx.shadowBlur = 10;
+    
+    // Cső test
+    let grad = ctx.createLinearGradient(-15, -5, 15, 5);
+    grad.addColorStop(0, "#5a4a42"); // Rozsda
+    grad.addColorStop(0.5, "#888");   // Fém
+    grad.addColorStop(1, "#4a3b35");  // Rozsda
+    
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(-20, -5); ctx.lineTo(15, -8); 
+    ctx.lineTo(20, 5); ctx.lineTo(-15, 8); 
+    ctx.fill();
+    
+    // Korom a végén
+    ctx.fillStyle = "#222";
+    ctx.beginPath(); ctx.ellipse(18, -1, 4, 7, 0, 0, Math.PI*2); ctx.fill();
+    
+    // Füst pamacsok (jelzi hogy friss)
+    if(Math.random() > 0.5) {
+        ctx.fillStyle = "rgba(100,100,100,0.5)";
+        ctx.beginPath(); ctx.arc(20 + Math.random()*10, -5 + Math.random()*10, 3, 0, Math.PI*2); ctx.fill();
+    }
+    
+    ctx.restore();
+}
+
 function drawFrog(x, y, color, jump) {
     ctx.save();
     ctx.translate(x + 25, y + 25);
     
-    // Árnyék (Ugráskor kicsit összemegy)
+    // Árnyék
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     let shadowScale = 1 - (jump * 0.5); 
     ctx.beginPath(); 
     ctx.ellipse(0, 20, 22 * shadowScale, 12 * shadowScale, 0, 0, Math.PI*2); 
     ctx.fill();
     
-    // --- UGRÁS ANIMÁCIÓ (DEFORMÁCIÓ) ---
-    // Magasabbra ugrunk (60px)
+    // Ugrás deformáció
     ctx.translate(0, -jump * 60);
-    
-    // SQUASH & STRETCH: 
-    // Amikor jump=1 (elrugaszkodás), a test keskenyebb (X) és magasabb (Y) lesz.
-    // Ez a "kinyúlás" effektus.
-    let stretch = 1 + (jump * 0.3); // Y nyúlik
-    let squash = 1 - (jump * 0.15); // X vékonyodik
+    let stretch = 1 + (jump * 0.3);
+    let squash = 1 - (jump * 0.15); 
     ctx.scale(squash, stretch);
 
     // Test Gradiens
@@ -177,12 +206,11 @@ function drawFrog(x, y, color, jump) {
     else grad.addColorStop(1, "#051a05");
     ctx.fillStyle = grad;
     
-    // Alapforma (Béka "Blob")
+    // Alapforma
     ctx.beginPath(); ctx.moveTo(-18, 15); ctx.quadraticCurveTo(-28, -25, 0, -28);
     ctx.quadraticCurveTo(28, -25, 18, 15); ctx.quadraticCurveTo(0, 25, -18, 15); ctx.fill();
 
-    // Szemek (Ezeket nem torzítjuk annyira, visszaállítunk egy picit)
-    // De mivel az egész context skálázva van, a szemek is nyúlnak, ami vicces/jó.
+    // Szemek
     ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(-12, -20, 8, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(12, -20, 8, 0, 7); ctx.fill();
     ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(-12, -22, 4, 0, 7); ctx.fill();
@@ -192,8 +220,10 @@ function drawFrog(x, y, color, jump) {
 
 function drawVehicle(e, y) {
     const isRight = e.s > 0;
+    const isTrabant = e.t === 'trabant';
     
     ctx.save();
+    // Fényszóró
     if(isRight) {
         let beam = ctx.createLinearGradient(e.x+e.w, 0, e.x+e.w+250, 0);
         beam.addColorStop(0, "rgba(255,255,200,0.5)"); beam.addColorStop(1, "rgba(255,255,200,0)");
@@ -207,14 +237,29 @@ function drawVehicle(e, y) {
         ctx.beginPath(); ctx.moveTo(e.x, y+15); ctx.lineTo(e.x-250, y-15); ctx.lineTo(e.x-250, y+35); ctx.fill();
         ctx.beginPath(); ctx.moveTo(e.x, y+45); ctx.lineTo(e.x-250, y+25); ctx.lineTo(e.x-250, y+75); ctx.fill();
     }
+
+    // TRABANT FÜST (Extra effekt)
+    if(isTrabant) {
+        let smokeX = isRight ? e.x : e.x + e.w;
+        for(let i=0; i<5; i++) {
+             ctx.fillStyle = `rgba(100,100,100,${Math.random()*0.5})`;
+             let r = Math.random() * 20;
+             ctx.beginPath();
+             ctx.arc(smokeX + (isRight ? -r*3 : r*3) - (Math.random()*50), y + 40 + (Math.random()*10), r, 0, Math.PI*2);
+             ctx.fill();
+        }
+    }
+
     ctx.restore();
 
+    // Kerekek
     ctx.fillStyle = "#000";
     ctx.beginPath(); ctx.roundRect(e.x+10, y-3, 25, 8, 2); ctx.fill();
     ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y-3, 25, 8, 2); ctx.fill();
     ctx.beginPath(); ctx.roundRect(e.x+10, y+50, 25, 8, 2); ctx.fill();
     ctx.beginPath(); ctx.roundRect(e.x+e.w-35, y+50, 25, 8, 2); ctx.fill();
 
+    // Kasztni
     ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 15;
     let carBody = ctx.createLinearGradient(e.x, y, e.x, y+55);
     carBody.addColorStop(0, e.col); carBody.addColorStop(1, "#000"); 
@@ -235,8 +280,12 @@ function drawVehicle(e, y) {
     ctx.fill();
     ctx.shadowBlur = 0;
 
+    // Utastér
     let cabinX = isRight ? e.x + 20 : e.x + e.w - 70;
     let cabinW = e.w - 60;
+    // Trabant kicsit kockább
+    if(isTrabant) { cabinX = isRight ? e.x + 10 : e.x + e.w - 90; cabinW = e.w - 30; }
+
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.beginPath(); ctx.roundRect(cabinX, y+8, cabinW, 39, 8); ctx.fill();
 
@@ -258,6 +307,7 @@ function drawVehicle(e, y) {
         ctx.lineTo(cabinX+cabinW+5, y+43); ctx.lineTo(cabinX+cabinW-5, y+45); ctx.fill();
     }
 
+    // Lámpák
     if(isRight) {
         ctx.fillStyle = "#fff"; ctx.shadowColor="#fff"; ctx.shadowBlur=10;
         ctx.beginPath(); ctx.ellipse(e.x+e.w-2, y+15, 3, 6, 0, 0, Math.PI*2); ctx.fill();
@@ -302,6 +352,7 @@ function generateMap() {
     entities = []; staticCoins = [];
     let spawnW = width > 0 ? width : window.innerWidth;
 
+    // Normál entitások generálása
     map.forEach((l, i) => {
         if(l.type==='road' || l.type==='water') {
             let count = 2 + Math.floor(Math.random() * 2);
@@ -319,9 +370,35 @@ function generateMap() {
             }
         }
         if(l.type === 'grass' || l.type === 'road') {
-            if(Math.random() > 0.3) staticCoins.push({ lane: i, x: Math.random() * (spawnW - 50) + 25, active: true });
+            if(Math.random() > 0.3) staticCoins.push({ lane: i, x: Math.random() * (spawnW - 50) + 25, active: true, type: 'coin' });
         }
     });
+
+    // --- TRABANT EVENT GENERÁLÁSA ---
+    // Minden 4. szinten (4, 8, 12...)
+    if(level % 4 === 0) {
+        // Keressünk egy megfelelő aszfalt utat (lehetőleg középtájt)
+        let roadIndices = [];
+        map.forEach((l, i) => { if(l.type==='road') roadIndices.push(i); });
+        
+        if(roadIndices.length > 0) {
+            // Véletlenszerű út kiválasztása
+            let trabiLane = roadIndices[Math.floor(Math.random() * roadIndices.length)];
+            let direction = map[trabiLane].d; // Kövesse a sáv irányát
+            
+            // Hozzáadjuk a Trabantot
+            // s = 35 (nagyon gyors)
+            entities.push({
+                t: 'trabant',
+                lane: trabiLane,
+                x: direction === 1 ? -1000 : spawnW + 1000, // Messziről indul
+                w: 135,
+                s: 35 * direction, 
+                col: '#B5C2B7', // Piszkosfehér/Zöldes Trabant szín
+                droppedExhaust: false
+            });
+        }
+    }
 }
 
 function start() {
@@ -356,8 +433,9 @@ function move(d) {
     }
 }
 
-function collectCoin() {
-    totalCoins += 10;
+// MÓDOSÍTVA: Alapértelmezett érték 1
+function collectCoin(amount = 1) {
+    totalCoins += amount;
     document.getElementById('coin-num').innerText = totalCoins;
 }
 
@@ -367,7 +445,25 @@ function loop() {
     if(state !== "dead") {
         entities.forEach(e => {
              let px = e.x; e.x += e.s;
-             if(e.x > width) e.x = -e.w; if(e.x < -e.w) e.x = width;
+             
+             // TRABANT LOGIKA
+             if(e.t === 'trabant') {
+                 // Ha a Trabant átlépi a képernyő közepét, eldobjuk a kipufogót
+                 if(!e.droppedExhaust) {
+                     let centerX = width / 2;
+                     if ((e.s > 0 && e.x > centerX) || (e.s < 0 && e.x + e.w < centerX)) {
+                         staticCoins.push({ 
+                             lane: e.lane, 
+                             x: e.x + (e.w/2), 
+                             active: true, 
+                             type: 'exhaust' 
+                         });
+                         e.droppedExhaust = true;
+                     }
+                 }
+             } else {
+                 if(e.x > width) e.x = -e.w; if(e.x < -e.w) e.x = width;
+             }
              
              if(state === "playing") {
                 if(e.t === 'l' && e.lane === frog.lane) {
@@ -377,7 +473,7 @@ function loop() {
                         if(e.hasCoin) { let coinX = e.x + e.w/2; if(Math.abs((frog.x + 25) - coinX) < 40) { e.hasCoin = false; collectCoin(); } }
                     }
                 }
-                if(e.t === 'c' && e.lane === frog.lane && frog.x + 15 < e.x + e.w && frog.x + 35 > e.x) endGame();
+                if((e.t === 'c' || e.t === 'trabant') && e.lane === frog.lane && frog.x + 15 < e.x + e.w && frog.x + 35 > e.x) endGame();
              }
         });
     }
@@ -388,15 +484,25 @@ function loop() {
         entities.forEach(e => {
             if(e.t === 'l' && e.lane === frog.lane && frog.x + 25 > e.x && frog.x + 25 < e.x + e.w) onLog = true;
         });
+        
+        // Tárgyak felvétele (Pénz vagy Kipufogó)
         staticCoins.forEach(c => {
-            if(c.active && c.lane === frog.lane) { if(Math.abs((frog.x + 25) - c.x) < 40) { c.active = false; collectCoin(); } }
+            if(c.active && c.lane === frog.lane) { 
+                if(Math.abs((frog.x + 25) - c.x) < 40) { 
+                    c.active = false; 
+                    if(c.type === 'exhaust') {
+                        collectCoin(5); // Kipufogó 5 pénz marad
+                    } else {
+                        collectCoin(1); // Sima érme mostantól 1 pénz
+                    }
+                } 
+            }
         });
         
         // --- JUMP FIZIKA ---
         frog.x += (frog.tX - frog.x) * 0.2; 
         frog.y += (frog.tY - frog.y) * 0.2; 
         
-        // Lassabb lecsengés a simább animációért (0.8 -> 0.85)
         frog.jump *= 0.85; 
 
         camY += (frog.y - height/2 - camY) * 0.05;
@@ -451,8 +557,14 @@ function draw() {
             if(fog>0) { ctx.fillStyle = `rgba(5,5,5,${Math.min(0.5, fog)})`; ctx.fillRect(0, y, width, laneH); }
         });
 
-        staticCoins.forEach(c => { let y = c.lane * laneH + (laneH-55)/2; if(c.active) drawCoin(c.x, y); });
-        entities.forEach(e => { let y = e.lane*laneH + (laneH-55)/2; if(e.t === 'c') drawVehicle(e, y); else drawLog(e, y); });
+        staticCoins.forEach(c => { 
+            let y = c.lane * laneH + (laneH-55)/2; 
+            if(c.active) {
+                if(c.type === 'exhaust') drawExhaustPipe(c.x, y);
+                else drawCoin(c.x, y); 
+            }
+        });
+        entities.forEach(e => { let y = e.lane*laneH + (laneH-55)/2; if(e.t === 'c' || e.t === 'trabant') drawVehicle(e, y); else drawLog(e, y); });
     }
 
     drawFrog(frog.x, frog.y, frog.color, frog.jump);
