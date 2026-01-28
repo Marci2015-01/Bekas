@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Végtelen Béka - ULTIMATE PRO</title>
+<title>Végtelen Béka - ULTIMATE PRO (Wrap Penalty)</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
     :root { --accent: #00f2ff; --warn: #ff0055; --bg: #050505; }
@@ -32,6 +32,23 @@
     .hud-label { font-size: 12px; opacity: 0.8; font-weight: 700; transform: skewX(15deg); display:block; letter-spacing: 2px; }
     .stat-val { color: #fff; font-weight: 900; font-size: 28px; transform: skewX(15deg); display: block; text-shadow: 0 0 10px var(--accent); }
     #coin-val { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+
+    /* PENALTY BAR */
+    #penalty-bar-container {
+        position: absolute; top: 80px; left: 50%; transform: translateX(-50%) skewX(-15deg);
+        width: 200px; height: 8px; background: rgba(255, 255, 255, 0.1);
+        display: none; /* Alapból rejtett */
+        border: 1px solid rgba(255,0,0,0.3);
+    }
+    #penalty-bar {
+        width: 100%; height: 100%; background: var(--warn);
+        box-shadow: 0 0 15px var(--warn);
+        transition: width 0.1s linear;
+    }
+    #penalty-text {
+        position: absolute; top: -20px; width: 100%; text-align: center;
+        color: var(--warn); font-size: 12px; font-weight: 900; letter-spacing: 2px;
+    }
 
     #ui-layer {
         position: absolute; inset: 0;
@@ -106,6 +123,11 @@
         <span class="hud-label">SZINT</span>
         <span id="lvl-num" class="stat-val">1</span>
     </div>
+    <div id="penalty-bar-container">
+        <div id="penalty-text">LOCKED</div>
+        <div id="penalty-bar"></div>
+    </div>
+    
     <div class="hud-box" style="border-left:none; border-right:4px solid #ffd700; text-align:right;">
         <span class="hud-label">VAGYON</span>
         <span id="coin-num" class="stat-val" style="color:#ffd700; text-shadow:0 0 10px #ffd700">0</span>
@@ -120,12 +142,12 @@
                 <div class="weather-badge">PRO</div>
             </div>
             <p style="color:#888; margin-bottom:30px; font-size: 16px; font-weight:700;">
-                HÓESÉS • FÁK • SCREEN SHAKE
+                HÓ • FÁK • WRAP PENALTY
             </p>
             <div style="text-align:left; font-size:14px; color:#ccc; margin-bottom:20px; line-height:1.6; border-top:1px solid #333; padding-top:15px;">
+                ⚠️ <b>WRAP:</b> Ha kimész a szélén, 5 mp büntetés!<br>
                 🚂 <b>VONAT:</b> Ha rázkódik a kép, FUSS!<br>
-                🌲 <b>AKADÁLYOK:</b> Kerüld ki a köveket és a fákat!<br>
-                ❄️ <b>IDŐJÁRÁS:</b> Változatos körülmények.
+                🌲 <b>AKADÁLYOK:</b> Kerüld ki a köveket és a fákat!
             </div>
             <button class="big-btn" id="start-btn">START GAME</button>
             <button class="big-btn" id="open-shop-btn" style="border-color:#555; color:#aaa; font-size:16px;">GARÁZS</button>
@@ -176,6 +198,7 @@ const Sound = {
     jump: function() { this.playTone(200, 'triangle', 0.1, 0.1, 100); }, 
     coin: function() { this.playTone(1500, 'sine', 0.1, 0.1); setTimeout(()=>this.playTone(2500, 'sine', 0.2, 0.1), 50); },
     combo: function(count) { let pitch = 400 + (count * 100); this.playTone(pitch, 'square', 0.1, 0.1); },
+    lock: function() { this.playTone(100, 'sawtooth', 0.2, 0.2, -20); }, // Büntető hang
     splash: function() {
         if(!this.ctx) return;
         const bufferSize = this.ctx.sampleRate * 0.5; const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -229,6 +252,7 @@ let frog = { x:0, y:0, tX:0, tY:0, lane:0, jump:0, color: currentSkin, blinkTime
 let camY = 0;
 let shake = 0; 
 let combo = 0; let comboTimer = 0;
+let comboPenalty = 0; // BÜNTETÉS SZÁMLÁLÓ
 let weather = 'clear'; 
 
 // --- EFX RENDSZER ---
@@ -280,24 +304,20 @@ function drawRock(x, y) {
     ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 15;
     let g = ctx.createLinearGradient(-15, -15, 10, 10); g.addColorStop(0, "#555"); g.addColorStop(1, "#222"); ctx.fillStyle = g;
     ctx.beginPath(); ctx.moveTo(-20, 15); ctx.lineTo(-15, -15); ctx.lineTo(15, -20); ctx.lineTo(25, 10); ctx.lineTo(15, 20); ctx.lineTo(-15, 25); ctx.fill();
-    ctx.fillStyle = "rgba(46, 204, 113, 0.2)"; ctx.beginPath(); ctx.arc(-5, -5, 12, 0, Math.PI*2); ctx.fill(); // Moha
-    if(weather === 'snow') { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.beginPath(); ctx.ellipse(0, -18, 15, 5, 0, 0, Math.PI*2); ctx.fill(); } // Hósapka
+    ctx.fillStyle = "rgba(46, 204, 113, 0.2)"; ctx.beginPath(); ctx.arc(-5, -5, 12, 0, Math.PI*2); ctx.fill(); 
+    if(weather === 'snow') { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.beginPath(); ctx.ellipse(0, -18, 15, 5, 0, 0, Math.PI*2); ctx.fill(); } 
     ctx.restore();
 }
 
 function drawTree(x, y) {
     ctx.save(); ctx.translate(x + 25, y + 40);
     ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 15;
-    // Törzs
     ctx.fillStyle = "#3e2723"; ctx.fillRect(-5, 0, 10, 20);
-    // Levelek (háromszögek)
-    let treeColor = "#145a32";
-    if(weather === 'snow') treeColor = "#3a7a52"; // Havasabb szín
+    let treeColor = "#145a32"; if(weather === 'snow') treeColor = "#3a7a52"; 
     ctx.fillStyle = treeColor;
     ctx.beginPath(); ctx.moveTo(-25, 0); ctx.lineTo(25, 0); ctx.lineTo(0, -35); ctx.fill();
     ctx.beginPath(); ctx.moveTo(-20, -20); ctx.lineTo(20, -20); ctx.lineTo(0, -50); ctx.fill();
     ctx.beginPath(); ctx.moveTo(-15, -40); ctx.lineTo(15, -40); ctx.lineTo(0, -65); ctx.fill();
-    // Hó a fán
     if(weather === 'snow') {
         ctx.fillStyle = "rgba(255,255,255,0.9)";
         ctx.beginPath(); ctx.moveTo(-25, 0); ctx.lineTo(25, 0); ctx.lineTo(0, -10); ctx.fill();
@@ -437,7 +457,8 @@ function generateMap() {
             }
         }
         if(l.type === 'grass' || l.type === 'road') { if(Math.random() > 0.3) staticCoins.push({ lane: i, x: Math.random() * (spawnW - 50) + 25, active: true, type: 'coin' }); }
-        // AKADÁLYOK GENERÁLÁSA (KŐ VAGY FA)
+        
+        // AKADÁLYOK (KŐ VAGY FA)
         if(l.type === 'grass') { 
             let obsCount = Math.floor(Math.random() * 3); 
             for(let r=0; r<obsCount; r++) { 
@@ -463,7 +484,8 @@ function start() {
     state = "playing"; generateMap(); 
     frog.lane = map.length - 1; frog.tX = width/2 - 25; frog.tY = frog.lane * laneH + (laneH-55)/2; frog.x = frog.tX; frog.y = frog.tY; camY = frog.y - height/2;
     document.getElementById('ui-layer').style.display = "none"; document.getElementById('lvl-num').innerText = level; document.getElementById('coin-num').innerText = totalCoins;
-    startT = Date.now(); particles = []; floatingTexts = []; combo=0; shake=0;
+    startT = Date.now(); particles = []; floatingTexts = []; combo=0; shake=0; comboPenalty=0;
+    document.getElementById('penalty-bar-container').style.display = 'none';
 }
 
 function move(d) {
@@ -471,9 +493,18 @@ function move(d) {
     let targetLane = frog.lane; let targetX = frog.tX;
     if(d==='up') targetLane--; else if(d==='down') targetLane++; else if(d==='left') targetX -= 85; else if(d==='right') targetX += 85;
     if(targetLane < 0 || targetLane >= map.length) return;
-    if(targetX < -50) targetX += width; if(targetX > width) targetX -= width;
     
-    // AKADÁLY ÜTKÖZÉS (KŐ VAGY FA)
+    // --- WRAP LOGIC & PENALTY ---
+    let wrapped = false;
+    if(targetX < -50) { targetX += width; wrapped = true; }
+    if(targetX > width) { targetX -= width; wrapped = true; }
+    
+    if(wrapped) {
+        combo = 0; comboPenalty = 300; // 5mp (60fps * 5)
+        Sound.lock();
+        document.getElementById('penalty-bar-container').style.display = 'block';
+    }
+
     let hitObs = false; obstacles.forEach(o => { if(o.lane === targetLane) { if(Math.abs((targetX + 25) - (o.x + 25)) < 40) hitObs = true; }});
     if(hitObs) { Sound.playTone(100, 'square', 0.1); return; }
 
@@ -483,8 +514,21 @@ function move(d) {
     if(d==='left') frog.rot = -1; else if(d==='right') frog.rot = 1; else frog.rot = 0;
     frog.tY = frog.lane * laneH + (laneH-55)/2;
     
-    if(comboTimer > 0) { combo++; if(combo > 1) { showText(`${combo}x COMBO!`, frog.x+25, frog.y, "#00f2ff"); Sound.combo(combo); totalCoins += combo; document.getElementById('coin-num').innerText = totalCoins; }} else { combo = 1; }
-    comboTimer = 60;
+    // COMBO CSAK HA NINCS BÜNTETÉS
+    if(d === 'up') {
+        if(comboPenalty <= 0) {
+            if(comboTimer > 0) {
+                combo++;
+                if(combo > 1) { 
+                    showText(`${combo}x COMBO!`, frog.x+25, frog.y, "#00f2ff"); 
+                    Sound.combo(combo); 
+                    totalCoins += combo; 
+                    document.getElementById('coin-num').innerText = totalCoins;
+                }
+            } else { combo = 1; }
+            comboTimer = 60;
+        }
+    }
 
     if(frog.lane === 0) {
         state = "menu"; level++; totalCoins += 100; save(); Sound.win();
@@ -499,6 +543,13 @@ function collectCoin(amount = 1, x, y) { totalCoins += amount; Sound.coin(); doc
 function loop() {
     frame++; if(comboTimer > 0) comboTimer--; if(shake > 0) shake *= 0.9;
     
+    // PENALTY COUNTDOWN
+    if(comboPenalty > 0) {
+        comboPenalty--;
+        document.getElementById('penalty-bar').style.width = (comboPenalty/300)*100 + "%";
+        if(comboPenalty <= 0) document.getElementById('penalty-bar-container').style.display = 'none';
+    }
+
     if(state === 'playing') {
         if(weather === 'rain') spawnParticles(Math.random()*width, frog.y - height/2 - 50, "#aaf", 3, "rain");
         if(weather === 'snow') spawnParticles(Math.random()*width, frog.y - height/2 - 50, "#fff", 1, "snow");
@@ -591,10 +642,8 @@ function draw() {
     }
     drawFrog(frog.x, frog.y, frog.color, frog.jump);
     ctx.restore();
-    // IDŐJÁRÁS LAYERS
     if(weather === 'rain') { ctx.fillStyle = "rgba(0, 10, 30, 0.3)"; ctx.fillRect(0,0,width,height); }
     if(weather === 'snow') { ctx.fillStyle = "rgba(200, 220, 255, 0.2)"; ctx.fillRect(0,0,width,height); }
-    // VIGNETTE
     let grad = ctx.createRadialGradient(width/2, height/2, height/3, width/2, height/2, height); grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,0.8)"); ctx.fillStyle = grad; ctx.fillRect(0,0,width,height);
 }
 
