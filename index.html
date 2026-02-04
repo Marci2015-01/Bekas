@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Végtelen Béka - MUSIC EDITION</title>
+<title>Végtelen Béka - FIXED LOOP & MUSIC</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
     :root { --accent: #00f2ff; --warn: #ff0040; --bg: #050505; }
@@ -194,25 +194,15 @@ const Sound = {
     musicNoteIndex: 0,
     
     // A dallam kottája: [Frekvencia, Hossz (ms)]
-    // "Al-ma bé-ka ku-ku-ri-ku a ka-kas meg ku-ku-ri-ku"
     melody: [
-        // Alma (C5, E5)
         [523, 100], [659, 100], 
-        // Béka (C5, E5)
         [523, 100], [659, 100], 
-        // Kukuriku (G5, G5, A5, G5) - Gyors
         [784, 90], [784, 90], [880, 90], [784, 90], 
-        // Szünet
         [0, 50],
-        // A (F5)
         [698, 90],
-        // Kakas (F5, E5)
         [698, 90], [659, 90],
-        // Meg (D5)
         [587, 90],
-        // Kukuriku (C5, G4, E5, C5)
         [523, 90], [392, 90], [659, 90], [523, 90],
-        // Hosszabb szünet a loop végén
         [0, 200]
     ],
 
@@ -230,7 +220,6 @@ const Sound = {
         } catch(e) {}
     },
 
-    // Zene lejátszó hurok
     startMusic: function() {
         if(this.isPlayingMusic) return;
         this.isPlayingMusic = true;
@@ -245,25 +234,16 @@ const Sound = {
 
     playNextNote: function() {
         if(!this.isPlayingMusic || !this.ctx) return;
-        
         const note = this.melody[this.musicNoteIndex];
         const freq = note[0];
-        const duration = note[1] / 1000; // ms to sec
+        const duration = note[1] / 1000; 
 
-        // Hang lejátszása (ha nem szünet)
-        if(freq > 0) {
-            this.playTone(freq, 'square', duration, 0.05); // Halk, 8-bit stílus
-        }
+        if(freq > 0) this.playTone(freq, 'square', duration, 0.05);
 
-        // Következő hang időzítése
         this.musicNoteIndex++;
-        if(this.musicNoteIndex >= this.melody.length) {
-            this.musicNoteIndex = 0;
-        }
+        if(this.musicNoteIndex >= this.melody.length) this.musicNoteIndex = 0;
 
-        this.musicTimeout = setTimeout(() => {
-            this.playNextNote();
-        }, note[1]);
+        this.musicTimeout = setTimeout(() => { this.playNextNote(); }, note[1]);
     },
 
     jump: function() { this.playTone(200, 'triangle', 0.1); }, 
@@ -301,13 +281,13 @@ document.getElementById('lvl-num').innerText = level; document.getElementById('c
 
 function fullReset() { if(confirm("Mindent törölsz?")) { localStorage.clear(); location.reload(); }}
 function goToMenu() { 
-    state = "menu"; Sound.stopMusic(); // Zene STOP
+    state = "menu"; Sound.stopMusic(); 
     document.getElementById('ui-layer').style.display = 'flex'; document.getElementById('main-menu').style.display = 'block'; document.getElementById('shop-box').style.display = 'none'; document.getElementById('game-over-box').style.display = 'none'; document.getElementById('hud').style.display = 'none'; document.getElementById('controls').style.display = 'none'; 
 }
 function openShop() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('shop-box').style.display = 'block'; renderShop(); }
 
 function start() {
-    Sound.init(); Sound.startMusic(); // Zene START
+    Sound.init(); Sound.startMusic(); 
     state = "playing"; generateMap(); 
     frog.lane = map.length - 1; frog.tX = width/2 - 25; frog.tY = frog.lane * laneH + (laneH-55)/2; frog.x = frog.tX; frog.y = frog.tY; camY = frog.y - height/2;
     document.getElementById('ui-layer').style.display = "none"; document.getElementById('hud').style.display = 'flex'; document.getElementById('controls').style.display = 'grid';
@@ -371,7 +351,7 @@ function collectCoin(amount, x, y) { totalCoins += amount; Sound.coin(); documen
 
 function endGame() {
     if(state === 'dead') return;
-    Sound.stopMusic(); // Zene STOP
+    Sound.stopMusic(); 
     Sound.crash(); state = "dead"; save(); shake = 20; damageFlash = 30;
     setTimeout(() => { document.getElementById('ui-layer').style.display = 'flex'; document.getElementById('game-over-box').style.display = 'block'; document.getElementById('go-coins').innerText = totalCoins; document.getElementById('hud').style.display = 'none'; document.getElementById('controls').style.display = 'none'; }, 500);
 }
@@ -404,7 +384,21 @@ function loop() {
     }
     if(state !== 'dead') {
         map.forEach((l,i)=>{if(l.type==='rail'){if(l.railState==='dormant'&&Math.random()<0.005){l.railState='warning';l.warningTimer=120;}if(l.railState==='warning'){l.warningTimer--;if(l.warningTimer<=0){l.railState='active';entities.push({t:'train',lane:i,x:l.d===1?-2000:width+2000,w:1200,s:45*l.d});}}}});
-        entities.forEach(e=>{e.x+=e.s;});
+        
+        // --- JAVÍTOTT VÉGTELEN CIKLUS ÉS TISZTÍTÁS ---
+        entities.forEach((e, index)=>{
+            e.x+=e.s;
+            // Vonat tisztítása (ha nagyon kiment, töröljük)
+            if (e.t === 'train') {
+                if (Math.abs(e.x) > 5000) entities.splice(index, 1);
+            } 
+            // Autók és Rönkök visszajönnek (Loop)
+            else {
+                if(e.s > 0 && e.x > width + 200) e.x = -300;
+                if(e.s < 0 && e.x < -300) e.x = width + 200;
+            }
+        });
+        
         staticCoins.forEach(c=>{if(c.active&&c.lane===frog.lane&&Math.abs(frog.x+25-c.x)<30){c.active=false;collectCoin(1,c.x,c.lane*laneH+50);}});
     }
     particles.forEach((p,i)=>{p.update();if(p.life<=0)particles.splice(i,1);});
