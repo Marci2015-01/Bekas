@@ -3,435 +3,557 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Végtelen Béka - FIXED LOOP & MUSIC</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;900&display=swap" rel="stylesheet">
+<title>Frogger Pro - Paid Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
-    :root { --accent: #00f2ff; --warn: #ff0040; --bg: #050505; }
+    :root { --bg: #0f172a; --text: #f8fafc; --accent: #4ade80; --danger: #ef4444; --gold: #fbbf24; }
     html, body {
         margin: 0; padding: 0; height: 100%; width: 100%;
         overflow: hidden; background: var(--bg);
-        font-family: 'Rajdhani', sans-serif;
+        font-family: 'Inter', sans-serif;
         touch-action: none; user-select: none;
+        color: var(--text);
     }
-    canvas { display: block; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* UI LAYERS */
+    #ui-layer {
+        position: absolute; inset: 0;
+        display: flex; justify-content: center; align-items: center;
+        z-index: 100;
+        pointer-events: none;
+    }
+
+    .panel {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px;
+        padding: 30px; width: 90%; max-width: 420px;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+        text-align: center;
+        backdrop-filter: blur(20px);
+        display: none;
+        pointer-events: auto;
+    }
+
+    h1 { font-weight: 800; font-size: 28px; margin: 0 0 10px 0; color: white; letter-spacing: -1px; }
+    p { font-weight: 400; opacity: 0.7; font-size: 14px; margin-bottom: 25px; line-height: 1.5; color: #94a3b8; }
+
+    input {
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        color: white; padding: 15px; width: 100%; border-radius: 8px;
+        font-family: inherit; font-size: 16px; margin-bottom: 20px; box-sizing: border-box; text-align: center;
+        outline: none; transition: 0.3s;
+    }
+    input:focus { border-color: var(--accent); background: rgba(255,255,255,0.1); }
     
+    button {
+        background: white; color: #0f172a; border: none; padding: 16px; width: 100%;
+        border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 16px;
+        transition: 0.2s; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,255,255,0.2); }
+    button:active { transform: scale(0.98); }
+    
+    button.secondary { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
+    button.secondary:hover { color: white; border-color: white; transform: none; box-shadow: none; }
+
+    /* SHOP GRID */
+    .shop-grid {
+        display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+        margin-bottom: 20px;
+    }
+    .shop-item {
+        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px; padding: 10px; cursor: pointer; position: relative;
+        transition: 0.2s; display: flex; flex-direction: column; align-items: center;
+    }
+    .shop-item:hover { background: rgba(255,255,255,0.08); }
+    .shop-item.active { border: 2px solid var(--accent); background: rgba(74, 222, 128, 0.1); }
+    .skin-preview { width: 30px; height: 30px; border-radius: 50%; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .skin-price { font-size: 11px; font-weight: 700; color: var(--gold); }
+    .skin-owned { font-size: 10px; color: rgba(255,255,255,0.5); font-weight: 600; }
+
     /* HUD */
     #hud {
         position: absolute; top: 20px; left: 20px; right: 20px;
         display: flex; justify-content: space-between;
-        color: white; z-index: 100; pointer-events: none;
-        text-transform: uppercase;
+        pointer-events: none; opacity: 0; transition: opacity 1s; z-index: 50;
     }
-    .hud-box {
-        background: rgba(0, 0, 0, 0.6);
-        border-left: 4px solid var(--accent);
-        padding: 8px 20px;
-        backdrop-filter: blur(8px);
-        transform: skewX(-15deg);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    }
-    .hud-label { font-size: 12px; opacity: 0.8; font-weight: 700; transform: skewX(15deg); display:block; letter-spacing: 2px; }
-    .stat-val { color: #fff; font-weight: 900; font-size: 28px; transform: skewX(15deg); display: block; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-    
-    #pause-btn {
-        pointer-events: auto; cursor: pointer;
-        background: rgba(255,255,255,0.1); width: 40px; height: 40px;
-        display: flex; align-items: center; justify-content: center;
-        border: 1px solid rgba(255,255,255,0.2); transform: skewX(-10deg);
-        margin-right: 15px; transition: 0.2s; font-weight: 900;
-    }
-
-    /* PENALTY BAR */
-    #penalty-bar-container {
-        position: absolute; top: 90px; left: 50%; transform: translateX(-50%) skewX(-15deg);
-        width: 260px; height: 10px; background: rgba(50, 0, 0, 0.8);
-        display: none; border: 2px solid var(--warn);
-        box-shadow: 0 0 30px var(--warn); z-index: 90;
-    }
-    #penalty-bar { width: 100%; height: 100%; background: var(--warn); }
-    #penalty-text {
-        position: absolute; top: -30px; width: 100%; text-align: center;
-        color: var(--warn); font-size: 24px; font-weight: 900; letter-spacing: 4px;
-        text-shadow: 0 0 15px var(--warn);
-    }
-
-    /* MENÜ UI */
-    #ui-layer {
-        position: absolute; inset: 0;
-        display: flex; justify-content: center; align-items: center;
-        z-index: 999;
-        background: radial-gradient(circle, rgba(20,20,20,0.95) 0%, rgba(0,0,0,1) 100%);
-        backdrop-filter: blur(10px);
-    }
-    
-    .panel {
-        background: rgba(20, 20, 20, 0.85);
+    .hud-stat {
+        background: rgba(15, 23, 42, 0.8); padding: 8px 16px; border-radius: 30px;
+        font-size: 13px; font-weight: 600; color: white;
+        backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px;
         border: 1px solid rgba(255,255,255,0.1);
-        border-top: 6px solid var(--accent);
-        border-bottom: 2px solid var(--accent);
-        color: white; padding: 30px; 
-        width: 85%; max-width: 400px;
-        box-shadow: 0 0 60px rgba(0,0,0,0.8);
-        transform: skewX(-5deg);
-        position: relative; overflow: hidden;
-        display: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
-    
-    .panel-content { transform: skewX(5deg); text-align: center; position: relative; z-index: 2; }
-
-    h1 {
-        font-size: 56px; margin: 0; line-height: 0.9;
-        color: #fff; text-transform: uppercase; letter-spacing: -2px;
-        text-shadow: 4px 4px 0px rgba(0,0,0,0.5), 0 0 30px var(--accent);
-    }
-    
-    .weather-badge {
-        background: var(--accent); color: #000; padding: 4px 10px; font-weight: 900; font-size: 14px;
-        position: absolute; top: -10px; right: -15px; transform: rotate(10deg);
-        box-shadow: 0 0 20px var(--accent); text-transform: uppercase;
-    }
-    
-    .menu-btn {
-        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
-        color: #fff; border: 1px solid rgba(255,255,255,0.2); 
-        border-left: 4px solid var(--accent); border-right: 4px solid var(--accent);
-        padding: 15px; margin: 10px 0;
-        font-size: 18px; cursor: pointer; width: 100%; 
-        font-weight: 800; text-transform: uppercase; letter-spacing: 2px; 
-        font-family: 'Rajdhani', sans-serif;
-        transition: 0.2s;
-    }
-    .menu-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
-    .menu-btn:active { transform: scale(0.98); }
-
-    .reset-btn {
-        margin-top: 20px; font-size: 12px; color: #ff4444; background: transparent; 
-        border: 1px solid #ff4444; padding: 8px; cursor: pointer; opacity: 0.7;
-    }
-
-    .skin-card {
-        background: rgba(0,0,0,0.3); padding: 10px; cursor: pointer; 
-        border: 1px solid rgba(255,255,255,0.1);
-        display: flex; flex-direction: column; align-items: center;
-    }
-    .skin-card.active { border: 2px solid var(--accent); background: rgba(255,255,255,0.1); }
-    .skin-preview { width: 35px; height: 35px; border-radius: 50%; margin-bottom: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 
     #controls {
-        position: absolute; bottom: 30px; right: 30px;
-        display: grid; grid-template-columns: repeat(3, 80px); gap: 10px; z-index: 150;
+        position: absolute; bottom: 0; left: 0; right: 0; height: 35vh;
+        z-index: 50; display: grid; grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 1fr 1fr; opacity: 0; pointer-events: none; 
     }
-    .ctrl-btn {
-        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-        color: var(--accent); height: 80px; display: flex; 
-        justify-content: center; align-items: center; font-size: 24px; backdrop-filter: blur(5px);
-        transform: skewX(-10deg); transition: 0.1s;
-    }
-    .ctrl-btn:active { background: var(--accent); color: #000; }
+    .c-btn { width: 100%; height: 100%; }
 </style>
 </head>
 <body>
 
 <div id="hud">
-    <div style="display:flex;">
-        <div id="pause-btn" onclick="goToMenu()">II</div>
-        <div class="hud-box">
-            <span class="hud-label">SZINT</span>
-            <span id="lvl-num" class="stat-val">1</span>
-        </div>
-    </div>
-    <div id="penalty-bar-container"><div id="penalty-text">LOCKED</div><div id="penalty-bar"></div></div>
-    <div class="hud-box" style="border-left:none; border-right:4px solid #ffd700; text-align:right;">
-        <span class="hud-label">VAGYON</span>
-        <span id="coin-num" class="stat-val" style="color:#ffd700; text-shadow:0 0 10px #ffd700">0</span>
-    </div>
+    <div class="hud-stat"><span id="level-display">SZINT 1</span></div>
+    <div class="hud-stat"><span style="color:var(--gold)">●</span><span id="coin-display">0</span></div>
 </div>
 
 <div id="ui-layer">
+    
+    <div id="profile-panel" class="panel">
+        <h1>VÁLASSZ BÉKÁT</h1>
+        <div id="profile-list-container" style="margin-bottom:20px; max-height:150px; overflow-y:auto; text-align:left;"></div>
+        <button onclick="showRegister()" class="secondary">+ ÚJ PROFIL</button>
+    </div>
+
+    <div id="register-panel" class="panel">
+        <h1>ÚJ KARRIER</h1>
+        <p>Adj nevet a versenyzőnek.</p>
+        <input type="text" id="frog-name-input" placeholder="Név..." maxlength="12">
+        <button onclick="registerFrog()">LÉTREHOZÁS</button>
+        <button class="secondary" onclick="showProfiles()">MÉGSE</button>
+    </div>
+
     <div id="main-menu" class="panel">
-        <div class="panel-content">
-            <div style="position:relative; display:inline-block; margin-bottom: 25px;"><h1>FROGGER</h1><div class="weather-badge">ULTIMATE</div></div>
-            <button class="menu-btn" onclick="start()">JÁTÉK INDÍTÁSA</button>
-            <button class="menu-btn" onclick="openShop()">GARÁZS & SKINEK</button>
-            <button class="reset-btn" onclick="fullReset()">⚠️ MENTÉS TÖRLÉSE</button>
-        </div>
+        <h1 id="welcome-title">Üdv!</h1>
+        <p>A forgalom ma sűrű. Készülj fel.</p>
+        <button onclick="startGame()">JÁTÉK INDÍTÁSA</button>
+        <button onclick="showShop()" style="background: var(--gold); color: black;">GARÁZS (SKINEK)</button>
+        <button class="secondary" onclick="showProfiles()">KILÉPÉS</button>
     </div>
-    <div id="shop-box" class="panel">
-        <div class="panel-content">
-            <h2 style="margin:0 0 20px 0; color:var(--accent);">GARÁZS</h2>
-            <div id="skin-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:25px;"></div>
-            <button class="menu-btn" onclick="goToMenu()">VISSZA</button>
-        </div>
+
+    <div id="shop-panel" class="panel">
+        <h1 style="color:var(--gold)">PRÉMIUM BOLT</h1>
+        <p>Egyenleged: <span id="shop-coins" style="color:white; font-weight:bold;">0</span></p>
+        <div id="shop-grid" class="shop-grid"></div>
+        <button class="secondary" onclick="showMenu()">VISSZA A MENÜBE</button>
     </div>
-    <div id="game-over-box" class="panel" style="border-color:var(--warn);">
-        <div class="panel-content">
-            <h1 style="font-size:42px; color:var(--warn);">MEGSEMMISÜLTÉL</h1>
-            <p style="font-size:18px; color:#fff; margin:20px 0;">PÉNZ: <span id="go-coins" style="color:#ffd700">0</span></p>
-            <button class="menu-btn" onclick="start()">ÚJRA</button>
-            <button class="menu-btn" onclick="goToMenu()">MENÜ</button>
-        </div>
+
+    <div id="end-panel" class="panel">
+        <h1 id="end-title" style="font-size: 42px;">VÉGE</h1>
+        <p id="end-desc">Vigyázz jobban!</p>
+        <button id="end-action-btn" onclick="restartOrNext()">ÚJRA</button>
+        <button class="secondary" onclick="showMenu()">MENÜ</button>
     </div>
+
 </div>
 
 <div id="controls">
-    <div class="ctrl-btn" id="btn-up" style="grid-column:2">▲</div>
-    <div class="ctrl-btn" id="btn-left" style="grid-column:1; grid-row:2">◀</div>
-    <div class="ctrl-btn" id="btn-down" style="grid-column:2; grid-row:2">▼</div>
-    <div class="ctrl-btn" id="btn-right" style="grid-column:3; grid-row:2">▶</div>
+    <div class="c-btn" style="grid-row:2; grid-column:1" ontouchstart="handleInput('left')"></div>
+    <div class="c-btn" style="grid-row:1; grid-column:1/4" ontouchstart="handleInput('up')"></div> 
+    <div class="c-btn" style="grid-row:2; grid-column:2" ontouchstart="handleInput('down')"></div>
+    <div class="c-btn" style="grid-row:2; grid-column:3" ontouchstart="handleInput('right')"></div>
 </div>
 
 <canvas id="game"></canvas>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
 
-// --- MUSIC & AUDIO ENGINE ---
-const Sound = {
-    ctx: null,
-    isPlayingMusic: false,
-    musicTimeout: null,
-    musicNoteIndex: 0,
-    
-    // A dallam kottája: [Frekvencia, Hossz (ms)]
-    melody: [
-        [523, 100], [659, 100], 
-        [523, 100], [659, 100], 
-        [784, 90], [784, 90], [880, 90], [784, 90], 
-        [0, 50],
-        [698, 90],
-        [698, 90], [659, 90],
-        [587, 90],
-        [523, 90], [392, 90], [659, 90], [523, 90],
-        [0, 200]
-    ],
-
-    init: function() { if (!this.ctx) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } if (this.ctx.state === 'suspended') { this.ctx.resume(); } },
-    
-    playTone: function(freq, type, duration, vol=0.1) {
-        if(!this.ctx || freq <= 0) return; 
-        try { 
-            const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain(); 
-            osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime); 
-            gain.gain.setValueAtTime(vol, this.ctx.currentTime); 
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration); 
-            osc.connect(gain); gain.connect(this.ctx.destination); 
-            osc.start(); osc.stop(this.ctx.currentTime + duration); 
-        } catch(e) {}
-    },
-
-    startMusic: function() {
-        if(this.isPlayingMusic) return;
-        this.isPlayingMusic = true;
-        this.musicNoteIndex = 0;
-        this.playNextNote();
-    },
-
-    stopMusic: function() {
-        this.isPlayingMusic = false;
-        clearTimeout(this.musicTimeout);
-    },
-
-    playNextNote: function() {
-        if(!this.isPlayingMusic || !this.ctx) return;
-        const note = this.melody[this.musicNoteIndex];
-        const freq = note[0];
-        const duration = note[1] / 1000; 
-
-        if(freq > 0) this.playTone(freq, 'square', duration, 0.05);
-
-        this.musicNoteIndex++;
-        if(this.musicNoteIndex >= this.melody.length) this.musicNoteIndex = 0;
-
-        this.musicTimeout = setTimeout(() => { this.playNextNote(); }, note[1]);
-    },
-
-    jump: function() { this.playTone(200, 'triangle', 0.1); }, 
-    coin: function() { this.playTone(1500, 'sine', 0.1); },
-    crash: function() { this.playTone(100, 'sawtooth', 0.5, 0.3); },
-    win: function() { this.playTone(600, 'triangle', 0.2); },
-    lock: function() { this.playTone(80, 'square', 0.3, 0.2); },
-    splash: function() { this.playTone(300, 'sine', 0.2, 0.2); }
+// --- AUDIO ---
+const AudioEngine = {
+    ctx: null, isPlaying: false, timer: null, index: 0,
+    melody: [[523,100],[659,100],[523,100],[659,100],[784,90],[784,90],[880,90],[784,90],[0,50],[698,90],[698,90],[659,90],[587,90],[523,90],[392,90],[659,90],[523,90],[0,200]],
+    init() { if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)(); },
+    playTone(f,d,t='sine',v=0.05) { if(!this.ctx)return; const o=this.ctx.createOscillator(),g=this.ctx.createGain(); o.frequency.value=f; o.type=t; g.gain.setValueAtTime(v,this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+d); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d); },
+    startMusic() { if(this.isPlaying) return; this.isPlaying=true; this.index=0; this.playNext(); },
+    stopMusic() { this.isPlaying=false; clearTimeout(this.timer); },
+    playNext() { if(!this.isPlaying)return; const n=this.melody[this.index]; if(n[0]>0)this.playTone(n[0],n[1]/1000,'square',0.03); this.index=(this.index+1)%this.melody.length; this.timer=setTimeout(()=>this.playNext(),n[1]); },
+    fx(t) { if(!this.ctx)return; if(t==='jump')this.playTone(150,0.1,'triangle',0.1); if(t==='coin'){this.playTone(1200,0.1,'sine',0.1);setTimeout(()=>this.playTone(1800,0.2,'sine',0.1),50);} if(t==='die')this.playTone(100,0.4,'sawtooth',0.2); if(t==='win'){this.playTone(400,0.1);setTimeout(()=>this.playTone(600,0.1),100);setTimeout(()=>this.playTone(800,0.3),200);} else if(t==='buy'){this.playTone(600,0.1,'square',0.2);setTimeout(()=>this.playTone(1000,0.2,'square',0.2),100);} else if(t==='error'){this.playTone(150,0.3,'sawtooth',0.2);} }
 };
 
-// --- DATA & CONFIG ---
-let level = parseInt(localStorage.getItem('f_pro_lvl')) || 1;
-let totalCoins = parseInt(localStorage.getItem('f_pro_coins')) || 0;
-let ownedSkins = JSON.parse(localStorage.getItem('f_pro_skins')) || ['#2ecc71'];
-let currentSkin = localStorage.getItem('f_pro_curr') || '#2ecc71';
-
-const skins = [
-    { name: 'NEON',   c: '#2ecc71', p: 0 }, { name: 'AQUA',   c: '#3498db', p: 50 }, { name: 'MAGMA',  c: '#e74c3c', p: 150 },
-    { name: 'TOXIC',  c: '#9b59b6', p: 150 }, { name: 'GOLD',   c: '#ffd700', p: 1000 }, { name: 'ICE', c: '#00d2ff', p: 300 }
+// --- DATA & SKINS ---
+const AVAILABLE_SKINS = [
+    { id: 'classic', name: 'KLASSZIK', color: '#4ade80', price: 0 },
+    { id: 'aqua',    name: 'TENGERÉSZ', color: '#38bdf8', price: 250 },
+    { id: 'lava',    name: 'LÁVA',      color: '#ef4444', price: 500 },
+    { id: 'toxic',   name: 'TOXIKUS',   color: '#a855f7', price: 1000 },
+    { id: 'night',   name: 'NINDZSA',   color: '#334155', price: 2000 },
+    { id: 'gold',    name: 'MILLIOMOS', color: '#fbbf24', price: 5000 }
 ];
 
-let width, height, laneH = 100, state = "menu";
-let map = [], entities = [], obstacles = [], particles = [], staticCoins = [];
-let frame = 0;
-let frog = { x:0, y:0, tX:0, tY:0, lane:0, jump:0, color: currentSkin, rot: 0, blinkTimer:0 };
+let profiles = JSON.parse(localStorage.getItem('frog_profiles_pro')) || [];
+let currentFrogIndex = -1;
+function saveProfiles() { localStorage.setItem('frog_profiles_pro', JSON.stringify(profiles)); }
+
+// --- STATE ---
+let width, height, laneH = 80;
+let gameState = 'menu'; 
+let level = 1;
+let map = [], entities = [], particles = [];
+let frog = { x:0, y:0, tx:0, ty:0, lane:0, jumpP:0, rot:0, dead:false, color: '#4ade80' };
 let camY = 0;
-let shake = 0, damageFlash = 0;
-let combo = 0, comboTimer = 0, comboPenalty = 0;
-let weather = 'clear'; 
 
-// --- FUNCTIONS ---
-function updateTheme(color) { document.documentElement.style.setProperty('--accent', color); }
-updateTheme(currentSkin);
-document.getElementById('lvl-num').innerText = level; document.getElementById('coin-num').innerText = totalCoins;
+// Texture
+const noiseCanvas = document.createElement('canvas'); noiseCanvas.width=200; noiseCanvas.height=200; const nCtx=noiseCanvas.getContext('2d');
+for(let i=0;i<4000;i++){nCtx.fillStyle=`rgba(255,255,255,${Math.random()*0.1})`;nCtx.fillRect(Math.random()*200,Math.random()*200,2,2);}
+const asphaltPattern = ctx.createPattern(noiseCanvas,'repeat');
 
-function fullReset() { if(confirm("Mindent törölsz?")) { localStorage.clear(); location.reload(); }}
-function goToMenu() { 
-    state = "menu"; Sound.stopMusic(); 
-    document.getElementById('ui-layer').style.display = 'flex'; document.getElementById('main-menu').style.display = 'block'; document.getElementById('shop-box').style.display = 'none'; document.getElementById('game-over-box').style.display = 'none'; document.getElementById('hud').style.display = 'none'; document.getElementById('controls').style.display = 'none'; 
-}
-function openShop() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('shop-box').style.display = 'block'; renderShop(); }
+// --- UI FUNCTIONS ---
+function initApp() { resize(); showProfiles(); }
 
-function start() {
-    Sound.init(); Sound.startMusic(); 
-    state = "playing"; generateMap(); 
-    frog.lane = map.length - 1; frog.tX = width/2 - 25; frog.tY = frog.lane * laneH + (laneH-55)/2; frog.x = frog.tX; frog.y = frog.tY; camY = frog.y - height/2;
-    document.getElementById('ui-layer').style.display = "none"; document.getElementById('hud').style.display = 'flex'; document.getElementById('controls').style.display = 'grid';
-    document.getElementById('lvl-num').innerText = level; document.getElementById('coin-num').innerText = totalCoins;
+function showProfiles() {
+    AudioEngine.stopMusic();
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-    particles = []; combo=0; shake=0; comboPenalty=0; document.getElementById('penalty-bar-container').style.display = 'none';
+    
+    if (profiles.length === 0) { showRegister(); return; }
+    
+    document.getElementById('profile-panel').style.display = 'block';
+    const list = document.getElementById('profile-list-container');
+    list.innerHTML = '';
+    profiles.forEach((p, index) => {
+        // Ensure profile has skin data (migration fix)
+        if(!p.skin) p.skin = 'classic';
+        if(!p.ownedSkins) p.ownedSkins = ['classic'];
+        
+        const div = document.createElement('div');
+        div.style.padding = "10px"; div.style.background="rgba(255,255,255,0.05)"; div.style.marginBottom="5px"; div.style.cursor="pointer"; div.style.borderRadius="4px";
+        div.style.border = "1px solid rgba(255,255,255,0.1)";
+        div.innerHTML = `<b>${p.name}</b> <span style="font-size:12px; float:right; color:#fbbf24">lvl ${p.lvl||1} • ${p.coins}$</span>`;
+        div.onclick = () => { currentFrogIndex = index; level = p.lvl || 1; showMenu(); };
+        list.appendChild(div);
+    });
 }
 
-function generateMap() {
-    map = [{type:'goal'}];
-    let len = 15 + Math.min(level, 40);
-    for(let i=1; i<len-1; i++) {
-        let r = Math.random(); let type = r < 0.1 ? 'rail' : (r < 0.3 ? 'grass' : (r < 0.6 ? 'water' : 'road'));
-        map.push({type, d:Math.random()>0.5?1:-1, s:(1.5+(level*0.15))+Math.random()*2, seed: Math.random(), railState: 'dormant', warningTimer: 0});
+function showRegister() {
+    document.getElementById('profile-panel').style.display = 'none';
+    document.getElementById('register-panel').style.display = 'block';
+}
+
+function registerFrog() {
+    const name = document.getElementById('frog-name-input').value.trim();
+    if(name.length < 2) return;
+    profiles.push({ name: name, coins: 0, lvl: 1, skin: 'classic', ownedSkins: ['classic'] });
+    saveProfiles();
+    currentFrogIndex = profiles.length - 1;
+    level = 1;
+    showMenu();
+}
+
+function showMenu() {
+    gameState = 'menu';
+    document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+    document.getElementById('main-menu').style.display = 'block';
+    document.getElementById('hud').style.opacity = 0;
+    
+    const p = profiles[currentFrogIndex];
+    document.getElementById('welcome-title').innerText = `SZIA, ${p.name.toUpperCase()}!`;
+}
+
+function showShop() {
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('shop-panel').style.display = 'block';
+    renderShop();
+}
+
+function renderShop() {
+    const p = profiles[currentFrogIndex];
+    document.getElementById('shop-coins').innerText = p.coins;
+    
+    const grid = document.getElementById('shop-grid');
+    grid.innerHTML = '';
+    
+    AVAILABLE_SKINS.forEach(skin => {
+        const owned = p.ownedSkins.includes(skin.id);
+        const selected = p.skin === skin.id;
+        
+        const card = document.createElement('div');
+        card.className = `shop-item ${selected ? 'active' : ''}`;
+        
+        let label = '';
+        if (selected) label = '<span class="skin-owned" style="color:var(--accent)">KIVÁLASZTVA</span>';
+        else if (owned) label = '<span class="skin-owned">MEGVÉVE</span>';
+        else label = `<span class="skin-price">${skin.price} $</span>`;
+        
+        card.innerHTML = `
+            <div class="skin-preview" style="background:${skin.color}"></div>
+            <div style="font-weight:700; font-size:10px; margin-bottom:5px;">${skin.name}</div>
+            ${label}
+        `;
+        
+        card.onclick = () => buyOrSelectSkin(skin);
+        grid.appendChild(card);
+    });
+}
+
+function buyOrSelectSkin(skin) {
+    const p = profiles[currentFrogIndex];
+    const owned = p.ownedSkins.includes(skin.id);
+    
+    if (owned) {
+        p.skin = skin.id;
+        saveProfiles();
+        renderShop();
+    } else {
+        if (p.coins >= skin.price) {
+            if(confirm(`Megveszed a ${skin.name} skint ${skin.price} érméért?`)) {
+                p.coins -= skin.price;
+                p.ownedSkins.push(skin.id);
+                p.skin = skin.id;
+                saveProfiles();
+                AudioEngine.fx('buy');
+                renderShop();
+            }
+        } else {
+            AudioEngine.fx('error');
+            alert("Nincs elég pénzed!");
+        }
     }
-    map.push({type:'start'});
-    entities = []; obstacles = []; staticCoins = [];
-    let spawnW = width > 0 ? width : window.innerWidth;
-    map.forEach((l, i) => {
-        if(l.type==='road' || l.type==='water') {
-            let count = 2 + Math.floor(Math.random() * 2); let spacing = spawnW / count;
-            for(let k=0; k<count; k++) {
-                let offset = (Math.random() * 200) - 100; let subtype = 'sedan'; let vW = 140; let vC = `hsl(${Math.random()*360}, 70%, 50%)`;
-                if(l.type === 'road') { if(Math.random() > 0.7) { subtype = 'truck'; vW = 180; vC = '#555'; l.s *= 0.8; } else if(Math.random()<0.2){subtype='sport'; vW=130; vC='#e74c3c'; l.s*=1.2;}}
-                entities.push({ t:l.type==='road'?'c':'l', subtype: subtype, lane:i, x: (k * spacing) + offset, w:l.type==='road'?vW:220, s:l.s*l.d, col: l.t==='c' ? vC : '#3d2b1f' });
+}
+
+function startGame() {
+    AudioEngine.init(); AudioEngine.startMusic();
+    document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+    document.getElementById('hud').style.opacity = 1;
+    document.getElementById('controls').style.pointerEvents = 'auto';
+    
+    updateHud();
+    gameState = 'playing';
+    generateLevel();
+    loop();
+}
+
+function updateHud() {
+    if(currentFrogIndex === -1) return;
+    document.getElementById('level-display').innerText = `SZINT ${level}`;
+    document.getElementById('coin-display').innerText = profiles[currentFrogIndex].coins;
+}
+
+function restartOrNext() {
+    if(gameState === 'win') {
+        level++; profiles[currentFrogIndex].lvl = level; saveProfiles();
+    }
+    startGame();
+}
+
+function showEndScreen(won) {
+    document.getElementById('end-panel').style.display = 'block';
+    const title = document.getElementById('end-title');
+    const desc = document.getElementById('end-desc');
+    const btn = document.getElementById('end-action-btn');
+    
+    if(won) {
+        title.innerText = "SZÉP VOLT!";
+        title.style.color = "#4ade80";
+        desc.innerText = "Sikeresen átjutottál a forgalmon.";
+        btn.innerText = "KÖVETKEZŐ SZINT";
+        gameState = 'win';
+    } else {
+        title.innerText = "VÉGE";
+        title.style.color = "#ef4444";
+        desc.innerText = "Sajnos elütöttek.";
+        btn.innerText = "ÚJRA";
+        gameState = 'dead';
+    }
+}
+
+// --- GAMEPLAY ---
+function generateLevel() {
+    map = []; entities = []; particles = [];
+    
+    // Get current skin color for frog
+    const p = profiles[currentFrogIndex];
+    const skinObj = AVAILABLE_SKINS.find(s => s.id === p.skin);
+    const frogColor = skinObj ? skinObj.color : '#4ade80';
+
+    map.push({type:'goal'}); 
+    map.push({type:'grass'});
+
+    let length = 15 + Math.min(level, 10);
+    
+    for(let i=0; i<length; i++) {
+        const r = Math.random();
+        let type = 'road'; 
+        if(r < 0.3) type = 'water'; else if(r < 0.5) type = 'grass';
+        if(type==='water'&&map[map.length-1].type==='water'&&map[map.length-2].type==='water') type='road';
+        let speed = (Math.random() + 0.5 + (level * 0.1));
+        map.push({type: type, speed: speed * (Math.random()>0.5?1:-1)});
+    }
+    map.push({type:'grass'}, {type:'grass'}, {type:'grass'});
+
+    map.forEach((lane, i) => {
+        if(i < 2 || i >= map.length - 3) return;
+        
+        if(lane.type === 'road') {
+            let cnt = Math.floor(Math.random() * 2) + 1;
+            for(let j=0; j<cnt; j++) {
+                let subtype = Math.random() < 0.25 ? 'trabant' : 'normal';
+                let w = subtype === 'trabant' ? 100 : 120;
+                let c = subtype === 'trabant' ? ['#dbe7e4', '#e6e6bd', '#a8c0b0'][Math.floor(Math.random()*3)] : ['#3b82f6', '#ef4444', '#8b5cf6'][Math.floor(Math.random()*3)];
+                entities.push({
+                    type: 'car', subtype: subtype, lane: i, 
+                    x: j*(width/cnt) + Math.random()*100, 
+                    w: w, h: 50, speed: lane.speed * (subtype==='trabant'?0.8:1),
+                    color: c
+                });
+            }
+        } else if (lane.type === 'water') {
+            let cnt = Math.floor(Math.random() * 2) + 2;
+            for(let j=0; j<cnt; j++) entities.push({type: 'log', lane: i, x: j*(width/cnt) + Math.random()*50, w: 160, h: 45, speed: lane.speed});
+        } else if (lane.type === 'grass') {
+            if(Math.random()>0.6) entities.push({type: 'tree', lane: i, x: Math.random()*width, w:60, h:60});
+            if(Math.random()>0.8) entities.push({type: 'coin', lane: i, x: Math.random()*width, w:20, h:20, active:true});
+        }
+    });
+
+    let startLane = map.length - 2;
+    frog = { x: width/2, y: startLane * laneH + laneH/2, tx: width/2, ty: startLane * laneH + laneH/2, lane: startLane, jumpP: 0, rot: 0, dead: false, color: frogColor };
+    camY = frog.y - height/2;
+}
+
+function handleInput(dir) {
+    if(gameState !== 'playing' || frog.dead) return;
+    if(frog.jumpP > 0.05) return; 
+
+    let nextLane = frog.lane;
+    let nextX = frog.tx;
+    
+    if(dir==='up') nextLane--; 
+    if(dir==='down') nextLane++; 
+    if(dir==='left') nextX-=60; 
+    if(dir==='right') nextX+=60;
+    
+    if(nextX < 20) return; if(nextX > width - 20) return; if(nextLane >= map.length) return;
+    
+    let blocked = false; 
+    entities.forEach(e => { if(e.type==='tree'&&e.lane===nextLane&&Math.abs(e.x-nextX)<40) blocked=true; });
+    
+    if(!blocked) {
+        AudioEngine.fx('jump'); 
+        frog.lane = nextLane; frog.tx = nextX; frog.ty = frog.lane * laneH + laneH/2; frog.jumpP = 1;
+        if(dir==='up')frog.rot=0; if(dir==='down')frog.rot=Math.PI; if(dir==='left')frog.rot=-Math.PI/2; if(dir==='right')frog.rot=Math.PI/2;
+        if(frog.lane === 0) winLevel();
+    }
+}
+
+function update() {
+    if(gameState !== 'playing') return;
+    
+    frog.x += (frog.tx - frog.x) * 0.2; 
+    frog.y += (frog.ty - frog.y) * 0.2; 
+    frog.jumpP *= 0.85; 
+    
+    let targetCamY = frog.y - height * 0.6; 
+    camY += (targetCamY - camY) * 0.05;
+    
+    let onLog = false;
+    entities.forEach(e => {
+        if(e.speed) { e.x += e.speed; if(e.speed>0 && e.x>width+e.w)e.x=-e.w; if(e.speed<0 && e.x<-e.w)e.x=width+e.w; }
+        
+        if(e.subtype === 'trabant' && Math.random() > 0.8) {
+             particles.push({x: e.x + (e.speed>0?-e.w/2:e.w/2), y: e.lane*laneH + laneH/2 + 10, vx:0, vy:-1, life:0.5, color:'rgba(200,200,200,0.5)'});
+        }
+
+        if(e.lane === frog.lane) {
+            let overlap = Math.abs(frog.x - e.x) < (e.w/2 + 10);
+            if(e.type==='car'&&overlap&&frog.jumpP<0.5) die();
+            if(e.type==='log'&&overlap) { onLog=true; frog.tx+=e.speed; frog.x+=e.speed; }
+            if(e.type==='coin'&&e.active&&Math.abs(frog.x-e.x)<30) {
+                e.active=false; AudioEngine.fx('coin');
+                profiles[currentFrogIndex].coins++; saveProfiles();
+                updateHud();
             }
         }
-        if(l.type === 'grass') { let obsCount = Math.floor(Math.random() * 3); for(let r=0; r<obsCount; r++) { obstacles.push({ lane: i, x: Math.random() * (spawnW - 50) + 25, type: Math.random()>0.5?'rock':'tree' }); }}
-        if(l.type === 'grass' || l.type === 'road') { if(Math.random() > 0.3) staticCoins.push({ lane: i, x: Math.random() * (spawnW - 50) + 25, active: true }); }
     });
-    let wRand = Math.random(); weather = wRand < 0.33 ? 'rain' : (wRand < 0.66 ? 'snow' : 'clear');
+    
+    if(map[frog.lane] && map[frog.lane].type==='water' && !onLog && frog.jumpP<0.2) die();
+    if(onLog && (frog.x < 0 || frog.x > width)) die();
+    
+    particles.forEach((p,i)=>{p.x+=p.vx;p.y+=p.vy;p.life-=0.05;if(p.life<=0)particles.splice(i,1);});
 }
 
-function move(d) {
-    if(state !== "playing") return;
-    let targetLane = frog.lane; let targetX = frog.tX;
-    if(d==='up') targetLane--; else if(d==='down') targetLane++; else if(d==='left') targetX -= 85; else if(d==='right') targetX += 85;
-    if(targetLane < 0 || targetLane >= map.length) return;
-    
-    let wrapped = false;
-    if(targetX < -50) { targetX += width + 100; wrapped = true; }
-    if(targetX > width + 50) { targetX -= (width + 100); wrapped = true; }
-    
-    if(wrapped) { combo = 0; comboPenalty = 300; Sound.lock(); damageFlash = 10; document.getElementById('penalty-bar-container').style.display = 'block'; frog.x = targetX; frog.tX = targetX; }
-
-    let hitObs = false; obstacles.forEach(o => { if(o.lane === targetLane && Math.abs((targetX + 25) - (o.x + 25)) < 40) hitObs = true; });
-    if(hitObs) { Sound.playTone(100, 'square', 0.1); return; }
-
-    Sound.jump();
-    frog.jump = 1; frog.lane = targetLane; frog.tX = targetX;
-    if(d==='left') frog.rot = -1; else if(d==='right') frog.rot = 1; else frog.rot = 0;
-    frog.tY = frog.lane * laneH + (laneH-55)/2;
-    if(map[frog.lane].type === 'grass' || map[frog.lane].type === 'start') spawnParticles(frog.x+25, frog.y+50, "#3a5f0b", 5, 'smoke');
-    
-    if(d === 'up' && comboPenalty <= 0) { if(comboTimer > 0) { combo++; totalCoins += combo; document.getElementById('coin-num').innerText = totalCoins; } else { combo = 1; } comboTimer = 60; }
-
-    if(frog.lane === 0) { level++; totalCoins += 100; save(); Sound.win(); document.getElementById('lvl-num').innerText = level; document.getElementById('coin-num').innerText = totalCoins; generateMap(); frog.lane = map.length - 1; frog.tX = width/2 - 25; frog.tY = frog.lane * laneH + (laneH-55)/2; frog.x = frog.tX; frog.y = frog.tY; spawnParticles(width/2, height/2, "#ffd700", 50, "sparkle"); }
+function die() {
+    frog.dead = true; AudioEngine.fx('die'); AudioEngine.stopMusic();
+    showEndScreen(false);
 }
 
-function collectCoin(amount, x, y) { totalCoins += amount; Sound.coin(); document.getElementById('coin-num').innerText = totalCoins; spawnParticles(x, y, "#ffd700", 10, "sparkle"); }
-
-function endGame() {
-    if(state === 'dead') return;
-    Sound.stopMusic(); 
-    Sound.crash(); state = "dead"; save(); shake = 20; damageFlash = 30;
-    setTimeout(() => { document.getElementById('ui-layer').style.display = 'flex'; document.getElementById('game-over-box').style.display = 'block'; document.getElementById('go-coins').innerText = totalCoins; document.getElementById('hud').style.display = 'none'; document.getElementById('controls').style.display = 'none'; }, 500);
-}
-
-// DRAWING HELPERS
-function drawRock(x,y) { ctx.save(); ctx.translate(x+25,y+30); ctx.shadowColor="rgba(0,0,0,0.8)"; ctx.shadowBlur=15; let g=ctx.createLinearGradient(-15,-15,10,10);g.addColorStop(0,"#555");g.addColorStop(1,"#222");ctx.fillStyle=g; ctx.beginPath();ctx.moveTo(-20,15);ctx.lineTo(-15,-15);ctx.lineTo(15,-20);ctx.lineTo(25,10);ctx.lineTo(15,20);ctx.lineTo(-15,25);ctx.fill(); ctx.fillStyle="rgba(46,204,113,0.2)";ctx.beginPath();ctx.arc(-5,-5,12,0,6.28);ctx.fill(); if(weather==='snow'){ctx.fillStyle="rgba(255,255,255,0.8)";ctx.beginPath();ctx.ellipse(0,-18,15,5,0,0,6.28);ctx.fill();} ctx.restore(); }
-function drawTree(x,y) { ctx.save(); ctx.translate(x+25,y+40); ctx.shadowColor="rgba(0,0,0,0.8)"; ctx.shadowBlur=15; ctx.fillStyle="#3e2723"; ctx.fillRect(-5,0,10,20); let c=weather==='snow'?"#3a7a52":"#145a32"; ctx.fillStyle=c; ctx.beginPath();ctx.moveTo(-25,0);ctx.lineTo(25,0);ctx.lineTo(0,-35);ctx.fill(); ctx.beginPath();ctx.moveTo(-20,-20);ctx.lineTo(20,-20);ctx.lineTo(0,-50);ctx.fill(); ctx.beginPath();ctx.moveTo(-15,-40);ctx.lineTo(15,-40);ctx.lineTo(0,-65);ctx.fill(); if(weather==='snow'){ctx.fillStyle="rgba(255,255,255,0.9)";ctx.beginPath();ctx.moveTo(-25,0);ctx.lineTo(25,0);ctx.lineTo(0,-10);ctx.fill();ctx.beginPath();ctx.moveTo(-20,-20);ctx.lineTo(20,-20);ctx.lineTo(0,-30);ctx.fill();} ctx.restore(); }
-function drawVehicle(e,y) { const isRight=e.s>0; ctx.save(); ctx.shadowColor="rgba(0,0,0,0.5)"; ctx.shadowBlur=20; if(isRight){let b=ctx.createLinearGradient(e.x+e.w,y+25,e.x+e.w+200,y+25);b.addColorStop(0,"rgba(255,255,200,0.6)");b.addColorStop(1,"transparent");ctx.fillStyle=b;ctx.beginPath();ctx.moveTo(e.x+e.w,y+15);ctx.lineTo(e.x+e.w+200,y-10);ctx.lineTo(e.x+e.w+200,y+60);ctx.lineTo(e.x+e.w,y+35);ctx.fill();} else{let b=ctx.createLinearGradient(e.x,y+25,e.x-200,y+25);b.addColorStop(0,"rgba(255,255,200,0.6)");b.addColorStop(1,"transparent");ctx.fillStyle=b;ctx.beginPath();ctx.moveTo(e.x,y+15);ctx.lineTo(e.x-200,y-10);ctx.lineTo(e.x-200,y+60);ctx.lineTo(e.x,y+35);ctx.fill();} let grad=ctx.createLinearGradient(e.x,y,e.x,y+50);grad.addColorStop(0,e.col);grad.addColorStop(1,"#050505");ctx.fillStyle=grad; if(e.subtype==='truck'){ctx.fillRect(e.x,y-10,e.w,60);ctx.fillStyle="#333";ctx.fillRect(e.x,y-10,e.w,20);ctx.fillStyle="#aaf";ctx.fillRect(e.x+5,y-5,e.w-10,15);} else if(e.subtype==='sport'){ctx.beginPath();if(isRight){ctx.moveTo(e.x,y+15);ctx.lineTo(e.x+40,y+5);ctx.lineTo(e.x+e.w-10,y+8);ctx.lineTo(e.x+e.w,y+25);ctx.lineTo(e.x+e.w,y+45);ctx.lineTo(e.x,y+45);}else{ctx.moveTo(e.x+e.w,y+15);ctx.lineTo(e.x+e.w-40,y+5);ctx.lineTo(e.x+10,y+8);ctx.lineTo(e.x,y+25);ctx.lineTo(e.x,y+45);ctx.lineTo(e.x+e.w,y+45);}ctx.fill();ctx.fillStyle="#aaf";if(isRight)ctx.fillRect(e.x+40,y+8,40,15);else ctx.fillRect(e.x+e.w-80,y+8,40,15);} else{ctx.beginPath();ctx.roundRect(e.x,y+5,e.w,45,8);ctx.fill();ctx.fillStyle="#222";ctx.beginPath();ctx.roundRect(e.x+15,y,e.w-30,40,5);ctx.fill();ctx.fillStyle="#aaf";ctx.beginPath();ctx.roundRect(e.x+20,y+5,e.w-40,25,3);ctx.fill();} ctx.fillStyle="#111";ctx.beginPath();ctx.roundRect(e.x+15,y+40,12,12,3);ctx.fill();ctx.beginPath();ctx.roundRect(e.x+e.w-27,y+40,12,12,3);ctx.fill(); ctx.restore(); }
-function drawFrog(x,y,c,j) { ctx.save(); ctx.translate(x+25,y+25); if(j>0.1)ctx.rotate(frog.rot*0.2); ctx.fillStyle="rgba(0,0,0,0.5)";ctx.beginPath();ctx.ellipse(0,18,20*(1-j*0.5),8*(1-j*0.5),0,0,6.28);ctx.fill(); ctx.translate(0,-j*60); ctx.scale(1-j*0.3, 1+j*0.5); let g=ctx.createRadialGradient(-5,-10,5,0,0,35);g.addColorStop(0,c);g.addColorStop(1,"rgba(0,0,0,0.4)");ctx.fillStyle=g; ctx.beginPath();ctx.moveTo(-15,12);ctx.quadraticCurveTo(-25,-20,0,-25);ctx.quadraticCurveTo(25,-20,15,12);ctx.quadraticCurveTo(0,25,-15,12);ctx.fill(); frog.blinkTimer--; if(frog.blinkTimer<-20)frog.blinkTimer=Math.random()*150+50; if(frog.blinkTimer>0){ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(-10,-18,7,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(10,-18,7,0,6.28);ctx.fill();ctx.fillStyle="#000";ctx.beginPath();ctx.arc(-10,-20,3,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(10,-20,3,0,6.28);ctx.fill();} if(j>0.2){ctx.strokeStyle=c;ctx.lineWidth=5;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-12,8);ctx.quadraticCurveTo(-25,15,-28,-5);ctx.stroke();ctx.beginPath();ctx.moveTo(12,8);ctx.quadraticCurveTo(25,15,28,-5);ctx.stroke();} ctx.restore(); }
-class Particle { constructor(x,y,c,t){this.x=x;this.y=y;this.c=c;this.t=t;this.l=1.0;let a=Math.random()*6.28;let s=Math.random()*3+1;this.vx=Math.cos(a)*s;this.vy=Math.sin(a)*s;if(t==='rain'){this.vx=-2;this.vy=15;}if(t==='snow'){this.vx=Math.sin(Math.random()*5);this.vy=3;}} update(){this.x+=this.vx;this.y+=this.vy;this.l-=0.03;} draw(ctx){ctx.save();ctx.globalAlpha=this.l;ctx.fillStyle=this.c;ctx.fillRect(this.x,this.y,this.t==='rain'?2:4,this.t==='rain'?15:4);ctx.restore();} }
-function spawnParticles(x,y,c,n,t){for(let i=0;i<n;i++)particles.push(new Particle(x,y,c,t));}
-
-// LOOP
-function loop() {
-    frame++; if(comboTimer>0)comboTimer--; if(shake>0)shake*=0.9; if(damageFlash>0)damageFlash--;
-    if(comboPenalty>0) { comboPenalty--; document.getElementById('penalty-bar').style.width = (comboPenalty/300)*100 + "%"; if(comboPenalty<=0) document.getElementById('penalty-bar-container').style.display='none'; }
-    if(state==='playing' && weather!=='clear') spawnParticles(Math.random()*width, frog.y-height/2-50, weather==='rain'?'#aaf':'#fff', 1, weather);
-
-    if(state === 'playing') {
-        if(Math.abs(frog.x - frog.tX) > 200) frog.x = frog.tX; else frog.x += (frog.tX - frog.x) * 0.3;
-        frog.y += (frog.tY - frog.y) * 0.3; frog.jump *= 0.8; camY += (frog.y - height/2 - camY) * 0.05;
-        let onLog = false;
-        entities.forEach(e => {
-            if(e.lane === frog.lane) {
-                if(frog.x+15 < e.x+e.w && frog.x+35 > e.x && (e.t==='c'||e.t==='train')) endGame();
-                if(e.t==='l' && frog.x+25>e.x && frog.x+25<e.x+e.w) { onLog = true; frog.tX+=e.s; frog.x+=e.s; }
-            }
-        });
-        if(map[frog.lane].type==='water' && !onLog && frog.jump<0.2) { Sound.splash(); spawnParticles(frog.x+25,frog.y+25,"#0af",15,"splash"); endGame(); }
-    }
-    if(state !== 'dead') {
-        map.forEach((l,i)=>{if(l.type==='rail'){if(l.railState==='dormant'&&Math.random()<0.005){l.railState='warning';l.warningTimer=120;}if(l.railState==='warning'){l.warningTimer--;if(l.warningTimer<=0){l.railState='active';entities.push({t:'train',lane:i,x:l.d===1?-2000:width+2000,w:1200,s:45*l.d});}}}});
-        
-        // --- JAVÍTOTT VÉGTELEN CIKLUS ÉS TISZTÍTÁS ---
-        entities.forEach((e, index)=>{
-            e.x+=e.s;
-            // Vonat tisztítása (ha nagyon kiment, töröljük)
-            if (e.t === 'train') {
-                if (Math.abs(e.x) > 5000) entities.splice(index, 1);
-            } 
-            // Autók és Rönkök visszajönnek (Loop)
-            else {
-                if(e.s > 0 && e.x > width + 200) e.x = -300;
-                if(e.s < 0 && e.x < -300) e.x = width + 200;
-            }
-        });
-        
-        staticCoins.forEach(c=>{if(c.active&&c.lane===frog.lane&&Math.abs(frog.x+25-c.x)<30){c.active=false;collectCoin(1,c.x,c.lane*laneH+50);}});
-    }
-    particles.forEach((p,i)=>{p.update();if(p.life<=0)particles.splice(i,1);});
-    draw(); requestAnimationFrame(loop);
+function winLevel() {
+    AudioEngine.fx('win');
+    profiles[currentFrogIndex].coins += 50; saveProfiles(); updateHud();
+    showEndScreen(true);
 }
 
 function draw() {
-    ctx.clearRect(0,0,width,height); ctx.save();
-    if(shake>0) ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
-    ctx.translate(0, -camY);
-    map.forEach((l,i)=>{
-        let y=i*laneH; if(y+laneH<camY||y>camY+height)return;
-        if(l.type==='grass'||l.type==='start'){let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,"#120");g.addColorStop(1,"#240");ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);ctx.fillStyle="#360";for(let j=0;j<width;j+=20)ctx.fillRect(j+(l.seed*20),y+10,4,10+Math.sin(j)*5);}
-        else if(l.type==='road'){ctx.fillStyle="#111";ctx.fillRect(0,y,width,laneH);ctx.fillStyle="#444";for(let j=0;j<width;j+=100)ctx.fillRect(j,y+45,60,10);}
-        else if(l.type==='water'){let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,"#013");g.addColorStop(1,"#026");ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);ctx.fillStyle="rgba(0,242,255,0.1)";for(let w=0;w<width;w+=30)ctx.fillRect(w+Math.sin(frame*0.02+w)*20,y+10+Math.random()*80,20,5);}
-        else if(l.type==='rail'){ctx.fillStyle="#211";ctx.fillRect(0,y,width,laneH);ctx.fillStyle="#543";for(let j=0;j<width;j+=50)ctx.fillRect(j,y+10,30,80);if(l.railState==='warning'||l.railState==='active'){ctx.fillStyle=(frame%10<5)?"#f00":"#500";ctx.beginPath();ctx.arc(60,y+50,25,0,6.28);ctx.fill();}}
-        else if(l.type==='goal'){ctx.fillStyle="#042";ctx.fillRect(0,y,width,laneH);}
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, width, height);
+    ctx.save(); ctx.translate(0, -camY);
+    
+    map.forEach((lane, i) => {
+        let y = i * laneH; if(y < camY - laneH || y > camY + height) return;
+        if(lane.type==='goal') {
+            ctx.fillStyle = '#cbd5e1'; ctx.fillRect(0, y, width, laneH);
+            ctx.fillStyle = '#1e293b'; for(let r=0; r<4; r++) for(let c=0; c<width/20; c++) if((r+c)%2===0) ctx.fillRect(c*20, y + r*20, 20, 20);
+            ctx.fillStyle = 'rgba(74, 222, 128, 0.3)'; ctx.fillRect(0,y,width,laneH);
+        }
+        else if(lane.type==='grass'){let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,'#14532d');g.addColorStop(1,'#064e3b');ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);ctx.fillStyle=asphaltPattern;ctx.globalAlpha=0.1;ctx.fillRect(0,y,width,laneH);ctx.globalAlpha=1;}
+        else if(lane.type==='road'){ctx.fillStyle='#1e293b';ctx.fillRect(0,y,width,laneH);ctx.fillStyle=asphaltPattern;ctx.globalAlpha=0.15;ctx.fillRect(0,y,width,laneH);ctx.globalAlpha=1;ctx.fillStyle='rgba(255,255,255,0.2)';for(let k=0;k<width;k+=80)ctx.fillRect(k,y+laneH/2,40,2);ctx.fillStyle='#0f172a';ctx.fillRect(0,y,width,4);ctx.fillRect(0,y+laneH-4,width,4);}
+        else if(lane.type==='water'){let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,'#0c4a6e');g.addColorStop(1,'#075985');ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fillRect(0,y+10,width,5);ctx.fillRect(0,y+30,width,2);}
     });
-    obstacles.forEach(o=>{let y=o.lane*laneH+(laneH-60)/2;if(o.type==='tree')drawTree(o.x,y);else drawRock(o.x,y);});
-    entities.forEach(e=>{let y=e.lane*laneH+(laneH-55)/2; if(e.t==='train'){ctx.save();ctx.shadowColor="#000";ctx.shadowBlur=20;let g=ctx.createLinearGradient(e.x,y,e.x,y+70);g.addColorStop(0,"#444");g.addColorStop(1,"#111");ctx.fillStyle=g;ctx.fillRect(e.x,y,e.w,70);ctx.fillStyle="#000";ctx.fillRect(e.x,y+70,e.w,10);ctx.restore();} else if(e.t==='c')drawVehicle(e,y); else {let f=Math.sin(frame*0.05+e.x*0.01)*3;ctx.fillStyle="rgba(0,0,0,0.5)";ctx.beginPath();ctx.roundRect(e.x+10,y+25+f,e.w,30,15);ctx.fill();let g=ctx.createLinearGradient(e.x,y+f,e.x,y+55+f);g.addColorStop(0,"#3e2723");g.addColorStop(1,"#2d1e15");ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(e.x,y+10+f,e.w,35,10);ctx.fill();}});
-    staticCoins.forEach(c=>{if(c.active){ctx.fillStyle="#ffd700";ctx.beginPath();ctx.arc(c.x,c.lane*laneH+50,8,0,6.28);ctx.fill();}});
-    particles.forEach(p=>p.draw(ctx));
-    drawFrog(frog.x,frog.y,frog.color,frog.jump);
+    
+    // SHADOWS
+    entities.forEach(e => {
+        if(e.y < camY - 100 || e.y > camY + height) return;
+        let y = e.lane * laneH + laneH/2;
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath();
+        if(e.type==='car') ctx.roundRect(e.x-e.w/2+10,y-e.h/2+10,e.w,e.h,10); else if(e.type==='tree') ctx.arc(e.x+5,y+5,25,0,Math.PI*2); else if(e.type==='log') ctx.roundRect(e.x-e.w/2+5,y-e.h/2+10,e.w,e.h,5);
+        ctx.fill();
+    });
+
+    // OBJECTS
+    entities.forEach(e => {
+        if(e.y < camY - 100 || e.y > camY + height) return;
+        let y = e.lane * laneH + laneH/2;
+        if(e.type==='log'){let g=ctx.createLinearGradient(e.x-e.w/2,y-e.h/2,e.x-e.w/2,y+e.h/2);g.addColorStop(0,'#451a03');g.addColorStop(1,'#78350f');ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(e.x-e.w/2,y-e.h/2,e.w,e.h,6);ctx.fill();}
+        else if(e.type==='car'){
+            const isRight=e.speed>0; ctx.save(); ctx.translate(e.x,y); if(!isRight)ctx.scale(-1,1);
+            if(e.subtype === 'trabant') {
+                ctx.fillStyle = e.color; ctx.beginPath(); ctx.roundRect(-e.w/2, -e.h/2, e.w, e.h, 4); ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(-e.w/4, -e.h/2+2, e.w/2, e.h-4);
+                ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.arc(e.w/2, -12, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(e.w/2, 12, 6, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(-e.w/2, -15, 3, 30);
+            } else {
+                let b=ctx.createLinearGradient(e.w/2,0,e.w/2+150,0);b.addColorStop(0,'rgba(255,255,200,0.4)');b.addColorStop(1,'transparent');ctx.fillStyle=b;ctx.beginPath();ctx.moveTo(e.w/2,-15);ctx.lineTo(e.w/2+150,-40);ctx.lineTo(e.w/2+150,40);ctx.lineTo(e.w/2,15);ctx.fill();
+                ctx.fillStyle=e.color;ctx.beginPath();ctx.roundRect(-e.w/2,-e.h/2,e.w,e.h,8);ctx.fill();
+                ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.roundRect(-e.w/4,-e.h/2+5,e.w/2,e.h-10,4);ctx.fill();
+                ctx.fillStyle='#fbbf24';ctx.fillRect(e.w/2-2,-15,2,6);ctx.fillRect(e.w/2-2,10,2,6);
+            }
+            ctx.restore();
+        } 
+        else if(e.type==='tree'){ctx.fillStyle='#14532d';ctx.beginPath();for(let i=0;i<7;i++){let a=(i/7)*Math.PI*2,r=25+Math.random()*5;ctx.lineTo(e.x+Math.cos(a)*r,y+Math.sin(a)*r);}ctx.fill();ctx.fillStyle='#15803d';ctx.beginPath();ctx.arc(e.x,y,15,0,Math.PI*2);ctx.fill();}
+        else if(e.type==='coin'&&e.active){ctx.fillStyle='#fbbf24';ctx.shadowColor='#f59e0b';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(e.x,y,8,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;}
+    });
+    
+    particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life;ctx.beginPath();ctx.arc(p.x,p.y,3,0,6.28);ctx.fill();ctx.globalAlpha=1;});
+
+    if(!frog.dead){
+        ctx.save();ctx.translate(frog.x,frog.y);ctx.rotate(frog.rot);let s=1+frog.jumpP*0.3;ctx.scale(s,s);
+        ctx.fillStyle=frog.color; // SKIN COLOR
+        ctx.beginPath();ctx.ellipse(-12,-12,6,12,-0.5,0,6.28);ctx.ellipse(12,-12,6,12,0.5,0,6.28);ctx.ellipse(-12,12,6,12,0.5,0,6.28);ctx.ellipse(12,12,6,12,-0.5,0,6.28);ctx.fill();
+        // Body brightness tweak for gradient
+        ctx.filter = 'brightness(1.1)';
+        ctx.beginPath();ctx.ellipse(0,0,14,18,0,0,6.28);ctx.fill();
+        ctx.filter = 'none';
+        ctx.fillStyle='#022c22';ctx.beginPath();ctx.arc(-6,-8,2,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(6,-8,2,0,6.28);ctx.fill();
+        ctx.restore();
+    }
+    
     ctx.restore();
-    if(damageFlash>0){ctx.fillStyle=`rgba(255,0,0,${damageFlash/30})`;ctx.fillRect(0,0,width,height);}
 }
 
-function renderShop() { const g=document.getElementById("skin-grid");g.innerHTML='';skins.forEach(s=>{const h=ownedSkins.includes(s.c),a=currentSkin===s.c,c=document.createElement('div');c.className=`skin-card ${a?'active':''}`;c.innerHTML=`<div class="skin-preview" style="background:${s.c}"></div><div style="font-weight:700;font-size:12px;">${s.name}</div><div class="${h?'skin-owned':'skin-price'}">${a?'KIVÁLASZTVA':(h?'MEGVÉVE':s.p+' $')}</div>`;c.onclick=()=>{if(h){currentSkin=s.c;updateTheme(s.c);}else if(totalCoins>=s.p){totalCoins-=s.p;ownedSkins.push(s.c);currentSkin=s.c;updateTheme(s.c);}save();renderShop();};g.appendChild(c);});}
-function save() { localStorage.setItem('f_pro_lvl', level); localStorage.setItem('f_pro_coins', totalCoins); localStorage.setItem('f_pro_skins', JSON.stringify(ownedSkins)); localStorage.setItem('f_pro_curr', currentSkin); }
-window.addEventListener('keydown', (e)=>{if(state==='playing'){const k=e.key.toLowerCase(); if(k==='w'||k==='arrowup')move('up'); if(k==='s'||k==='arrowdown')move('down'); if(k==='a'||k==='arrowleft')move('left'); if(k==='d'||k==='arrowright')move('right');}});
-const sb=(id,d)=>{const el=document.getElementById(id);const t=(e)=>{e.preventDefault();move(d);};el.onmousedown=t;el.ontouchstart=t;}; sb('btn-up','up');sb('btn-down','down');sb('btn-left','left');sb('btn-right','right');
-window.onresize=()=>{width=canvas.width=window.innerWidth;height=canvas.height=window.innerHeight;if(map.length===0)goToMenu();};
-window.onresize(); goToMenu(); loop();
+function loop() { if(gameState==='playing') { update(); draw(); requestAnimationFrame(loop); } else { draw(); } }
+window.addEventListener('keydown', e => { 
+    if(gameState==='playing') {
+        if(e.key==='ArrowUp'||e.key==='w')handleInput('up'); if(e.key==='ArrowDown'||e.key==='s')handleInput('down'); if(e.key==='ArrowLeft'||e.key==='a')handleInput('left'); if(e.key==='ArrowRight'||e.key==='d')handleInput('right'); 
+    }
+});
+function resize() { width=canvas.width=window.innerWidth; height=canvas.height=window.innerHeight; }
+window.addEventListener('resize', resize);
+initApp();
 </script>
 </body>
 </html>
