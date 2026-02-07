@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Real Frogger - Mobile Fix</title>
+<title>Real Frogger - Ultimate Hybrid</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
     :root { --bg: #0f172a; --text: #f8fafc; --accent: #4ade80; --danger: #ef4444; --gold: #fbbf24; }
@@ -49,11 +49,9 @@
     button {
         background: white; color: #0f172a; border: none; padding: 16px; width: 100%;
         border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 16px;
-        transition: 0.2s; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
-        touch-action: manipulation;
+        transition: 0.1s; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
     }
     button:active { transform: scale(0.96); opacity: 0.8; }
-    
     button.secondary { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
 
     /* SHOP GRID */
@@ -80,14 +78,13 @@
         border: 1px solid rgba(255,255,255,0.1);
     }
 
-    /* MOBIL CONTROLS (Visible Buttons) */
+    /* CONTROLS (Visible on both PC and Mobile for consistent UI) */
     #controls {
         position: absolute; bottom: 20px; left: 20px; right: 20px; height: 160px;
         z-index: 90; display: none; /* JS enables */
         pointer-events: none;
     }
     
-    /* D-PAD Layout */
     .d-pad {
         position: absolute; bottom: 0; width: 100%; height: 100%;
         display: grid; 
@@ -105,16 +102,16 @@
         color: rgba(255, 255, 255, 0.8);
         font-size: 24px; font-weight: 900;
         backdrop-filter: blur(4px);
-        user-select: none;
+        user-select: none; cursor: pointer;
         transition: background 0.1s;
     }
+    .d-btn:hover { background: rgba(255, 255, 255, 0.15); }
     .d-btn:active { background: rgba(74, 222, 128, 0.4); color: white; transform: scale(0.95); }
 
-    /* Button positioning */
-    #btn-left { grid-row: 2; grid-column: 1; border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+    #btn-left { grid-row: 2; grid-column: 1; }
     #btn-down { grid-row: 2; grid-column: 2; }
-    #btn-right { grid-row: 2; grid-column: 3; border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
-    #btn-up { grid-row: 1; grid-column: 1 / 4; margin-bottom: 5px; background: rgba(255,255,255,0.15); }
+    #btn-right { grid-row: 2; grid-column: 3; }
+    #btn-up { grid-row: 1; grid-column: 1 / 4; margin-bottom: 5px; }
 
 </style>
 </head>
@@ -165,10 +162,10 @@
 
 <div id="controls">
     <div class="d-pad">
-        <div class="d-btn" id="btn-up">▲ ELŐRE</div>
-        <div class="d-btn" id="btn-left">◀</div>
-        <div class="d-btn" id="btn-down">▼</div>
-        <div class="d-btn" id="btn-right">▶</div>
+        <div class="d-btn" id="btn-up" onpointerdown="handleUIInput(event, 'up')">▲ ELŐRE</div>
+        <div class="d-btn" id="btn-left" onpointerdown="handleUIInput(event, 'left')">◀</div>
+        <div class="d-btn" id="btn-down" onpointerdown="handleUIInput(event, 'down')">▼</div>
+        <div class="d-btn" id="btn-right" onpointerdown="handleUIInput(event, 'right')">▶</div>
     </div>
 </div>
 
@@ -190,7 +187,7 @@ const AudioEngine = {
     fx(t) { if(!this.ctx)return; if(t==='jump')this.playTone(150,0.1,'triangle',0.1); if(t==='coin'){this.playTone(1200,0.1,'sine',0.1);setTimeout(()=>this.playTone(1800,0.2,'sine',0.1),50);} if(t==='die')this.playTone(100,0.4,'sawtooth',0.2); if(t==='win'){this.playTone(400,0.1);setTimeout(()=>this.playTone(600,0.1),100);setTimeout(()=>this.playTone(800,0.3),200);} else if(t==='buy'){this.playTone(600,0.1,'square',0.2);setTimeout(()=>this.playTone(1000,0.2,'square',0.2),100);} else if(t==='error'){this.playTone(150,0.3,'sawtooth',0.2);} }
 };
 
-// --- DATA & SKINS ---
+// --- DATA ---
 const AVAILABLE_SKINS = [
     { id: 'classic', name: 'KLASSZIK', color: '#4ade80', price: 0 },
     { id: 'aqua',    name: 'TENGERÉSZ', color: '#38bdf8', price: 250 },
@@ -223,10 +220,8 @@ function initApp() { resize(); showProfiles(); }
 function showProfiles() {
     AudioEngine.stopMusic();
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-    document.getElementById('controls').style.display = 'none'; // Hide controls
-    
+    document.getElementById('controls').style.display = 'none'; 
     if (profiles.length === 0) { showRegister(); return; }
-    
     document.getElementById('profile-panel').style.display = 'block';
     const list = document.getElementById('profile-list-container');
     list.innerHTML = '';
@@ -287,7 +282,7 @@ function startGame() {
     AudioEngine.init(); AudioEngine.startMusic();
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
     document.getElementById('hud').style.opacity = 1;
-    document.getElementById('controls').style.display = 'block'; // SHOW CONTROLS
+    document.getElementById('controls').style.display = 'block';
     updateHud(); gameState = 'playing'; generateLevel(); loop();
 }
 
@@ -295,7 +290,7 @@ function updateHud() { if(currentFrogIndex === -1) return; document.getElementBy
 function restartOrNext() { if(gameState === 'win') { level++; profiles[currentFrogIndex].lvl = level; saveProfiles(); } startGame(); }
 function showEndScreen(won) {
     document.getElementById('end-panel').style.display = 'block';
-    document.getElementById('controls').style.display = 'none'; // Hide controls on end
+    document.getElementById('controls').style.display = 'none';
     const title = document.getElementById('end-title'); const desc = document.getElementById('end-desc'); const btn = document.getElementById('end-action-btn');
     if(won) { title.innerText = "SZÉP VOLT!"; title.style.color = "#4ade80"; desc.innerText = "Sikeresen átjutottál."; btn.innerText = "KÖVETKEZŐ SZINT"; gameState = 'win'; }
     else { title.innerText = "VÉGE"; title.style.color = "#ef4444"; desc.innerText = "Sajnos elütöttek."; btn.innerText = "ÚJRA"; gameState = 'dead'; }
@@ -347,6 +342,12 @@ function handleInput(dir) {
         if(dir==='up')frog.rot=0; if(dir==='down')frog.rot=Math.PI; if(dir==='left')frog.rot=-Math.PI/2; if(dir==='right')frog.rot=Math.PI/2;
         if(frog.lane === 0) winLevel();
     }
+}
+
+// Wrapper for UI buttons to prevent default browser behavior
+function handleUIInput(e, dir) {
+    e.preventDefault();
+    handleInput(dir);
 }
 
 function update() {
@@ -406,16 +407,7 @@ function draw() {
 
 function loop() { if(gameState==='playing') { update(); draw(); requestAnimationFrame(loop); } else { draw(); } }
 
-// KEYBOARD + MOBILE TOUCH HANDLERS (Fixed)
-function attachTouch(id, dir) {
-    const el = document.getElementById(id);
-    if(el) {
-        el.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(dir); }, {passive: false});
-        el.addEventListener('mousedown', (e) => { e.preventDefault(); handleInput(dir); });
-    }
-}
-attachTouch('btn-up', 'up'); attachTouch('btn-down', 'down'); attachTouch('btn-left', 'left'); attachTouch('btn-right', 'right');
-
+// GLOBAL KEY LISTENER
 window.addEventListener('keydown', e => { 
     if(gameState==='playing') {
         if(e.key==='ArrowUp'||e.key==='w')handleInput('up'); if(e.key==='ArrowDown'||e.key==='s')handleInput('down'); if(e.key==='ArrowLeft'||e.key==='a')handleInput('left'); if(e.key==='ArrowRight'||e.key==='d')handleInput('right'); 
