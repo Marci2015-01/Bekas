@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Real Frogger - Ultimate Hybrid</title>
+<title>Real Frogger - Ultra Realistic</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
-    :root { --bg: #0f172a; --text: #f8fafc; --accent: #4ade80; --danger: #ef4444; --gold: #fbbf24; }
+    :root { --bg: #020617; --text: #f8fafc; --accent: #4ade80; --danger: #ef4444; --gold: #fbbf24; }
     html, body {
         margin: 0; padding: 0; height: 100%; width: 100%;
         overflow: hidden; background: var(--bg);
@@ -25,42 +25,45 @@
     }
 
     .panel {
-        background: rgba(15, 23, 42, 0.95);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 16px;
+        background: rgba(15, 23, 42, 0.85); /* Átlátszóbb, üvegesebb */
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 20px;
         padding: 30px; width: 90%; max-width: 420px;
-        box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+        box-shadow: 0 40px 100px rgba(0,0,0,0.95);
         text-align: center;
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(25px) saturate(180%);
         display: none;
         pointer-events: auto;
     }
 
-    h1 { font-weight: 800; font-size: 28px; margin: 0 0 10px 0; color: white; letter-spacing: -1px; }
-    p { font-weight: 400; opacity: 0.7; font-size: 14px; margin-bottom: 25px; line-height: 1.5; color: #94a3b8; }
+    h1 { font-weight: 900; font-size: 32px; margin: 0 0 10px 0; color: white; letter-spacing: -1px; text-shadow: 0 0 20px rgba(74, 222, 128, 0.5); }
+    p { font-weight: 400; opacity: 0.8; font-size: 14px; margin-bottom: 25px; line-height: 1.5; color: #cbd5e1; }
 
     input {
-        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-        color: white; padding: 15px; width: 100%; border-radius: 8px;
+        background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+        color: white; padding: 15px; width: 100%; border-radius: 12px;
         font-family: inherit; font-size: 16px; margin-bottom: 20px; box-sizing: border-box; text-align: center;
         outline: none; transition: 0.3s;
     }
     
     button {
-        background: white; color: #0f172a; border: none; padding: 16px; width: 100%;
-        border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 16px;
+        background: white; color: #020617; border: none; padding: 16px; width: 100%;
+        border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 16px;
         transition: 0.1s; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(255,255,255,0.1);
     }
     button:active { transform: scale(0.96); opacity: 0.8; }
-    button.secondary { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
+    button.secondary { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.1); font-size: 14px; box-shadow: none; }
 
     /* SHOP GRID */
     .shop-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
     .shop-item {
         background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 8px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center;
+        border-radius: 12px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center;
+        transition: 0.2s;
     }
-    .shop-item.active { border: 2px solid var(--accent); background: rgba(74, 222, 128, 0.1); }
+    .shop-item:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+    .shop-item.active { border: 2px solid var(--accent); background: rgba(74, 222, 128, 0.15); box-shadow: 0 0 15px rgba(74, 222, 128, 0.2); }
     .skin-preview { width: 30px; height: 30px; border-radius: 50%; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     .skin-price { font-size: 11px; font-weight: 700; color: var(--gold); }
     .skin-owned { font-size: 10px; color: rgba(255,255,255,0.5); font-weight: 600; }
@@ -72,13 +75,14 @@
         pointer-events: none; opacity: 0; transition: opacity 1s; z-index: 50;
     }
     .hud-stat {
-        background: rgba(15, 23, 42, 0.8); padding: 8px 16px; border-radius: 30px;
-        font-size: 13px; font-weight: 600; color: white;
+        background: rgba(0, 0, 0, 0.6); padding: 8px 16px; border-radius: 30px;
+        font-size: 13px; font-weight: 700; color: white;
         backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px;
         border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
 
-    /* CONTROLS (Visible on both PC and Mobile for consistent UI) */
+    /* CONTROLS */
     #controls {
         position: absolute; bottom: 20px; left: 20px; right: 20px; height: 160px;
         z-index: 90; display: none; /* JS enables */
@@ -90,28 +94,28 @@
         display: grid; 
         grid-template-rows: 1fr 1fr;
         grid-template-columns: 1fr 1fr 1fr;
-        gap: 10px;
+        gap: 12px;
         pointer-events: auto;
     }
 
     .d-btn {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
         display: flex; justify-content: center; align-items: center;
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.6);
         font-size: 24px; font-weight: 900;
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(8px);
         user-select: none; cursor: pointer;
-        transition: background 0.1s;
+        transition: background 0.1s, transform 0.1s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
-    .d-btn:hover { background: rgba(255, 255, 255, 0.15); }
-    .d-btn:active { background: rgba(74, 222, 128, 0.4); color: white; transform: scale(0.95); }
+    .d-btn:active { background: rgba(74, 222, 128, 0.5); color: white; transform: scale(0.95); border-color: var(--accent); }
 
     #btn-left { grid-row: 2; grid-column: 1; }
     #btn-down { grid-row: 2; grid-column: 2; }
     #btn-right { grid-row: 2; grid-column: 3; }
-    #btn-up { grid-row: 1; grid-column: 1 / 4; margin-bottom: 5px; }
+    #btn-up { grid-row: 1; grid-column: 1 / 4; margin-bottom: 5px; background: rgba(255,255,255,0.08); }
 
 </style>
 </head>
@@ -141,7 +145,7 @@
         <h1 id="welcome-title">Üdv!</h1>
         <p>A forgalom ma sűrű. Készülj fel.</p>
         <button onclick="startGame()">JÁTÉK INDÍTÁSA</button>
-        <button onclick="showShop()" style="background: var(--gold); color: black;">GARÁZS (SKINEK)</button>
+        <button onclick="showShop()" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">GARÁZS (SKINEK)</button>
         <button class="secondary" onclick="showProfiles()">KILÉPÉS</button>
     </div>
 
@@ -162,7 +166,7 @@
 
 <div id="controls">
     <div class="d-pad">
-        <div class="d-btn" id="btn-up" onpointerdown="handleUIInput(event, 'up')">▲ ELŐRE</div>
+        <div class="d-btn" id="btn-up" onpointerdown="handleUIInput(event, 'up')">▲</div>
         <div class="d-btn" id="btn-left" onpointerdown="handleUIInput(event, 'left')">◀</div>
         <div class="d-btn" id="btn-down" onpointerdown="handleUIInput(event, 'down')">▼</div>
         <div class="d-btn" id="btn-right" onpointerdown="handleUIInput(event, 'right')">▶</div>
@@ -205,13 +209,15 @@ function saveProfiles() { localStorage.setItem('frog_profiles_pro', JSON.stringi
 let width, height, laneH = 80;
 let gameState = 'menu'; 
 let level = 1;
-let map = [], entities = [], particles = [];
+let map = [], entities = [], particles = [], rain = [];
 let frog = { x:0, y:0, tx:0, ty:0, lane:0, jumpP:0, rot:0, dead:false, color: '#4ade80' };
 let camY = 0;
+let weather = 'clear'; // clear, rain
 
-// Texture
-const noiseCanvas = document.createElement('canvas'); noiseCanvas.width=200; noiseCanvas.height=200; const nCtx=noiseCanvas.getContext('2d');
-for(let i=0;i<4000;i++){nCtx.fillStyle=`rgba(255,255,255,${Math.random()*0.1})`;nCtx.fillRect(Math.random()*200,Math.random()*200,2,2);}
+// Advanced Texture Generation
+const noiseCanvas = document.createElement('canvas'); noiseCanvas.width=256; noiseCanvas.height=256; 
+const nCtx=noiseCanvas.getContext('2d');
+for(let i=0;i<10000;i++){nCtx.fillStyle=`rgba(255,255,255,${Math.random()*0.05})`;nCtx.fillRect(Math.random()*256,Math.random()*256,2,2);}
 const asphaltPattern = ctx.createPattern(noiseCanvas,'repeat');
 
 // --- UI FUNCTIONS ---
@@ -228,9 +234,9 @@ function showProfiles() {
     profiles.forEach((p, index) => {
         if(!p.skin) p.skin = 'classic'; if(!p.ownedSkins) p.ownedSkins = ['classic'];
         const div = document.createElement('div');
-        div.style.padding = "10px"; div.style.background="rgba(255,255,255,0.05)"; div.style.marginBottom="5px"; div.style.cursor="pointer"; div.style.borderRadius="4px";
+        div.style.padding = "12px"; div.style.background="rgba(255,255,255,0.05)"; div.style.marginBottom="8px"; div.style.cursor="pointer"; div.style.borderRadius="8px";
         div.style.border = "1px solid rgba(255,255,255,0.1)";
-        div.innerHTML = `<b>${p.name}</b> <span style="font-size:12px; float:right; color:#fbbf24">lvl ${p.lvl||1} • ${p.coins}$</span>`;
+        div.innerHTML = `<b>${p.name}</b> <span style="font-size:12px; float:right; color:#fbbf24; font-weight:700;">lvl ${p.lvl||1} • ${p.coins}$</span>`;
         div.onclick = () => { currentFrogIndex = index; level = p.lvl || 1; showMenu(); };
         list.appendChild(div);
     });
@@ -261,7 +267,7 @@ function renderShop() {
         const owned = p.ownedSkins.includes(skin.id); const selected = p.skin === skin.id;
         const card = document.createElement('div'); card.className = `shop-item ${selected ? 'active' : ''}`;
         let label = selected ? '<span class="skin-owned" style="color:var(--accent)">KIVÁLASZTVA</span>' : (owned ? '<span class="skin-owned">MEGVÉVE</span>' : `<span class="skin-price">${skin.price} $</span>`);
-        card.innerHTML = `<div class="skin-preview" style="background:${skin.color}"></div><div style="font-weight:700; font-size:10px; margin-bottom:5px;">${skin.name}</div>${label}`;
+        card.innerHTML = `<div class="skin-preview" style="background:${skin.color}; box-shadow:0 0 10px ${skin.color}"></div><div style="font-weight:700; font-size:10px; margin-bottom:5px;">${skin.name}</div>${label}`;
         card.onclick = () => buyOrSelectSkin(skin); grid.appendChild(card);
     });
 }
@@ -298,7 +304,14 @@ function showEndScreen(won) {
 
 // --- GAMEPLAY ---
 function generateLevel() {
-    map = []; entities = []; particles = [];
+    map = []; entities = []; particles = []; rain = [];
+    
+    // Weather System (30% chance of rain)
+    weather = Math.random() < 0.3 ? 'rain' : 'clear';
+    if(weather === 'rain') {
+        for(let i=0; i<100; i++) rain.push({x:Math.random()*width, y:Math.random()*height, l:Math.random()*20+10, s:Math.random()*10+15});
+    }
+
     const p = profiles[currentFrogIndex]; const skinObj = AVAILABLE_SKINS.find(s => s.id === p.skin); const frogColor = skinObj ? skinObj.color : '#4ade80';
     map.push({type:'goal'}); map.push({type:'grass'});
     let length = 15 + Math.min(level, 10);
@@ -344,20 +357,22 @@ function handleInput(dir) {
     }
 }
 
-// Wrapper for UI buttons to prevent default browser behavior
-function handleUIInput(e, dir) {
-    e.preventDefault();
-    handleInput(dir);
-}
+function handleUIInput(e, dir) { e.preventDefault(); handleInput(dir); }
 
 function update() {
     if(gameState !== 'playing') return;
+    
+    // Physics
     frog.x += (frog.tx - frog.x) * 0.2; frog.y += (frog.ty - frog.y) * 0.2; frog.jumpP *= 0.85; 
     let targetCamY = frog.y - height * 0.6; camY += (targetCamY - camY) * 0.05;
+    
     let onLog = false;
     entities.forEach(e => {
         if(e.speed) { e.x += e.speed; if(e.speed>0 && e.x>width+e.w)e.x=-e.w; if(e.speed<0 && e.x<-e.w)e.x=width+e.w; }
-        if(e.subtype === 'trabant' && Math.random() > 0.8) particles.push({x: e.x + (e.speed>0?-e.w/2:e.w/2), y: e.lane*laneH + laneH/2 + 10, vx:0, vy:-1, life:0.5, color:'rgba(200,200,200,0.5)'});
+        
+        // Trabant Smoke (more particles)
+        if(e.subtype === 'trabant' && Math.random() > 0.7) particles.push({x: e.x + (e.speed>0?-e.w/2:e.w/2), y: e.lane*laneH + laneH/2 + 10, vx:0, vy:-1, life:0.6, color:'rgba(200,200,200,0.3)', size: Math.random()*5+2});
+        
         if(e.lane === frog.lane) {
             let overlap = Math.abs(frog.x - e.x) < (e.w/2 + 10);
             if(e.type==='car'&&overlap&&frog.jumpP<0.5) die();
@@ -367,47 +382,159 @@ function update() {
     });
     if(map[frog.lane] && map[frog.lane].type==='water' && !onLog && frog.jumpP<0.2) die();
     if(onLog && (frog.x < 0 || frog.x > width)) die();
-    particles.forEach((p,i)=>{p.x+=p.vx;p.y+=p.vy;p.life-=0.05;if(p.life<=0)particles.splice(i,1);});
+    
+    // Particles Update
+    particles.forEach((p,i)=>{p.x+=p.vx;p.y+=p.vy;p.life-=0.03;if(p.life<=0)particles.splice(i,1);});
+    
+    // Rain Update
+    if(weather === 'rain') {
+        rain.forEach(r => { r.y += r.s; r.x -= 1; if(r.y > height + camY) { r.y = camY - 20; r.x = Math.random() * width; } });
+    }
 }
 
 function die() { frog.dead = true; AudioEngine.fx('die'); AudioEngine.stopMusic(); showEndScreen(false); }
 function winLevel() { AudioEngine.fx('win'); profiles[currentFrogIndex].coins += 50; saveProfiles(); updateHud(); showEndScreen(true); }
 
 function draw() {
-    ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, width, height); ctx.save(); ctx.translate(0, -camY);
+    // 1. BACKGROUND (Dynamic Weather Color)
+    const skyColor = weather === 'rain' ? '#0f172a' : '#020617';
+    ctx.fillStyle = skyColor; ctx.fillRect(0, 0, width, height); 
+    
+    ctx.save(); ctx.translate(0, -camY);
+    
+    // 2. MAP LAYERS
     map.forEach((lane, i) => {
         let y = i * laneH; if(y < camY - laneH || y > camY + height) return;
-        if(lane.type==='goal') { ctx.fillStyle = '#cbd5e1'; ctx.fillRect(0, y, width, laneH); ctx.fillStyle = '#1e293b'; for(let r=0; r<4; r++) for(let c=0; c<width/20; c++) if((r+c)%2===0) ctx.fillRect(c*20, y + r*20, 20, 20); ctx.fillStyle = 'rgba(74, 222, 128, 0.3)'; ctx.fillRect(0,y,width,laneH); }
-        else if(lane.type==='grass'){let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,'#14532d');g.addColorStop(1,'#064e3b');ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);ctx.fillStyle=asphaltPattern;ctx.globalAlpha=0.1;ctx.fillRect(0,y,width,laneH);ctx.globalAlpha=1;}
-        else if(lane.type==='road'){ctx.fillStyle='#1e293b';ctx.fillRect(0,y,width,laneH);ctx.fillStyle=asphaltPattern;ctx.globalAlpha=0.15;ctx.fillRect(0,y,width,laneH);ctx.globalAlpha=1;ctx.fillStyle='rgba(255,255,255,0.2)';for(let k=0;k<width;k+=80)ctx.fillRect(k,y+laneH/2,40,2);ctx.fillStyle='#0f172a';ctx.fillRect(0,y,width,4);ctx.fillRect(0,y+laneH-4,width,4);}
-        else if(lane.type==='water'){let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,'#0c4a6e');g.addColorStop(1,'#075985');ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fillRect(0,y+10,width,5);ctx.fillRect(0,y+30,width,2);}
+        
+        if(lane.type==='goal') { 
+            ctx.fillStyle = '#cbd5e1'; ctx.fillRect(0, y, width, laneH); 
+            ctx.fillStyle = '#1e293b'; for(let r=0; r<4; r++) for(let c=0; c<width/20; c++) if((r+c)%2===0) ctx.fillRect(c*20, y + r*20, 20, 20); 
+            ctx.fillStyle = 'rgba(74, 222, 128, 0.3)'; ctx.fillRect(0,y,width,laneH); 
+        }
+        else if(lane.type==='grass'){
+            let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,'#14532d');g.addColorStop(1,'#064e3b');ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);
+            ctx.fillStyle=asphaltPattern;ctx.globalAlpha=0.1;ctx.fillRect(0,y,width,laneH);ctx.globalAlpha=1;
+            // Grass tufts details
+            ctx.fillStyle = '#166534';
+            for(let k=0; k<10; k++) ctx.fillRect((i*33 + k*100)%width, y+10+k*5, 4, 4);
+        }
+        else if(lane.type==='road'){
+            ctx.fillStyle='#1e293b';ctx.fillRect(0,y,width,laneH);
+            ctx.fillStyle=asphaltPattern;ctx.globalAlpha=0.15;ctx.fillRect(0,y,width,laneH);ctx.globalAlpha=1;
+            ctx.fillStyle='rgba(255,255,255,0.2)';for(let k=0;k<width;k+=80)ctx.fillRect(k,y+laneH/2,40,2);
+            ctx.fillStyle='#0f172a';ctx.fillRect(0,y,width,4);ctx.fillRect(0,y+laneH-4,width,4);
+            // Wet road reflection effect
+            if(weather === 'rain') { ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.fillRect(0,y,width,laneH); }
+        }
+        else if(lane.type==='water'){
+            let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,'#082f49');g.addColorStop(1,'#0c4a6e');ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);
+            // Animated Water Ripples
+            ctx.fillStyle='rgba(255,255,255,0.05)';
+            const offset = Date.now() / 20;
+            for(let k=0; k<width; k+=40) {
+                const waveY = Math.sin((k + offset)/50) * 5;
+                ctx.fillRect(k, y+30+waveY, 20, 2);
+                ctx.fillRect(k+20, y+50-waveY, 15, 2);
+            }
+        }
     });
+    
+    // 3. SHADOWS (For Depth)
     entities.forEach(e => {
         if(e.y < camY - 100 || e.y > camY + height) return;
         let y = e.lane * laneH + laneH/2;
         ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath();
-        if(e.type==='car') ctx.roundRect(e.x-e.w/2+10,y-e.h/2+10,e.w,e.h,10); else if(e.type==='tree') ctx.arc(e.x+5,y+5,25,0,Math.PI*2); else if(e.type==='log') ctx.roundRect(e.x-e.w/2+5,y-e.h/2+10,e.w,e.h,5);
+        if(e.type==='car') ctx.roundRect(e.x-e.w/2+10,y-e.h/2+10,e.w,e.h,10); 
+        else if(e.type==='tree') ctx.arc(e.x+5,y+5,25,0,Math.PI*2); 
+        else if(e.type==='log') ctx.roundRect(e.x-e.w/2+5,y-e.h/2+10,e.w,e.h,5);
         ctx.fill();
     });
+
+    // 4. OBJECTS & HEADLIGHTS
     entities.forEach(e => {
         if(e.y < camY - 100 || e.y > camY + height) return;
         let y = e.lane * laneH + laneH/2;
-        if(e.type==='log'){let g=ctx.createLinearGradient(e.x-e.w/2,y-e.h/2,e.x-e.w/2,y+e.h/2);g.addColorStop(0,'#451a03');g.addColorStop(1,'#78350f');ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(e.x-e.w/2,y-e.h/2,e.w,e.h,6);ctx.fill();}
+        
+        if(e.type==='log'){
+            let g=ctx.createLinearGradient(e.x-e.w/2,y-e.h/2,e.x-e.w/2,y+e.h/2);g.addColorStop(0,'#451a03');g.addColorStop(1,'#78350f');ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(e.x-e.w/2,y-e.h/2,e.w,e.h,6);ctx.fill();
+            // Wood Texture
+            ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(e.x-e.w/2+10, y-e.h/2, 2, e.h); ctx.fillRect(e.x+20, y-e.h/2, 2, e.h);
+        }
         else if(e.type==='car'){
             const isRight=e.speed>0; ctx.save(); ctx.translate(e.x,y); if(!isRight)ctx.scale(-1,1);
-            if(e.subtype === 'trabant') { ctx.fillStyle = e.color; ctx.beginPath(); ctx.roundRect(-e.w/2, -e.h/2, e.w, e.h, 4); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(-e.w/4, -e.h/2+2, e.w/2, e.h-4); ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.arc(e.w/2, -12, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(e.w/2, 12, 6, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ef4444'; ctx.fillRect(-e.w/2, -15, 3, 30); } else { let b=ctx.createLinearGradient(e.w/2,0,e.w/2+150,0);b.addColorStop(0,'rgba(255,255,200,0.4)');b.addColorStop(1,'transparent');ctx.fillStyle=b;ctx.beginPath();ctx.moveTo(e.w/2,-15);ctx.lineTo(e.w/2+150,-40);ctx.lineTo(e.w/2+150,40);ctx.lineTo(e.w/2,15);ctx.fill(); ctx.fillStyle=e.color;ctx.beginPath();ctx.roundRect(-e.w/2,-e.h/2,e.w,e.h,8);ctx.fill(); ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.roundRect(-e.w/4,-e.h/2+5,e.w/2,e.h-10,4);ctx.fill(); ctx.fillStyle='#fbbf24';ctx.fillRect(e.w/2-2,-15,2,6);ctx.fillRect(e.w/2-2,10,2,6); }
+            
+            // HEADLIGHTS (Realistic Beams)
+            let beam = ctx.createLinearGradient(e.w/2, 0, e.w/2 + 200, 0);
+            beam.addColorStop(0, 'rgba(255, 255, 200, 0.4)');
+            beam.addColorStop(1, 'rgba(255, 255, 200, 0)');
+            ctx.fillStyle = beam;
+            ctx.beginPath(); ctx.moveTo(e.w/2, -15); ctx.lineTo(e.w/2 + 200, -50); ctx.lineTo(e.w/2 + 200, 50); ctx.lineTo(e.w/2, 15); ctx.fill();
+
+            // Car Body
+            if(e.subtype === 'trabant') { 
+                ctx.fillStyle = e.color; ctx.beginPath(); ctx.roundRect(-e.w/2, -e.h/2, e.w, e.h, 4); ctx.fill(); 
+                ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(-e.w/4, -e.h/2+2, e.w/2, e.h-4); 
+                ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.arc(e.w/2, -12, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(e.w/2, 12, 6, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(-e.w/2, -15, 3, 30); 
+            } else { 
+                ctx.fillStyle=e.color;ctx.beginPath();ctx.roundRect(-e.w/2,-e.h/2,e.w,e.h,8);ctx.fill(); 
+                ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.roundRect(-e.w/4,-e.h/2+5,e.w/2,e.h-10,4);ctx.fill(); 
+                ctx.fillStyle='#fbbf24';ctx.fillRect(e.w/2-2,-15,2,6);ctx.fillRect(e.w/2-2,10,2,6); 
+                // Brake lights
+                ctx.fillStyle='#ef4444';ctx.fillRect(-e.w/2, -15, 2, 6);ctx.fillRect(-e.w/2, 10, 2, 6);
+            }
             ctx.restore();
-        } else if(e.type==='tree'){ctx.fillStyle='#14532d';ctx.beginPath();for(let i=0;i<7;i++){let a=(i/7)*Math.PI*2,r=25+Math.random()*5;ctx.lineTo(e.x+Math.cos(a)*r,y+Math.sin(a)*r);}ctx.fill();ctx.fillStyle='#15803d';ctx.beginPath();ctx.arc(e.x,y,15,0,Math.PI*2);ctx.fill();}
-        else if(e.type==='coin'&&e.active){ctx.fillStyle='#fbbf24';ctx.shadowColor='#f59e0b';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(e.x,y,8,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;}
+        } 
+        else if(e.type==='tree'){
+            ctx.fillStyle='#14532d';ctx.beginPath();for(let i=0;i<7;i++){let a=(i/7)*Math.PI*2,r=25+Math.random()*5;ctx.lineTo(e.x+Math.cos(a)*r,y+Math.sin(a)*r);}ctx.fill();
+            ctx.fillStyle='#15803d';ctx.beginPath();ctx.arc(e.x,y,15,0,Math.PI*2);ctx.fill();
+        }
+        else if(e.type==='coin'&&e.active){
+            ctx.fillStyle='#fbbf24';ctx.shadowColor='#f59e0b';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(e.x,y,8,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+            // Sparkle
+            ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(e.x-3, y-3, 2, 0, Math.PI*2); ctx.fill();
+        }
     });
-    particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life;ctx.beginPath();ctx.arc(p.x,p.y,3,0,6.28);ctx.fill();ctx.globalAlpha=1;});
-    if(!frog.dead){ctx.save();ctx.translate(frog.x,frog.y);ctx.rotate(frog.rot);let s=1+frog.jumpP*0.3;ctx.scale(s,s);ctx.fillStyle=frog.color;ctx.beginPath();ctx.ellipse(-12,-12,6,12,-0.5,0,6.28);ctx.ellipse(12,-12,6,12,0.5,0,6.28);ctx.ellipse(-12,12,6,12,0.5,0,6.28);ctx.ellipse(12,12,6,12,-0.5,0,6.28);ctx.fill();ctx.filter = 'brightness(1.1)';ctx.beginPath();ctx.ellipse(0,0,14,18,0,0,6.28);ctx.fill();ctx.filter = 'none';ctx.fillStyle='#022c22';ctx.beginPath();ctx.arc(-6,-8,2,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(6,-8,2,0,6.28);ctx.fill();ctx.restore();}
+    
+    // Particles (Smoke/Dust)
+    particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life;ctx.beginPath();ctx.arc(p.x,p.y,p.size||3,0,6.28);ctx.fill();ctx.globalAlpha=1;});
+
+    // 5. FROG (With jump scale)
+    if(!frog.dead){
+        ctx.save();ctx.translate(frog.x,frog.y);ctx.rotate(frog.rot);let s=1+frog.jumpP*0.4;ctx.scale(s,s);
+        ctx.fillStyle=frog.color;
+        // Legs
+        ctx.beginPath();ctx.ellipse(-12,-12,6,12,-0.5,0,6.28);ctx.ellipse(12,-12,6,12,0.5,0,6.28);ctx.ellipse(-12,12,6,12,0.5,0,6.28);ctx.ellipse(12,12,6,12,-0.5,0,6.28);ctx.fill();
+        // Body Gradient
+        let fg=ctx.createRadialGradient(0,0,2,0,0,18); fg.addColorStop(0, frog.color); fg.addColorStop(1, 'rgba(0,0,0,0.2)');
+        ctx.fillStyle=fg; ctx.beginPath();ctx.ellipse(0,0,14,18,0,0,6.28);ctx.fill();
+        // Eyes
+        ctx.fillStyle='#022c22';ctx.beginPath();ctx.arc(-6,-8,2,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(6,-8,2,0,6.28);ctx.fill();
+        ctx.restore();
+    }
+    
     ctx.restore();
+
+    // 6. OVERLAY EFFECTS (Rain & Vignette)
+    if(weather === 'rain') {
+        ctx.fillStyle = 'rgba(173, 216, 230, 0.4)';
+        rain.forEach(r => { ctx.fillRect(r.x, r.y - camY, 2, r.l); });
+        // Heavy Atmosphere Overlay
+        ctx.fillStyle = 'rgba(0, 10, 30, 0.3)'; ctx.fillRect(0,0,width,height);
+    }
+    
+    // Vignette (Cinematic Dark Corners)
+    let grad = ctx.createRadialGradient(width/2, height/2, height/2, width/2, height/2, height);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.6)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,width,height);
 }
 
 function loop() { if(gameState==='playing') { update(); draw(); requestAnimationFrame(loop); } else { draw(); } }
 
-// GLOBAL KEY LISTENER
+// KEYBOARD + HYBRID TOUCH
+function handleUIInput(e, dir) { e.preventDefault(); handleInput(dir); }
 window.addEventListener('keydown', e => { 
     if(gameState==='playing') {
         if(e.key==='ArrowUp'||e.key==='w')handleInput('up'); if(e.key==='ArrowDown'||e.key==='s')handleInput('down'); if(e.key==='ArrowLeft'||e.key==='a')handleInput('left'); if(e.key==='ArrowRight'||e.key==='d')handleInput('right'); 
