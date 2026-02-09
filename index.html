@@ -3,374 +3,422 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Crazy Frogger</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<title>Real Pixel Frog</title>
 <style>
-    :root { --bg: #0d1b2a; --accent: #00ff88; --ui-bg: rgba(0,0,0,0.85); }
-    body { 
-        margin: 0; overflow: hidden; background: var(--bg); 
-        font-family: 'Press Start 2P', cursive; color: white;
-        user-select: none; -webkit-user-select: none;
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+    body {
+        background: #111;
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        touch-action: none;
+        font-family: 'VT323', monospace;
     }
-    canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
-    
+
+    /* A VARÁZSLAT: A vászon pici, de CSS-sel nagyítjuk, szűrés nélkül */
+    canvas {
+        image-rendering: pixelated; /* A legfontosabb sor! */
+        image-rendering: crisp-edges;
+        width: 100%;
+        height: 100%;
+        max-width: 600px; /* Hogy ne legyen torz monitoron */
+        max-height: 600px;
+        aspect-ratio: 1/1;
+        background: #000;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
     #ui {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        display: flex; justify-content: center; align-items: center; pointer-events: none;
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        pointer-events: none;
     }
-    .panel {
-        background: var(--ui-bg); border: 4px solid #fff; padding: 20px;
-        text-align: center; pointer-events: auto; max-width: 400px; width: 90%;
-        box-shadow: 10px 10px 0 #000;
-        display: none; /* JS kapcsolja be */
+
+    .screen {
+        background: rgba(0, 0, 0, 0.85);
+        padding: 2px; /* Pixel border hack */
+        text-align: center;
+        pointer-events: auto;
+        border: 4px solid #fff;
+        display: none;
     }
-    h1 { color: var(--accent); font-size: 24px; line-height: 1.5; margin-bottom: 20px; text-shadow: 4px 4px #000; }
+
+    h1 {
+        color: #0f0;
+        font-size: 40px;
+        margin: 0;
+        text-shadow: 2px 2px #000;
+        line-height: 1;
+        margin-bottom: 20px;
+    }
+
     button {
-        background: #333; color: #fff; border: 2px solid #fff; padding: 15px; width: 100%;
-        font-family: inherit; font-size: 16px; cursor: pointer; margin-bottom: 10px;
+        background: #f00;
+        color: #fff;
+        border: 2px solid #fff;
+        font-family: 'VT323', monospace;
+        font-size: 24px;
+        padding: 10px 20px;
+        cursor: pointer;
         text-transform: uppercase;
+        box-shadow: 4px 4px 0px #500;
     }
-    button:hover { background: var(--accent); color: #000; }
-    button:active { transform: translateY(4px); }
-    
-    #hud { position: absolute; top: 10px; left: 10px; z-index: 5; font-size: 12px; text-shadow: 2px 2px #000; }
-    
-    /* Irányító gombok mobilon */
-    #controls {
-        position: absolute; bottom: 20px; left: 0; width: 100%; height: 160px;
-        display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr;
-        gap: 10px; padding: 0 20px; box-sizing: border-box; pointer-events: none;
+    button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #500; }
+
+    /* Mobilos gombok (láthatatlan réteg) */
+    #touch-layer {
+        position: absolute; inset: 0; z-index: 100;
+        display: grid; grid-template-rows: 1fr 1fr 1fr; grid-template-columns: 1fr 1fr 1fr;
     }
-    .btn-key {
-        pointer-events: auto; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
-        display: flex; align-items: center; justify-content: center; font-size: 24px; border-radius: 8px;
-    }
-    .btn-key:active { background: var(--accent); color: black; }
+    .t-btn { pointer-events: auto; }
 </style>
 </head>
 <body>
 
-<div id="hud">PÉNZ: $<span id="score">0</span></div>
+<canvas id="game" width="160" height="160"></canvas>
 
 <div id="ui">
-    <div id="menu" class="panel" style="display:block;">
-        <h1>CRAZY<br>FROGGER</h1>
-        <p style="font-size:10px; color:#aaa; margin-bottom:20px;">DING DING DING...</p>
-        <button onclick="Game.start()">INDÍTÁS</button>
+    <div id="start-screen" class="screen" style="display:block">
+        <h1 style="color:#4dff4d">CRAZY<br>PIXEL<br>FROG</h1>
+        <button onclick="startGame()">START</button>
+        <p style="color:#fff; font-size:14px; margin-top:10px;">HANG BEKAPCSOLVA 🔊</p>
     </div>
     
-    <div id="gameover" class="panel">
-        <h1 style="color:#ff4444">VÉGE</h1>
-        <button onclick="Game.start()">ÚJRA</button>
-        <button onclick="location.reload()">MENÜ</button>
+    <div id="game-over" class="screen">
+        <h1 style="color:#ff3333">VÉGE</h1>
+        <p style="color:#fff; font-size:20px;">SCORE: <span id="final-score">0</span></p>
+        <button onclick="resetGame()">ÚJRA</button>
     </div>
 </div>
 
-<div id="controls">
-    <div class="btn-key" style="grid-column: 2" onpointerdown="Input.handle('up', event)">▲</div>
-    <div class="btn-key" style="grid-column: 1; grid-row: 2" onpointerdown="Input.handle('left', event)">◀</div>
-    <div class="btn-key" style="grid-column: 2; grid-row: 2" onpointerdown="Input.handle('down', event)">▼</div>
-    <div class="btn-key" style="grid-column: 3; grid-row: 2" onpointerdown="Input.handle('right', event)">▶</div>
-</div>
-
-<canvas id="cvs"></canvas>
+<div id="touch-layer" style="display:none">
+    <div class="t-btn" style="grid-column:1/4; grid-row:1" onpointerdown="input('up')"></div> <div class="t-btn" style="grid-row:2; grid-column:1" onpointerdown="input('left')"></div>
+    <div class="t-btn" style="grid-row:2; grid-column:3" onpointerdown="input('right')"></div>
+    <div class="t-btn" style="grid-row:2; grid-column:2" onpointerdown="input('down')"></div>
+    <div class="t-btn" style="grid-column:1/4; grid-row:3" onpointerdown="input('down')"></div> </div>
 
 <script>
-// --- AUDIO ENGINE (AXEL F - CRAZY FROG THEME) ---
-const AudioSynth = {
-    ctx: null,
-    tempo: 140, // BPM (Gyors)
-    noteLen: 0.15,
-    timer: null,
-    step: 0,
-    
-    // A Híres Dallam
-    melody: [
-        // Ring ding ding...
-        'f4','r','ab4','f4','f4','bb4','f4','eb4',
-        'f4','r','c5','f4','f4','db5','c5','ab4',
-        'f4','c5','f5','f4','eb4','eb4','c4','g4','f4'
+/**
+ * --------------------------------------------------------
+ * 1. PIXEL ART ADATBÁZIS (0 és 1 mátrixok)
+ * --------------------------------------------------------
+ */
+// Színek (GameBoy Palette stílus)
+const C = {
+    BG: "#050505",
+    ROAD: "#222",
+    WATER: "#1a1a40",
+    FROG_DARK: "#004400", FROG_LIGHT: "#00cc00",
+    CAR_RED: "#ff3333", CAR_WIN: "#ccffff",
+    LOG: "#8b4513",
+    WHITE: "#fff", BLACK: "#000"
+};
+
+// 8x8-as sprite-ok (Béka, Autó, Rönk)
+// 1 = Szín, 0 = Átlátszó
+const SPRITES = {
+    frog: [
+        [0,1,0,0,0,0,1,0],
+        [1,1,1,0,0,1,1,1],
+        [1,1,1,1,1,1,1,1], // Test
+        [0,1,1,1,1,1,1,0],
+        [1,0,1,1,1,1,0,1],
+        [1,1,0,0,0,0,1,1]  // Lábak
     ],
+    car: [
+        [0,1,1,1,1,1,1,0],
+        [1,1,2,2,2,2,1,1], // 2 = ablak
+        [1,1,1,1,1,1,1,1],
+        [0,1,0,0,0,0,1,0]  // Kerekek
+    ],
+    log: [
+        [1,1,1,1,1,1,1,1],
+        [1,2,1,1,2,1,1,1], // 2 = fa minta
+        [1,1,1,1,1,1,1,1]
+    ]
+};
+
+/**
+ * --------------------------------------------------------
+ * 2. HANGMOTOR (AXEL F - CRAZY FROG)
+ * --------------------------------------------------------
+ */
+const AudioSys = {
+    ctx: null,
+    isPlaying: false,
     
     init() {
         if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         if(this.ctx.state === 'suspended') this.ctx.resume();
     },
-    
-    freq(note) {
-        if(note === 'r') return 0;
-        const notes = {'c':261.6,'db':277.2,'d':293.7,'eb':311.1,'e':329.6,'f':349.2,'g':392.0,'ab':415.3,'a':440.0,'bb':466.2,'b':493.9};
-        const oct = parseInt(note.slice(-1));
-        const key = note.slice(0, -1);
-        let f = notes[key];
-        if(oct === 5) f *= 2;
-        if(oct === 3) f /= 2;
-        return f;
-    },
-    
-    playNote(f, type='square') {
-        if(f <= 0 || !this.ctx) return;
+
+    playTone(freq, type, duration) {
+        if(!this.ctx) return;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = type;
-        osc.frequency.setValueAtTime(f, this.ctx.currentTime);
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
         gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + this.noteLen);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
         osc.start();
-        osc.stop(this.ctx.currentTime + this.noteLen);
+        osc.stop(this.ctx.currentTime + duration);
     },
-    
-    loop() {
-        if(!this.ctx) return;
-        const note = this.melody[this.step % this.melody.length];
-        this.playNote(this.freq(note), 'sawtooth'); // Szúrós szintetizátor hang
-        
-        // Basszus (dob helyett mély hang)
-        if(this.step % 2 === 0) this.playNote(55, 'square'); 
-        
-        this.step++;
-        this.timer = setTimeout(() => this.loop(), (60000/this.tempo)/2); // 8th notes
-    },
-    
-    start() {
+
+    // A DALLAM (Ding Ding)
+    playMusic() {
+        if(this.isPlaying) return;
+        this.isPlaying = true;
         this.init();
-        if(this.timer) return;
-        this.step = 0;
-        this.loop();
+        
+        let note = 0;
+        // Frequencies for: F, Ab, F, F, Bb, F, Eb
+        const notes = [
+            {f:349, d:0.2}, {f:0, d:0.2}, {f:415, d:0.2}, {f:349, d:0.2}, {f:0, d:0.1}, {f:349, d:0.2}, {f:466, d:0.2}, {f:349, d:0.2}, {f:311, d:0.2},
+            {f:349, d:0.2}, {f:0, d:0.2}, {f:523, d:0.2}, {f:349, d:0.2}, {f:0, d:0.1}, {f:349, d:0.2}, {f:554, d:0.2}, {f:523, d:0.2}, {f:415, d:0.2}
+        ];
+
+        const playNext = () => {
+            if(!this.isPlaying) return;
+            const n = notes[note % notes.length];
+            if(n.f > 0) {
+                // Szintetizátor hang (Sawtooth = recés, idegesítő)
+                this.playTone(n.f, 'sawtooth', n.d); 
+                // Basszus
+                if(note % 4 === 0) this.playTone(87, 'square', 0.1); 
+            }
+            note++;
+            setTimeout(playNext, n.d * 1000);
+        };
+        playNext();
     },
+
+    stop() { this.isPlaying = false; },
     
-    stop() {
-        clearTimeout(this.timer);
-        this.timer = null;
+    sfx(type) {
+        this.init();
+        if(type==='jump') this.playTone(150, 'square', 0.1);
+        if(type==='die') { this.playTone(100, 'sawtooth', 0.3); setTimeout(()=>this.playTone(50, 'sawtooth', 0.5), 200); }
     }
 };
 
-// --- SPRITES (PIXEL ART) ---
-// 1=Zöld, 2=SötétZöld, 3=Szem, 4=Kerék, 5=Piros, 6=Sárga, 7=Kék
-const SPRITES = {
-    frog: [
-        [0,3,0,0,3,0],
-        [2,1,1,1,1,2],
-        [1,2,1,1,2,1],
-        [1,1,1,1,1,1],
-        [2,1,0,0,1,2]
-    ],
-    car: [
-        [0,5,5,5,5,0],
-        [4,5,7,7,5,4], // 7 = ablak
-        [5,5,5,5,5,5],
-        [4,5,6,6,5,4]
-    ],
-    trabant: [
-        [0,7,7,7,7,0],
-        [4,7,7,7,7,4],
-        [7,7,7,7,7,7],
-        [4,6,7,7,6,4] // 7 = törtfehér szín
-    ]
-};
-
-// --- GAME LOGIC ---
-const cvs = document.getElementById('cvs');
+/**
+ * --------------------------------------------------------
+ * 3. JÁTÉK MOTOR (160x160 felbontás)
+ * --------------------------------------------------------
+ */
+const cvs = document.getElementById('game');
 const ctx = cvs.getContext('2d');
-let W, H;
-const GRID = 40;
+// Kikapcsoljuk a simítást, hogy igazi pixel legyen
+ctx.imageSmoothingEnabled = false; 
 
-const Game = {
-    running: false,
-    frog: { x:0, y:0, tx:0, ty:0, lane:0, dead:false },
-    map: [],
-    cars: [],
-    cam: 0,
-    score: 0,
-    
-    resize() {
-        W = cvs.width = window.innerWidth;
-        H = cvs.height = window.innerHeight;
-    },
-    
-    start() {
-        this.resize();
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('gameover').style.display = 'none';
-        
-        // Audio indítása (User interaction szükséges)
-        AudioSynth.start();
-        
-        // Pálya generálás
-        this.map = [];
-        this.cars = [];
-        for(let i=0; i<100; i++) {
-            let type = 'road';
-            if(i % 5 === 0) type = 'safe';
-            if(i === 0) type = 'safe';
-            
-            this.map.push({
-                type: type,
-                y: -i * GRID,
-                speed: type==='road' ? (Math.random()*3+2) * (Math.random()>0.5?1:-1) : 0
-            });
-            
-            if(type === 'road') {
-                let carCount = Math.floor(Math.random()*2)+1;
-                for(let c=0; c<carCount; c++) {
-                    this.cars.push({
-                        x: Math.random() * W,
-                        y: -i * GRID,
-                        lane: i,
-                        speed: this.map[i].speed,
-                        type: Math.random()>0.5 ? 'trabant' : 'car'
-                    });
-                }
-            }
-        }
-        
-        this.frog = { x: W/2, y: 0, tx: W/2, ty: 0, lane: 0, dead: false };
-        this.score = 0;
-        this.running = true;
-        this.cam = 200;
-        
-        loop();
-    },
-    
-    update() {
-        if(!this.running) return;
-        
-        // Béka mozgás
-        this.frog.x += (this.frog.tx - this.frog.x) * 0.3;
-        this.frog.y += (this.frog.ty - this.frog.y) * 0.3;
-        
-        // Kamera
-        this.cam += (-this.frog.y + H/2 - this.cam) * 0.1;
-        
-        // Autók
-        this.cars.forEach(c => {
-            c.x += c.speed;
-            if(c.speed > 0 && c.x > W) c.x = -50;
-            if(c.speed < 0 && c.x < -50) c.x = W + 50;
-            
-            // Ütközés (AABB)
-            if(this.frog.lane === c.lane && Math.abs(this.frog.x - c.x) < 30) {
-                this.die();
-            }
-        });
-        
-        // Pontszám
-        const s = Math.abs(this.frog.lane);
-        if(s > this.score) {
-            this.score = s;
-            document.getElementById('score').innerText = this.score;
-        }
-    },
-    
-    draw() {
-        // Háttér (Sötétkék)
-        ctx.fillStyle = '#050510';
-        ctx.fillRect(0, 0, W, H);
-        
-        ctx.save();
-        ctx.translate(0, this.cam);
-        
-        // Pálya kirajzolása
-        this.map.forEach((lane, i) => {
-            if(-lane.y + this.cam < -100 || -lane.y + this.cam > H+100) return; // Optimizáció
-            
-            if(lane.type === 'road') {
-                ctx.fillStyle = '#222';
-                ctx.fillRect(0, lane.y, W, GRID);
-                ctx.fillStyle = '#fff';
-                for(let k=0; k<W; k+=80) ctx.fillRect(k, lane.y+18, 20, 4); // Sávok
-            } else {
-                ctx.fillStyle = '#448833'; // Fű
-                ctx.fillRect(0, lane.y, W, GRID);
-            }
-        });
-        
-        // Autók rajzolása (Pixel art)
-        this.cars.forEach(c => {
-            const isRight = c.speed > 0;
-            const sprite = c.type === 'trabant' ? SPRITES.trabant : SPRITES.car;
-            drawPixelSprite(c.x, c.y + 5, sprite, isRight, c.type);
-        });
-        
-        // Béka rajzolása
-        if(!this.frog.dead) {
-            drawPixelSprite(this.frog.x - 15, this.frog.y + 5, SPRITES.frog, false, 'frog');
-        }
-        
-        ctx.restore();
-    },
-    
-    move(dir) {
-        if(this.frog.dead) return;
-        if(dir === 'up') { this.frog.lane++; this.frog.ty -= GRID; }
-        if(dir === 'down') { this.frog.lane--; this.frog.ty += GRID; }
-        if(dir === 'left') { this.frog.tx -= GRID; }
-        if(dir === 'right') { this.frog.tx += GRID; }
-    },
-    
-    die() {
-        this.frog.dead = true;
-        this.running = false;
-        AudioSynth.stop();
-        document.getElementById('gameover').style.display = 'block';
-    }
-};
+const GRID = 16; // Egy "mező" mérete (16x16 pixel)
+const W = 160;
+const H = 160;
 
-// --- PIXEL RAJZOLÓ SEGÉD ---
-function drawPixelSprite(x, y, map, flip, type) {
-    const size = 6; // Pixel méret
-    const cols = map[0].length;
-    const rows = map.length;
-    
-    const palette = {
-        0: null,
-        1: '#00ff00', 2: '#004400', 3: 'white', // Béka
-        4: 'black', 5: 'red', 6: 'yellow', 7: '#eee' // Autó
-    };
-    
-    if(type === 'trabant') palette[7] = '#aaccff'; // Halványkék Trabant
+let state = 'menu'; // menu, play, dead
+let frog = { x: 72, y: 144, lane: 0 };
+let map = []; // Sávok
+let entities = []; // Autók, rönkök
+let score = 0;
+let frame = 0;
 
-    for(let r=0; r<rows; r++) {
-        for(let c=0; c<cols; c++) {
-            const colorCode = map[r][c];
-            if(colorCode !== 0) {
-                ctx.fillStyle = palette[colorCode];
-                let px = flip ? (cols - 1 - c) * size : c * size;
-                ctx.fillRect(x + px, y + r * size, size, size);
+function initMap() {
+    map = [];
+    entities = [];
+    // Pálya generálása (10 sáv)
+    // 0: Start, 1-4: Út, 5: Pihenő, 6-8: Víz, 9: Cél
+    for(let i=0; i<10; i++) {
+        let type = 'grass';
+        let speed = 0;
+        
+        if(i >= 1 && i <= 4) { type = 'road'; speed = (Math.random() + 0.5) * (i%2==0 ? 1 : -1); }
+        if(i >= 6 && i <= 8) { type = 'water'; speed = (Math.random() + 0.8) * (i%2==0 ? -1 : 1); }
+        
+        map.push({ type: type, y: H - (i+1)*GRID });
+
+        // Tárgyak generálása a sávba
+        if(speed !== 0) {
+            let count = Math.floor(Math.random()*2) + 1;
+            for(let k=0; k<count; k++) {
+                entities.push({
+                    x: Math.random() * W,
+                    y: H - (i+1)*GRID,
+                    w: type==='road' ? 16 : 24, // Autó 16px, Rönk 24px
+                    h: 16,
+                    speed: speed,
+                    type: type==='road' ? 'car' : 'log',
+                    sprite: type==='road' ? SPRITES.car : SPRITES.log,
+                    color: type==='road' ? C.CAR_RED : C.LOG
+                });
             }
         }
     }
 }
 
-const Input = {
-    handle(dir, e) {
-        if(e) e.preventDefault();
-        Game.move(dir);
-    }
-};
+function startGame() {
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('game-over').style.display = 'none';
+    document.getElementById('touch-layer').style.display = 'grid';
+    
+    AudioSys.playMusic();
+    frog = { x: 8*8, y: 9*16, lane: 0 }; // Középen, lent
+    score = 0;
+    initMap();
+    state = 'play';
+    loop();
+}
 
+function resetGame() {
+    startGame();
+}
+
+function input(dir) {
+    if(state !== 'play') return;
+    
+    let nx = frog.x;
+    let ny = frog.y;
+    
+    if(dir === 'up') ny -= GRID;
+    if(dir === 'down') ny += GRID;
+    if(dir === 'left') nx -= GRID;
+    if(dir === 'right') nx += GRID;
+    
+    // Határok
+    if(nx >= 0 && nx <= W-GRID && ny >= 0 && ny < H) {
+        frog.x = nx;
+        frog.y = ny;
+        AudioSys.sfx('jump');
+        
+        // Pontszám (ha feljebb megy)
+        let row = 9 - (frog.y / GRID);
+        if(row > score) score = row;
+
+        // Célba érés?
+        if(frog.y < GRID) {
+            score += 100; // Bónusz
+            initMap(); // Új pálya
+            frog.y = 9*16; // Vissza startra
+        }
+    }
+}
+
+// Billentyűzet
 window.addEventListener('keydown', e => {
-    if(e.key === 'ArrowUp') Game.move('up');
-    if(e.key === 'ArrowDown') Game.move('down');
-    if(e.key === 'ArrowLeft') Game.move('left');
-    if(e.key === 'ArrowRight') Game.move('right');
+    if(e.key === 'ArrowUp') input('up');
+    if(e.key === 'ArrowDown') input('down');
+    if(e.key === 'ArrowLeft') input('left');
+    if(e.key === 'ArrowRight') input('right');
 });
 
-window.addEventListener('resize', Game.resize);
-Game.resize();
-
-// Loop
-function loop() {
-    requestAnimationFrame(loop);
-    Game.update();
-    Game.draw();
+// --- KIRAJZOLÁS (PIXEL PONTOSAN) ---
+function drawSprite(sprite, x, y, color) {
+    const w = sprite[0].length;
+    const h = sprite.length;
+    // Pixel nagyítás (minden 1 adat = 2x2 pixel a vásznon, hogy láthatóbb legyen)
+    const scale = 2; 
+    
+    for(let r=0; r<h; r++) {
+        for(let c=0; c<w; c++) {
+            if(sprite[r][c] !== 0) {
+                ctx.fillStyle = sprite[r][c] === 1 ? color : (sprite[r][c]===2 ? '#ccc' : '#fff');
+                ctx.fillRect(x + c*scale, y + r*scale, scale, scale);
+            }
+        }
+    }
 }
 
-// Alapállapot rajzolása (hogy ne legyen fekete a háttér indítás előtt)
-ctx.fillStyle = '#0d1b2a';
-ctx.fillRect(0,0,window.innerWidth, window.innerHeight);
+function loop() {
+    if(state !== 'play') return;
+    
+    // 1. Törlés
+    ctx.fillStyle = C.BG;
+    ctx.fillRect(0, 0, W, H);
+
+    // 2. Háttér rajzolása
+    map.forEach(row => {
+        if(row.type === 'water') ctx.fillStyle = C.WATER;
+        else if(row.type === 'road') ctx.fillStyle = C.ROAD;
+        else ctx.fillStyle = "#004400"; // Fű
+        
+        ctx.fillRect(0, row.y, W, GRID);
+        
+        // Sáv elválasztó
+        if(row.type === 'road') {
+            ctx.fillStyle = "#fff";
+            // Szaggatott vonal (pixel art stílusban)
+            for(let k=0; k<W; k+=8) { if(k%16===0) ctx.fillRect(k, row.y+15, 4, 1); }
+        }
+    });
+
+    // 3. Mozgó elemek update & draw
+    let onLog = false;
+    
+    entities.forEach(e => {
+        // Mozgatás
+        e.x += e.speed;
+        if(e.speed > 0 && e.x > W) e.x = -e.w;
+        if(e.speed < 0 && e.x < -e.w) e.x = W;
+        
+        // Rajzolás
+        drawSprite(e.sprite, e.x, e.y, e.color);
+
+        // Ütközés detektálás (AABB - doboz a dobozban)
+        // A béka 12x12 pixel "hitbox"-szal rendelkezik
+        if(
+            frog.x < e.x + e.w &&
+            frog.x + 12 > e.x &&
+            frog.y < e.y + e.h &&
+            frog.y + 12 > e.y
+        ) {
+            if(e.type === 'car') gameOver();
+            if(e.type === 'log') {
+                onLog = true;
+                frog.x += e.speed; // Viszi a rönk
+            }
+        }
+    });
+
+    // 4. Víz ellenőrzés
+    // Melyik sorban vagyunk?
+    let currentRow = map.find(row => Math.abs(row.y - frog.y) < 5);
+    if(currentRow && currentRow.type === 'water' && !onLog) {
+        gameOver(); // Beleesett
+    }
+    
+    // Képernyő széle ellenőrzés (ha a rönk kiviszi)
+    if(frog.x < -10 || frog.x > W) gameOver();
+
+    // 5. Béka rajzolása
+    drawSprite(SPRITES.frog, frog.x + 2, frog.y + 2, C.FROG_LIGHT);
+
+    // 6. Loop
+    frame++;
+    requestAnimationFrame(loop);
+}
+
+function gameOver() {
+    state = 'dead';
+    AudioSys.sfx('die');
+    AudioSys.stop();
+    document.getElementById('final-score').innerText = score;
+    document.getElementById('game-over').style.display = 'block';
+    document.getElementById('touch-layer').style.display = 'none';
+}
+
+// Induláskor kirajzolunk egy állóképet
+ctx.fillStyle = "#000";
+ctx.fillRect(0,0,W,H);
+ctx.fillStyle = "#0f0";
+ctx.font = "10px monospace";
+ctx.fillText("PIXEL READY", 50, 80);
 
 </script>
 </body>
