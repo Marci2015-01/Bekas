@@ -3,546 +3,923 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Real Frogger - Ultra Realistic</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<title>Frogger: High Definition Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
-    :root { --bg: #020617; --text: #f8fafc; --accent: #4ade80; --danger: #ef4444; --gold: #fbbf24; }
-    html, body {
-        margin: 0; padding: 0; height: 100%; width: 100%;
-        overflow: hidden; background: var(--bg);
-        font-family: 'Inter', sans-serif;
-        touch-action: none; user-select: none; -webkit-user-select: none;
-        color: var(--text);
+    :root { 
+        --bg: #050b14; 
+        --panel-bg: rgba(13, 22, 35, 0.95);
+        --accent: #00f2ff; 
+        --gold: #fbbf24; 
+        --danger: #ef4444; 
+        --text: #e2e8f0;
     }
-    canvas { display: block; width: 100%; height: 100%; }
+    
+    html, body {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        overflow: hidden; background: var(--bg);
+        font-family: 'Rajdhani', sans-serif;
+        color: var(--text);
+        user-select: none; -webkit-user-select: none;
+        touch-action: none;
+    }
 
-    /* UI LAYERS */
+    canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+    /* --- UI DESIGN --- */
     #ui-layer {
-        position: absolute; inset: 0;
+        position: absolute; inset: 0; pointer-events: none;
         display: flex; justify-content: center; align-items: center;
         z-index: 100;
-        pointer-events: none;
     }
 
     .panel {
-        background: rgba(15, 23, 42, 0.85); /* Átlátszóbb, üvegesebb */
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 20px;
-        padding: 30px; width: 90%; max-width: 420px;
-        box-shadow: 0 40px 100px rgba(0,0,0,0.95);
-        text-align: center;
-        backdrop-filter: blur(25px) saturate(180%);
-        display: none;
         pointer-events: auto;
+        background: var(--panel-bg);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,242,255,0.05);
+        padding: 40px; width: 90%; max-width: 450px;
+        border-radius: 12px; text-align: center;
+        backdrop-filter: blur(10px);
+        transform: perspective(1000px) rotateX(2deg);
+        display: none;
+        animation: fadeIn 0.5s ease-out;
     }
 
-    h1 { font-weight: 900; font-size: 32px; margin: 0 0 10px 0; color: white; letter-spacing: -1px; text-shadow: 0 0 20px rgba(74, 222, 128, 0.5); }
-    p { font-weight: 400; opacity: 0.8; font-size: 14px; margin-bottom: 25px; line-height: 1.5; color: #cbd5e1; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
+    h1 { 
+        font-size: 42px; margin: 0 0 10px 0; color: #fff; 
+        text-transform: uppercase; letter-spacing: 2px;
+        text-shadow: 0 0 20px var(--accent);
+    }
+
+    h2 { font-size: 24px; color: var(--gold); margin-bottom: 20px; text-transform: uppercase; }
+    p { font-size: 16px; color: #94a3b8; margin-bottom: 30px; line-height: 1.4; }
+
+    /* INPUTS & BUTTONS */
     input {
-        background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-        color: white; padding: 15px; width: 100%; border-radius: 12px;
-        font-family: inherit; font-size: 16px; margin-bottom: 20px; box-sizing: border-box; text-align: center;
-        outline: none; transition: 0.3s;
+        background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+        color: var(--accent); font-family: inherit; font-size: 20px; font-weight: 700;
+        padding: 15px; width: 100%; border-radius: 6px; box-sizing: border-box;
+        text-align: center; margin-bottom: 20px; outline: none;
+        transition: 0.3s; text-transform: uppercase;
     }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
+
+    .btn {
+        display: block; width: 100%; padding: 18px; margin-bottom: 12px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+        border: 1px solid rgba(255,255,255,0.2); border-left: 4px solid var(--accent);
+        color: #fff; font-family: inherit; font-size: 18px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 2px; cursor: pointer;
+        transition: all 0.2s; position: relative; overflow: hidden;
+    }
+    .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 25px var(--accent); transform: scale(1.02); }
+    .btn:active { transform: scale(0.98); }
     
-    button {
-        background: white; color: #020617; border: none; padding: 16px; width: 100%;
-        border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 16px;
-        transition: 0.1s; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
-        box-shadow: 0 4px 15px rgba(255,255,255,0.1);
-    }
-    button:active { transform: scale(0.96); opacity: 0.8; }
-    button.secondary { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.1); font-size: 14px; box-shadow: none; }
+    .btn-gold { border-left-color: var(--gold); }
+    .btn-gold:hover { background: var(--gold); box-shadow: 0 0 25px var(--gold); }
+    
+    .btn-danger { border-left-color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); box-shadow: 0 0 25px var(--danger); }
 
     /* SHOP GRID */
-    .shop-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .shop-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
     .shop-item {
-        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 12px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center;
-        transition: 0.2s;
+        background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+        padding: 10px; cursor: pointer; transition: 0.2s; position: relative;
     }
-    .shop-item:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
-    .shop-item.active { border: 2px solid var(--accent); background: rgba(74, 222, 128, 0.15); box-shadow: 0 0 15px rgba(74, 222, 128, 0.2); }
-    .skin-preview { width: 30px; height: 30px; border-radius: 50%; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    .skin-price { font-size: 11px; font-weight: 700; color: var(--gold); }
-    .skin-owned { font-size: 10px; color: rgba(255,255,255,0.5); font-weight: 600; }
+    .shop-item:hover { background: rgba(255,255,255,0.1); }
+    .shop-item.selected { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
+    .skin-circle { width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+    .skin-name { font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px; }
+    .skin-price { font-size: 11px; color: var(--gold); font-weight: 900; }
 
     /* HUD */
     #hud {
         position: absolute; top: 20px; left: 20px; right: 20px;
-        display: flex; justify-content: space-between;
-        pointer-events: none; opacity: 0; transition: opacity 1s; z-index: 50;
+        display: flex; justify-content: space-between; pointer-events: none;
+        opacity: 0; transition: opacity 1s; z-index: 50;
     }
-    .hud-stat {
-        background: rgba(0, 0, 0, 0.6); padding: 8px 16px; border-radius: 30px;
-        font-size: 13px; font-weight: 700; color: white;
-        backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px;
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    .hud-box {
+        background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.15);
+        padding: 10px 20px; transform: skewX(-15deg);
+        display: flex; align-items: center; gap: 10px;
     }
+    .hud-label { font-size: 12px; color: #aaa; transform: skewX(15deg); font-weight: 700; letter-spacing: 1px; }
+    .hud-val { font-size: 24px; color: #fff; transform: skewX(15deg); font-weight: 900; }
 
-    /* CONTROLS */
+    /* CONTROLS OVERLAY */
     #controls {
-        position: absolute; bottom: 20px; left: 20px; right: 20px; height: 160px;
-        z-index: 90; display: none; /* JS enables */
-        pointer-events: none;
+        position: absolute; bottom: 20px; left: 20px; right: 20px; height: 180px;
+        z-index: 80; display: none; pointer-events: none;
     }
-    
-    .d-pad {
-        position: absolute; bottom: 0; width: 100%; height: 100%;
-        display: grid; 
-        grid-template-rows: 1fr 1fr;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 12px;
-        pointer-events: auto;
+    .dpad-grid {
+        width: 100%; height: 100%; pointer-events: auto;
+        display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px;
     }
-
-    .d-btn {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        display: flex; justify-content: center; align-items: center;
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 24px; font-weight: 900;
-        backdrop-filter: blur(8px);
-        user-select: none; cursor: pointer;
-        transition: background 0.1s, transform 0.1s;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    .ctrl-btn {
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center;
+        font-size: 30px; color: rgba(255,255,255,0.5); cursor: pointer; transition: 0.1s;
+        border-radius: 8px;
     }
-    .d-btn:active { background: rgba(74, 222, 128, 0.5); color: white; transform: scale(0.95); border-color: var(--accent); }
-
-    #btn-left { grid-row: 2; grid-column: 1; }
-    #btn-down { grid-row: 2; grid-column: 2; }
-    #btn-right { grid-row: 2; grid-column: 3; }
-    #btn-up { grid-row: 1; grid-column: 1 / 4; margin-bottom: 5px; background: rgba(255,255,255,0.08); }
-
+    .ctrl-btn:active { background: var(--accent); color: #000; opacity: 0.8; }
 </style>
 </head>
 <body>
 
 <div id="hud">
-    <div class="hud-stat"><span id="level-display">SZINT 1</span></div>
-    <div class="hud-stat"><span style="color:var(--gold)">●</span><span id="coin-display">0</span></div>
+    <div class="hud-box" style="border-left: 4px solid var(--accent)">
+        <span class="hud-label">SZINT</span>
+        <span id="ui-level" class="hud-val">1</span>
+    </div>
+    <div class="hud-box" style="border-right: 4px solid var(--gold)">
+        <span id="ui-coins" class="hud-val" style="color:var(--gold)">0</span>
+        <span class="hud-label">KRIPTOPÉNZ</span>
+    </div>
 </div>
 
 <div id="ui-layer">
-    <div id="profile-panel" class="panel">
-        <h1>VÁLASSZ BÉKÁT</h1>
-        <div id="profile-list-container" style="margin-bottom:20px; max-height:150px; overflow-y:auto; text-align:left;"></div>
-        <button onclick="showRegister()" class="secondary">+ ÚJ PROFIL</button>
+    <div id="panel-profiles" class="panel">
+        <h1>VÁLASSZ KARAKTERT</h1>
+        <div id="profile-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 20px; text-align: left;"></div>
+        <button class="btn" onclick="showScreen('register')">ÚJ PROFIL LÉTREHOZÁSA</button>
     </div>
 
-    <div id="register-panel" class="panel">
-        <h1>ÚJ KARRIER</h1>
-        <p>Adj nevet a versenyzőnek.</p>
-        <input type="text" id="frog-name-input" placeholder="Név..." maxlength="12">
-        <button onclick="registerFrog()">LÉTREHOZÁS</button>
-        <button class="secondary" onclick="showProfiles()">MÉGSE</button>
+    <div id="panel-register" class="panel">
+        <h1>ÚJ VERSENYZŐ</h1>
+        <p>Adj nevet a békádnak. Ez a név bekerül a helyi adatbázisba.</p>
+        <input type="text" id="inp-name" placeholder="PL. BREKI_2077" maxlength="12">
+        <button class="btn" onclick="Game.register()">LÉTREHOZÁS</button>
+        <button class="btn btn-danger" onclick="showScreen('profiles')">MÉGSE</button>
     </div>
 
-    <div id="main-menu" class="panel">
-        <h1 id="welcome-title">Üdv!</h1>
-        <p>A forgalom ma sűrű. Készülj fel.</p>
-        <button onclick="startGame()">JÁTÉK INDÍTÁSA</button>
-        <button onclick="showShop()" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">GARÁZS (SKINEK)</button>
-        <button class="secondary" onclick="showProfiles()">KILÉPÉS</button>
+    <div id="panel-menu" class="panel">
+        <h1 id="menu-welcome">ÜDV!</h1>
+        <p>A víz szennyezett, az autók gyorsak. Készen állsz?</p>
+        <button class="btn" onclick="Game.start()">JÁTÉK INDÍTÁSA</button>
+        <button class="btn btn-gold" onclick="showScreen('shop')">FEKETEMPIAC (BOLT)</button>
+        <button class="btn btn-danger" onclick="showScreen('profiles')">PROFIL VÁLTÁS</button>
     </div>
 
-    <div id="shop-panel" class="panel">
-        <h1 style="color:var(--gold)">PRÉMIUM BOLT</h1>
-        <p>Egyenleged: <span id="shop-coins" style="color:white; font-weight:bold;">0</span></p>
-        <div id="shop-grid" class="shop-grid"></div>
-        <button class="secondary" onclick="showMenu()">VISSZA A MENÜBE</button>
+    <div id="panel-shop" class="panel">
+        <h2 style="color:var(--gold)">FEKETEMPIAC</h2>
+        <p>Egyenleged: <span id="shop-balance" style="color:#fff; font-weight:900">0</span></p>
+        <div id="shop-grid" class="shop-container"></div>
+        <button class="btn" onclick="showScreen('menu')">VISSZA</button>
     </div>
 
-    <div id="end-panel" class="panel">
-        <h1 id="end-title" style="font-size: 42px;">VÉGE</h1>
-        <p id="end-desc">Vigyázz jobban!</p>
-        <button id="end-action-btn" onclick="restartOrNext()">ÚJRA</button>
-        <button class="secondary" onclick="showMenu()">MENÜ</button>
+    <div id="panel-end" class="panel">
+        <h1 id="end-title">VÉGE</h1>
+        <p id="end-msg">A békád elpusztult.</p>
+        <button id="btn-restart" class="btn" onclick="Game.nextOrRestart()">ÚJRA</button>
+        <button class="btn btn-danger" onclick="showScreen('menu')">MENÜ</button>
     </div>
 </div>
 
 <div id="controls">
-    <div class="d-pad">
-        <div class="d-btn" id="btn-up" onpointerdown="handleUIInput(event, 'up')">▲</div>
-        <div class="d-btn" id="btn-left" onpointerdown="handleUIInput(event, 'left')">◀</div>
-        <div class="d-btn" id="btn-down" onpointerdown="handleUIInput(event, 'down')">▼</div>
-        <div class="d-btn" id="btn-right" onpointerdown="handleUIInput(event, 'right')">▶</div>
+    <div class="dpad-grid">
+        <div class="ctrl-btn" style="grid-column: 1/4; grid-row: 1;" onpointerdown="Input.trigger('up', event)">▲ ELŐRE</div>
+        <div class="ctrl-btn" onpointerdown="Input.trigger('left', event)">◀</div>
+        <div class="ctrl-btn" onpointerdown="Input.trigger('down', event)">▼</div>
+        <div class="ctrl-btn" onpointerdown="Input.trigger('right', event)">▶</div>
     </div>
 </div>
 
-<canvas id="game"></canvas>
+<canvas id="cvs"></canvas>
 
 <script>
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+/**
+ * ULTRA REALISTIC FROGGER ENGINE
+ * Features: Canvas Drawing API, Particle System, LocalStorage Profiles, Audio Synth
+ */
 
-// --- AUDIO ---
-const AudioEngine = {
-    ctx: null, isPlaying: false, timer: null, index: 0,
-    melody: [[523,100],[659,100],[523,100],[659,100],[784,90],[784,90],[880,90],[784,90],[0,50],[698,90],[698,90],[659,90],[587,90],[523,90],[392,90],[659,90],[523,90],[0,200]],
-    init() { if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)(); },
-    playTone(f,d,t='sine',v=0.05) { if(!this.ctx)return; const o=this.ctx.createOscillator(),g=this.ctx.createGain(); o.frequency.value=f; o.type=t; g.gain.setValueAtTime(v,this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+d); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d); },
-    startMusic() { if(this.isPlaying) return; this.isPlaying=true; this.index=0; this.playNext(); },
-    stopMusic() { this.isPlaying=false; clearTimeout(this.timer); },
-    playNext() { if(!this.isPlaying)return; const n=this.melody[this.index]; if(n[0]>0)this.playTone(n[0],n[1]/1000,'square',0.03); this.index=(this.index+1)%this.melody.length; this.timer=setTimeout(()=>this.playNext(),n[1]); },
-    fx(t) { if(!this.ctx)return; if(t==='jump')this.playTone(150,0.1,'triangle',0.1); if(t==='coin'){this.playTone(1200,0.1,'sine',0.1);setTimeout(()=>this.playTone(1800,0.2,'sine',0.1),50);} if(t==='die')this.playTone(100,0.4,'sawtooth',0.2); if(t==='win'){this.playTone(400,0.1);setTimeout(()=>this.playTone(600,0.1),100);setTimeout(()=>this.playTone(800,0.3),200);} else if(t==='buy'){this.playTone(600,0.1,'square',0.2);setTimeout(()=>this.playTone(1000,0.2,'square',0.2),100);} else if(t==='error'){this.playTone(150,0.3,'sawtooth',0.2);} }
-};
-
-// --- DATA ---
-const AVAILABLE_SKINS = [
-    { id: 'classic', name: 'KLASSZIK', color: '#4ade80', price: 0 },
-    { id: 'aqua',    name: 'TENGERÉSZ', color: '#38bdf8', price: 250 },
-    { id: 'lava',    name: 'LÁVA',      color: '#ef4444', price: 500 },
-    { id: 'toxic',   name: 'TOXIKUS',   color: '#a855f7', price: 1000 },
-    { id: 'night',   name: 'NINDZSA',   color: '#334155', price: 2000 },
-    { id: 'gold',    name: 'MILLIOMOS', color: '#fbbf24', price: 5000 }
+// --- CONFIGURATION ---
+const SKINS = [
+    { id: 'classic', name: 'MOCSÁRI', color: '#4ade80', spots: '#166534', belly: '#bbf7d0', price: 0 },
+    { id: 'dart',    name: 'MÉRGEZŐ', color: '#facc15', spots: '#000000', belly: '#fef08a', price: 500 },
+    { id: 'ocean',   name: 'TENGERI', color: '#3b82f6', spots: '#1e3a8a', belly: '#bfdbfe', price: 1000 },
+    { id: 'lava',    name: 'MAGMA',   color: '#ef4444', spots: '#7f1d1d', belly: '#fecaca', price: 2500 },
+    { id: 'cyber',   name: 'CYBER',   color: '#d946ef', spots: '#00f2ff', belly: '#e879f9', price: 5000 },
+    { id: 'gold',    name: 'ARANY',   color: '#fbbf24', spots: '#b45309', belly: '#fffbeb', price: 10000 }
 ];
 
-let profiles = JSON.parse(localStorage.getItem('frog_profiles_pro')) || [];
-let currentFrogIndex = -1;
-function saveProfiles() { localStorage.setItem('frog_profiles_pro', JSON.stringify(profiles)); }
-
-// --- STATE ---
-let width, height, laneH = 80;
-let gameState = 'menu'; 
-let level = 1;
-let map = [], entities = [], particles = [], rain = [];
-let frog = { x:0, y:0, tx:0, ty:0, lane:0, jumpP:0, rot:0, dead:false, color: '#4ade80' };
-let camY = 0;
-let weather = 'clear'; // clear, rain
-
-// Advanced Texture Generation
-const noiseCanvas = document.createElement('canvas'); noiseCanvas.width=256; noiseCanvas.height=256; 
-const nCtx=noiseCanvas.getContext('2d');
-for(let i=0;i<10000;i++){nCtx.fillStyle=`rgba(255,255,255,${Math.random()*0.05})`;nCtx.fillRect(Math.random()*256,Math.random()*256,2,2);}
-const asphaltPattern = ctx.createPattern(noiseCanvas,'repeat');
-
-// --- UI FUNCTIONS ---
-function initApp() { resize(); showProfiles(); }
-
-function showProfiles() {
-    AudioEngine.stopMusic();
-    document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-    document.getElementById('controls').style.display = 'none'; 
-    if (profiles.length === 0) { showRegister(); return; }
-    document.getElementById('profile-panel').style.display = 'block';
-    const list = document.getElementById('profile-list-container');
-    list.innerHTML = '';
-    profiles.forEach((p, index) => {
-        if(!p.skin) p.skin = 'classic'; if(!p.ownedSkins) p.ownedSkins = ['classic'];
-        const div = document.createElement('div');
-        div.style.padding = "12px"; div.style.background="rgba(255,255,255,0.05)"; div.style.marginBottom="8px"; div.style.cursor="pointer"; div.style.borderRadius="8px";
-        div.style.border = "1px solid rgba(255,255,255,0.1)";
-        div.innerHTML = `<b>${p.name}</b> <span style="font-size:12px; float:right; color:#fbbf24; font-weight:700;">lvl ${p.lvl||1} • ${p.coins}$</span>`;
-        div.onclick = () => { currentFrogIndex = index; level = p.lvl || 1; showMenu(); };
-        list.appendChild(div);
-    });
-}
-
-function showRegister() { document.getElementById('profile-panel').style.display = 'none'; document.getElementById('register-panel').style.display = 'block'; }
-function registerFrog() {
-    const name = document.getElementById('frog-name-input').value.trim();
-    if(name.length < 2) return;
-    profiles.push({ name: name, coins: 0, lvl: 1, skin: 'classic', ownedSkins: ['classic'] });
-    saveProfiles(); currentFrogIndex = profiles.length - 1; level = 1; showMenu();
-}
-
-function showMenu() {
-    gameState = 'menu'; document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-    document.getElementById('main-menu').style.display = 'block';
-    document.getElementById('hud').style.opacity = 0;
-    document.getElementById('controls').style.display = 'none';
-    const p = profiles[currentFrogIndex];
-    document.getElementById('welcome-title').innerText = `SZIA, ${p.name.toUpperCase()}!`;
-}
-
-function showShop() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('shop-panel').style.display = 'block'; renderShop(); }
-function renderShop() {
-    const p = profiles[currentFrogIndex]; document.getElementById('shop-coins').innerText = p.coins;
-    const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
-    AVAILABLE_SKINS.forEach(skin => {
-        const owned = p.ownedSkins.includes(skin.id); const selected = p.skin === skin.id;
-        const card = document.createElement('div'); card.className = `shop-item ${selected ? 'active' : ''}`;
-        let label = selected ? '<span class="skin-owned" style="color:var(--accent)">KIVÁLASZTVA</span>' : (owned ? '<span class="skin-owned">MEGVÉVE</span>' : `<span class="skin-price">${skin.price} $</span>`);
-        card.innerHTML = `<div class="skin-preview" style="background:${skin.color}; box-shadow:0 0 10px ${skin.color}"></div><div style="font-weight:700; font-size:10px; margin-bottom:5px;">${skin.name}</div>${label}`;
-        card.onclick = () => buyOrSelectSkin(skin); grid.appendChild(card);
-    });
-}
-
-function buyOrSelectSkin(skin) {
-    const p = profiles[currentFrogIndex]; const owned = p.ownedSkins.includes(skin.id);
-    if (owned) { p.skin = skin.id; saveProfiles(); renderShop(); }
-    else {
-        if (p.coins >= skin.price) {
-            if(confirm(`Megveszed a ${skin.name} skint ${skin.price} érméért?`)) {
-                p.coins -= skin.price; p.ownedSkins.push(skin.id); p.skin = skin.id; saveProfiles(); AudioEngine.fx('buy'); renderShop();
-            }
-        } else { AudioEngine.fx('error'); alert("Nincs elég pénzed!"); }
-    }
-}
-
-function startGame() {
-    AudioEngine.init(); AudioEngine.startMusic();
-    document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-    document.getElementById('hud').style.opacity = 1;
-    document.getElementById('controls').style.display = 'block';
-    updateHud(); gameState = 'playing'; generateLevel(); loop();
-}
-
-function updateHud() { if(currentFrogIndex === -1) return; document.getElementById('level-display').innerText = `SZINT ${level}`; document.getElementById('coin-display').innerText = profiles[currentFrogIndex].coins; }
-function restartOrNext() { if(gameState === 'win') { level++; profiles[currentFrogIndex].lvl = level; saveProfiles(); } startGame(); }
-function showEndScreen(won) {
-    document.getElementById('end-panel').style.display = 'block';
-    document.getElementById('controls').style.display = 'none';
-    const title = document.getElementById('end-title'); const desc = document.getElementById('end-desc'); const btn = document.getElementById('end-action-btn');
-    if(won) { title.innerText = "SZÉP VOLT!"; title.style.color = "#4ade80"; desc.innerText = "Sikeresen átjutottál."; btn.innerText = "KÖVETKEZŐ SZINT"; gameState = 'win'; }
-    else { title.innerText = "VÉGE"; title.style.color = "#ef4444"; desc.innerText = "Sajnos elütöttek."; btn.innerText = "ÚJRA"; gameState = 'dead'; }
-}
-
-// --- GAMEPLAY ---
-function generateLevel() {
-    map = []; entities = []; particles = []; rain = [];
-    
-    // Weather System (30% chance of rain)
-    weather = Math.random() < 0.3 ? 'rain' : 'clear';
-    if(weather === 'rain') {
-        for(let i=0; i<100; i++) rain.push({x:Math.random()*width, y:Math.random()*height, l:Math.random()*20+10, s:Math.random()*10+15});
-    }
-
-    const p = profiles[currentFrogIndex]; const skinObj = AVAILABLE_SKINS.find(s => s.id === p.skin); const frogColor = skinObj ? skinObj.color : '#4ade80';
-    map.push({type:'goal'}); map.push({type:'grass'});
-    let length = 15 + Math.min(level, 10);
-    for(let i=0; i<length; i++) {
-        const r = Math.random(); let type = 'road'; if(r < 0.3) type = 'water'; else if(r < 0.5) type = 'grass';
-        if(type==='water'&&map[map.length-1].type==='water'&&map[map.length-2].type==='water') type='road';
-        let speed = (Math.random() + 0.5 + (level * 0.1)); map.push({type: type, speed: speed * (Math.random()>0.5?1:-1)});
-    }
-    map.push({type:'grass'}, {type:'grass'}, {type:'grass'});
-    map.forEach((lane, i) => {
-        if(i < 2 || i >= map.length - 3) return;
-        if(lane.type === 'road') {
-            let cnt = Math.floor(Math.random() * 2) + 1;
-            for(let j=0; j<cnt; j++) {
-                let subtype = Math.random() < 0.25 ? 'trabant' : 'normal';
-                let w = subtype === 'trabant' ? 100 : 120;
-                let c = subtype === 'trabant' ? ['#dbe7e4', '#e6e6bd', '#a8c0b0'][Math.floor(Math.random()*3)] : ['#3b82f6', '#ef4444', '#8b5cf6'][Math.floor(Math.random()*3)];
-                entities.push({ type: 'car', subtype: subtype, lane: i, x: j*(width/cnt) + Math.random()*100, w: w, h: 50, speed: lane.speed * (subtype==='trabant'?0.8:1), color: c });
-            }
-        } else if (lane.type === 'water') {
-            let cnt = Math.floor(Math.random() * 2) + 2; for(let j=0; j<cnt; j++) entities.push({type: 'log', lane: i, x: j*(width/cnt) + Math.random()*50, w: 160, h: 45, speed: lane.speed});
-        } else if (lane.type === 'grass') {
-            if(Math.random()>0.6) entities.push({type: 'tree', lane: i, x: Math.random()*width, w:60, h:60});
-            if(Math.random()>0.8) entities.push({type: 'coin', lane: i, x: Math.random()*width, w:20, h:20, active:true});
-        }
-    });
-    let startLane = map.length - 2;
-    frog = { x: width/2, y: startLane * laneH + laneH/2, tx: width/2, ty: startLane * laneH + laneH/2, lane: startLane, jumpP: 0, rot: 0, dead: false, color: frogColor };
-    camY = frog.y - height/2;
-}
-
-function handleInput(dir) {
-    if(gameState !== 'playing' || frog.dead) return;
-    if(frog.jumpP > 0.05) return; 
-    let nextLane = frog.lane; let nextX = frog.tx;
-    if(dir==='up') nextLane--; if(dir==='down') nextLane++; if(dir==='left') nextX-=60; if(dir==='right') nextX+=60;
-    if(nextX < 20) return; if(nextX > width - 20) return; if(nextLane >= map.length) return;
-    let blocked = false; entities.forEach(e => { if(e.type==='tree'&&e.lane===nextLane&&Math.abs(e.x-nextX)<40) blocked=true; });
-    if(!blocked) {
-        AudioEngine.fx('jump'); frog.lane = nextLane; frog.tx = nextX; frog.ty = frog.lane * laneH + laneH/2; frog.jumpP = 1;
-        if(dir==='up')frog.rot=0; if(dir==='down')frog.rot=Math.PI; if(dir==='left')frog.rot=-Math.PI/2; if(dir==='right')frog.rot=Math.PI/2;
-        if(frog.lane === 0) winLevel();
-    }
-}
-
-function handleUIInput(e, dir) { e.preventDefault(); handleInput(dir); }
-
-function update() {
-    if(gameState !== 'playing') return;
-    
-    // Physics
-    frog.x += (frog.tx - frog.x) * 0.2; frog.y += (frog.ty - frog.y) * 0.2; frog.jumpP *= 0.85; 
-    let targetCamY = frog.y - height * 0.6; camY += (targetCamY - camY) * 0.05;
-    
-    let onLog = false;
-    entities.forEach(e => {
-        if(e.speed) { e.x += e.speed; if(e.speed>0 && e.x>width+e.w)e.x=-e.w; if(e.speed<0 && e.x<-e.w)e.x=width+e.w; }
+// --- AUDIO SYNTHESIZER (Advanced) ---
+const AudioSynth = {
+    ctx: null,
+    init() { if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)(); },
+    playTone(freq, type, dur, vol=0.1, slide=0) {
+        if(!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        if(slide !== 0) osc.frequency.linearRampToValueAtTime(freq + slide, this.ctx.currentTime + dur);
         
-        // Trabant Smoke (more particles)
-        if(e.subtype === 'trabant' && Math.random() > 0.7) particles.push({x: e.x + (e.speed>0?-e.w/2:e.w/2), y: e.lane*laneH + laneH/2 + 10, vx:0, vy:-1, life:0.6, color:'rgba(200,200,200,0.3)', size: Math.random()*5+2});
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
         
-        if(e.lane === frog.lane) {
-            let overlap = Math.abs(frog.x - e.x) < (e.w/2 + 10);
-            if(e.type==='car'&&overlap&&frog.jumpP<0.5) die();
-            if(e.type==='log'&&overlap) { onLog=true; frog.tx+=e.speed; frog.x+=e.speed; }
-            if(e.type==='coin'&&e.active&&Math.abs(frog.x-e.x)<30) { e.active=false; AudioEngine.fx('coin'); profiles[currentFrogIndex].coins++; saveProfiles(); updateHud(); }
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + dur);
+    },
+    // Sound Effects
+    sfx(type) {
+        this.init();
+        if(this.ctx.state === 'suspended') this.ctx.resume();
+        switch(type) {
+            case 'jump': this.playTone(200, 'triangle', 0.15, 0.1, 100); break;
+            case 'land': this.playTone(100, 'sine', 0.1, 0.2, -50); break;
+            case 'coin': this.playTone(1200, 'square', 0.1, 0.05); setTimeout(()=>this.playTone(1800, 'square', 0.2, 0.05), 80); break;
+            case 'splash': 
+                for(let i=0; i<5; i++) setTimeout(()=>this.playTone(100+Math.random()*200, 'sawtooth', 0.2, 0.1, -100), i*20);
+                break;
+            case 'squish': this.playTone(150, 'sawtooth', 0.1, 0.2, -100); this.playTone(80, 'square', 0.2, 0.2); break;
+            case 'win': 
+                [440, 554, 659, 880].forEach((f,i) => setTimeout(()=>this.playTone(f, 'triangle', 0.3, 0.1), i*100));
+                break;
+            case 'buy': this.playTone(600, 'sine', 0.1); setTimeout(()=>this.playTone(1200, 'sine', 0.2), 100); break;
         }
-    });
-    if(map[frog.lane] && map[frog.lane].type==='water' && !onLog && frog.jumpP<0.2) die();
-    if(onLog && (frog.x < 0 || frog.x > width)) die();
-    
-    // Particles Update
-    particles.forEach((p,i)=>{p.x+=p.vx;p.y+=p.vy;p.life-=0.03;if(p.life<=0)particles.splice(i,1);});
-    
-    // Rain Update
-    if(weather === 'rain') {
-        rain.forEach(r => { r.y += r.s; r.x -= 1; if(r.y > height + camY) { r.y = camY - 20; r.x = Math.random() * width; } });
     }
-}
+};
 
-function die() { frog.dead = true; AudioEngine.fx('die'); AudioEngine.stopMusic(); showEndScreen(false); }
-function winLevel() { AudioEngine.fx('win'); profiles[currentFrogIndex].coins += 50; saveProfiles(); updateHud(); showEndScreen(true); }
-
-function draw() {
-    // 1. BACKGROUND (Dynamic Weather Color)
-    const skyColor = weather === 'rain' ? '#0f172a' : '#020617';
-    ctx.fillStyle = skyColor; ctx.fillRect(0, 0, width, height); 
-    
-    ctx.save(); ctx.translate(0, -camY);
-    
-    // 2. MAP LAYERS
-    map.forEach((lane, i) => {
-        let y = i * laneH; if(y < camY - laneH || y > camY + height) return;
+// --- GRAPHICS ENGINE (The "HD" Part) ---
+const GFX = {
+    // Helper to draw the complex frog
+    drawFrog(ctx, x, y, size, angle, jumpProgress, skinId, isDead) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
         
-        if(lane.type==='goal') { 
-            ctx.fillStyle = '#cbd5e1'; ctx.fillRect(0, y, width, laneH); 
-            ctx.fillStyle = '#1e293b'; for(let r=0; r<4; r++) for(let c=0; c<width/20; c++) if((r+c)%2===0) ctx.fillRect(c*20, y + r*20, 20, 20); 
-            ctx.fillStyle = 'rgba(74, 222, 128, 0.3)'; ctx.fillRect(0,y,width,laneH); 
+        // Scale based on jump (illusion of height)
+        const scale = 1 + (Math.sin(jumpProgress * Math.PI) * 0.3);
+        ctx.scale(scale, scale);
+
+        if(isDead) {
+            ctx.fillStyle = '#500'; ctx.beginPath(); ctx.arc(0,0, size, 0, Math.PI*2); ctx.fill(); // Blood pool
+            ctx.scale(1, 0.2); // Flattened
         }
-        else if(lane.type==='grass'){
-            let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,'#14532d');g.addColorStop(1,'#064e3b');ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);
-            ctx.fillStyle=asphaltPattern;ctx.globalAlpha=0.1;ctx.fillRect(0,y,width,laneH);ctx.globalAlpha=1;
-            // Grass tufts details
-            ctx.fillStyle = '#166534';
-            for(let k=0; k<10; k++) ctx.fillRect((i*33 + k*100)%width, y+10+k*5, 4, 4);
-        }
-        else if(lane.type==='road'){
-            ctx.fillStyle='#1e293b';ctx.fillRect(0,y,width,laneH);
-            ctx.fillStyle=asphaltPattern;ctx.globalAlpha=0.15;ctx.fillRect(0,y,width,laneH);ctx.globalAlpha=1;
-            ctx.fillStyle='rgba(255,255,255,0.2)';for(let k=0;k<width;k+=80)ctx.fillRect(k,y+laneH/2,40,2);
-            ctx.fillStyle='#0f172a';ctx.fillRect(0,y,width,4);ctx.fillRect(0,y+laneH-4,width,4);
-            // Wet road reflection effect
-            if(weather === 'rain') { ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.fillRect(0,y,width,laneH); }
-        }
-        else if(lane.type==='water'){
-            let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,'#082f49');g.addColorStop(1,'#0c4a6e');ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH);
-            // Animated Water Ripples
-            ctx.fillStyle='rgba(255,255,255,0.05)';
-            const offset = Date.now() / 20;
-            for(let k=0; k<width; k+=40) {
-                const waveY = Math.sin((k + offset)/50) * 5;
-                ctx.fillRect(k, y+30+waveY, 20, 2);
-                ctx.fillRect(k+20, y+50-waveY, 15, 2);
-            }
-        }
-    });
-    
-    // 3. SHADOWS (For Depth)
-    entities.forEach(e => {
-        if(e.y < camY - 100 || e.y > camY + height) return;
-        let y = e.lane * laneH + laneH/2;
-        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath();
-        if(e.type==='car') ctx.roundRect(e.x-e.w/2+10,y-e.h/2+10,e.w,e.h,10); 
-        else if(e.type==='tree') ctx.arc(e.x+5,y+5,25,0,Math.PI*2); 
-        else if(e.type==='log') ctx.roundRect(e.x-e.w/2+5,y-e.h/2+10,e.w,e.h,5);
+
+        const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
+        const legOffset = Math.sin(jumpProgress * Math.PI) * 5;
+
+        // 1. Hátsó lábak (izmosak)
+        ctx.fillStyle = skin.color;
+        // Bal hátsó
+        ctx.beginPath();
+        ctx.ellipse(-12 - legOffset, 12 + legOffset, 6, 14, -0.5, 0, Math.PI*2);
         ctx.fill();
-    });
+        // Jobb hátsó
+        ctx.beginPath();
+        ctx.ellipse(12 + legOffset, 12 + legOffset, 6, 14, 0.5, 0, Math.PI*2);
+        ctx.fill();
 
-    // 4. OBJECTS & HEADLIGHTS
-    entities.forEach(e => {
-        if(e.y < camY - 100 || e.y > camY + height) return;
-        let y = e.lane * laneH + laneH/2;
+        // 2. Test (sziluett)
+        ctx.fillStyle = skin.color;
+        ctx.beginPath();
+        // Kicsit körte alakú test
+        ctx.moveTo(-10, -15); // Fej bal
+        ctx.bezierCurveTo(-20, -5, -20, 15, 0, 20); // Bal oldal -> Fenék
+        ctx.bezierCurveTo(20, 15, 20, -5, 10, -15); // Jobb oldal -> Fej jobb
+        ctx.closePath();
+        ctx.fill();
+
+        // 3. Has (világosabb)
+        ctx.fillStyle = skin.belly;
+        ctx.beginPath();
+        ctx.ellipse(0, 2, 8, 12, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // 4. Foltok (textúra)
+        ctx.fillStyle = skin.spots;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath(); ctx.arc(-8, 5, 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(6, 10, 3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -5, 2, 0, Math.PI*2); ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        // 5. Mellső lábak
+        ctx.fillStyle = skin.color;
+        ctx.beginPath(); ctx.ellipse(-12, -5 - legOffset, 4, 8, 0.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(12, -5 - legOffset, 4, 8, -0.5, 0, Math.PI*2); ctx.fill();
+
+        // 6. Szemek (Kidülledő)
+        // Bal szem
+        ctx.fillStyle = skin.color;
+        ctx.beginPath(); ctx.arc(-8, -14, 5, 0, Math.PI*2); ctx.fill(); // Szemhéj
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(-8, -14, 3, 0, Math.PI*2); ctx.fill(); // Szemfehérje
+        ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.arc(-8, -14, 1.5, 0, Math.PI*2); ctx.fill(); // Pupilla
         
-        if(e.type==='log'){
-            let g=ctx.createLinearGradient(e.x-e.w/2,y-e.h/2,e.x-e.w/2,y+e.h/2);g.addColorStop(0,'#451a03');g.addColorStop(1,'#78350f');ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(e.x-e.w/2,y-e.h/2,e.w,e.h,6);ctx.fill();
-            // Wood Texture
-            ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(e.x-e.w/2+10, y-e.h/2, 2, e.h); ctx.fillRect(e.x+20, y-e.h/2, 2, e.h);
-        }
-        else if(e.type==='car'){
-            const isRight=e.speed>0; ctx.save(); ctx.translate(e.x,y); if(!isRight)ctx.scale(-1,1);
+        // Jobb szem
+        ctx.fillStyle = skin.color;
+        ctx.beginPath(); ctx.arc(8, -14, 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(8, -14, 3, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.arc(8, -14, 1.5, 0, Math.PI*2); ctx.fill();
+
+        ctx.restore();
+    },
+
+    drawCar(ctx, x, y, w, h, color, isRight, type) {
+        ctx.save();
+        ctx.translate(x, y);
+        if (!isRight) ctx.scale(-1, 1);
+
+        // -- FÉNYSZÓRÓK (Világítás) --
+        const grad = ctx.createLinearGradient(w/2, 0, w/2 + 250, 0);
+        grad.addColorStop(0, 'rgba(255, 255, 200, 0.6)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(w/2, -10);
+        ctx.lineTo(w/2 + 250, -60);
+        ctx.lineTo(w/2 + 250, 60);
+        ctx.lineTo(w/2, 10);
+        ctx.fill();
+
+        // -- KAROSSZÉRIA --
+        // Árnyék
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(-w/2 + 5, -h/2 + 5, w, h);
+
+        if (type === 'trabant') {
+            // TRABANT (Dobozos, retró)
+            ctx.fillStyle = color;
+            // Fő test
+            ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 2); ctx.fill();
+            // Tető (kicsit beljebb)
+            ctx.fillStyle = 'rgba(255,255,255,0.2)'; // Üvegek
+            ctx.fillRect(-w/4, -h/2 + 2, w/1.8, h - 4);
+            // Tetőlemez
+            ctx.fillStyle = color; // Vagy fehér tető
+            ctx.fillRect(-w/5, -h/2 + 3, w/2, h - 6);
             
-            // HEADLIGHTS (Realistic Beams)
-            let beam = ctx.createLinearGradient(e.w/2, 0, e.w/2 + 200, 0);
-            beam.addColorStop(0, 'rgba(255, 255, 200, 0.4)');
-            beam.addColorStop(1, 'rgba(255, 255, 200, 0)');
-            ctx.fillStyle = beam;
-            ctx.beginPath(); ctx.moveTo(e.w/2, -15); ctx.lineTo(e.w/2 + 200, -50); ctx.lineTo(e.w/2 + 200, 50); ctx.lineTo(e.w/2, 15); ctx.fill();
+            // Kerek lámpák (Trabant jellegzetesség)
+            ctx.fillStyle = '#fffec0';
+            ctx.beginPath(); ctx.arc(w/2, -14, 5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(w/2, 14, 5, 0, Math.PI*2); ctx.fill();
 
-            // Car Body
-            if(e.subtype === 'trabant') { 
-                ctx.fillStyle = e.color; ctx.beginPath(); ctx.roundRect(-e.w/2, -e.h/2, e.w, e.h, 4); ctx.fill(); 
-                ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(-e.w/4, -e.h/2+2, e.w/2, e.h-4); 
-                ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.arc(e.w/2, -12, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(e.w/2, 12, 6, 0, Math.PI*2); ctx.fill(); 
-                ctx.fillStyle = '#ef4444'; ctx.fillRect(-e.w/2, -15, 3, 30); 
-            } else { 
-                ctx.fillStyle=e.color;ctx.beginPath();ctx.roundRect(-e.w/2,-e.h/2,e.w,e.h,8);ctx.fill(); 
-                ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.roundRect(-e.w/4,-e.h/2+5,e.w/2,e.h-10,4);ctx.fill(); 
-                ctx.fillStyle='#fbbf24';ctx.fillRect(e.w/2-2,-15,2,6);ctx.fillRect(e.w/2-2,10,2,6); 
-                // Brake lights
-                ctx.fillStyle='#ef4444';ctx.fillRect(-e.w/2, -15, 2, 6);ctx.fillRect(-e.w/2, 10, 2, 6);
-            }
-            ctx.restore();
-        } 
-        else if(e.type==='tree'){
-            ctx.fillStyle='#14532d';ctx.beginPath();for(let i=0;i<7;i++){let a=(i/7)*Math.PI*2,r=25+Math.random()*5;ctx.lineTo(e.x+Math.cos(a)*r,y+Math.sin(a)*r);}ctx.fill();
-            ctx.fillStyle='#15803d';ctx.beginPath();ctx.arc(e.x,y,15,0,Math.PI*2);ctx.fill();
-        }
-        else if(e.type==='coin'&&e.active){
-            ctx.fillStyle='#fbbf24';ctx.shadowColor='#f59e0b';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(e.x,y,8,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-            // Sparkle
-            ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(e.x-3, y-3, 2, 0, Math.PI*2); ctx.fill();
-        }
-    });
-    
-    // Particles (Smoke/Dust)
-    particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life;ctx.beginPath();ctx.arc(p.x,p.y,p.size||3,0,6.28);ctx.fill();ctx.globalAlpha=1;});
+            // Kerekek
+            ctx.fillStyle = '#222';
+            ctx.fillRect(-w/3, -h/2 - 2, 12, 4); // Bal első
+            ctx.fillRect(-w/3, h/2 - 2, 12, 4);  // Bal hátsó
+            ctx.fillRect(w/4, -h/2 - 2, 12, 4);  // Jobb első
+            ctx.fillRect(w/4, h/2 - 2, 12, 4);   // Jobb hátsó
 
-    // 5. FROG (With jump scale)
-    if(!frog.dead){
-        ctx.save();ctx.translate(frog.x,frog.y);ctx.rotate(frog.rot);let s=1+frog.jumpP*0.4;ctx.scale(s,s);
-        ctx.fillStyle=frog.color;
-        // Legs
-        ctx.beginPath();ctx.ellipse(-12,-12,6,12,-0.5,0,6.28);ctx.ellipse(12,-12,6,12,0.5,0,6.28);ctx.ellipse(-12,12,6,12,0.5,0,6.28);ctx.ellipse(12,12,6,12,-0.5,0,6.28);ctx.fill();
-        // Body Gradient
-        let fg=ctx.createRadialGradient(0,0,2,0,0,18); fg.addColorStop(0, frog.color); fg.addColorStop(1, 'rgba(0,0,0,0.2)');
-        ctx.fillStyle=fg; ctx.beginPath();ctx.ellipse(0,0,14,18,0,0,6.28);ctx.fill();
-        // Eyes
-        ctx.fillStyle='#022c22';ctx.beginPath();ctx.arc(-6,-8,2,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(6,-8,2,0,6.28);ctx.fill();
+        } else {
+            // MODERN AUTÓ
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.fill();
+            
+            // Szélvédő és ablakok
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath(); ctx.roundRect(-w/4, -h/2 + 4, w/2, h - 8, 4); ctx.fill();
+            
+            // Lámpák
+            ctx.fillStyle = '#fbbf24'; // Első sárga
+            ctx.fillRect(w/2 - 4, -h/2 + 2, 4, 10);
+            ctx.fillRect(w/2 - 4, h/2 - 12, 4, 10);
+            
+            ctx.fillStyle = '#ef4444'; // Hátsó piros
+            ctx.fillRect(-w/2, -h/2 + 2, 2, 10);
+            ctx.fillRect(-w/2, h/2 - 12, 2, 10);
+        }
+
         ctx.restore();
     }
-    
-    ctx.restore();
+};
 
-    // 6. OVERLAY EFFECTS (Rain & Vignette)
-    if(weather === 'rain') {
-        ctx.fillStyle = 'rgba(173, 216, 230, 0.4)';
-        rain.forEach(r => { ctx.fillRect(r.x, r.y - camY, 2, r.l); });
-        // Heavy Atmosphere Overlay
-        ctx.fillStyle = 'rgba(0, 10, 30, 0.3)'; ctx.fillRect(0,0,width,height);
-    }
+// --- GAME LOGIC ---
+const canvas = document.getElementById('cvs');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+// Global State
+const State = {
+    profiles: JSON.parse(localStorage.getItem('frog_hd_profiles')) || [],
+    currentProfile: -1,
+    screen: 'menu', // menu, game, shop, profiles
+    level: 1,
+    coins: 0,
     
-    // Vignette (Cinematic Dark Corners)
-    let grad = ctx.createRadialGradient(width/2, height/2, height/2, width/2, height/2, height);
-    grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.6)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,width,height);
+    save() { localStorage.setItem('frog_hd_profiles', JSON.stringify(this.profiles)); }
+};
+
+// Input Handling
+const Input = {
+    dir: null,
+    queue: [],
+    trigger(d, e) {
+        if(e) e.preventDefault();
+        this.queue.push(d);
+    },
+    pop() { return this.queue.shift(); }
+};
+window.addEventListener('keydown', e => {
+    const k = e.key;
+    if(k==='ArrowUp'||k==='w') Input.trigger('up');
+    if(k==='ArrowDown'||k==='s') Input.trigger('down');
+    if(k==='ArrowLeft'||k==='a') Input.trigger('left');
+    if(k==='ArrowRight'||k==='d') Input.trigger('right');
+});
+
+// Particle System
+class Particle {
+    constructor(x, y, type) {
+        this.x = x; this.y = y; this.type = type;
+        this.life = 1.0;
+        this.vx = (Math.random()-0.5)*2; 
+        this.vy = (Math.random()-0.5)*2;
+        
+        if(type === 'rain') {
+            this.vx = -1; this.vy = 15 + Math.random()*5; 
+            this.life = 1; this.x = Math.random()*width; this.y = Math.random()*height - height;
+        } else if (type === 'smoke') {
+            this.vy = -1; this.vx = -2; this.life = 0.8;
+        }
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        
+        if(this.type === 'rain') {
+            if(this.y > Game.camY + height) { this.y = Game.camY - 10; this.x = Math.random()*width; }
+        } else {
+            this.life -= 0.02;
+        }
+    }
+    draw(ctx) {
+        ctx.globalAlpha = this.life;
+        if(this.type === 'rain') {
+            ctx.fillStyle = 'rgba(150, 200, 255, 0.4)';
+            ctx.fillRect(this.x, this.y, 1, 10);
+        } else if (this.type === 'smoke') {
+            ctx.fillStyle = '#aaa';
+            ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI*2); ctx.fill();
+        } else if (this.type === 'splash') {
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
 }
 
-function loop() { if(gameState==='playing') { update(); draw(); requestAnimationFrame(loop); } else { draw(); } }
+// Main Game Object
+const Game = {
+    laneH: 90,
+    map: [],
+    entities: [],
+    particles: [],
+    frog: { x:0, y:0, tx:0, ty:0, lane:0, jump:0, rot:0, dead:false },
+    camY: 0,
+    loopId: null,
+    weather: 'clear', // 'rain'
 
-// KEYBOARD + HYBRID TOUCH
-function handleUIInput(e, dir) { e.preventDefault(); handleInput(dir); }
-window.addEventListener('keydown', e => { 
-    if(gameState==='playing') {
-        if(e.key==='ArrowUp'||e.key==='w')handleInput('up'); if(e.key==='ArrowDown'||e.key==='s')handleInput('down'); if(e.key==='ArrowLeft'||e.key==='a')handleInput('left'); if(e.key==='ArrowRight'||e.key==='d')handleInput('right'); 
+    init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.loadProfiles();
+        if(State.profiles.length === 0) showScreen('register');
+        else showScreen('profiles');
+    },
+
+    resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    },
+
+    loadProfiles() {
+        const list = document.getElementById('profile-list');
+        list.innerHTML = '';
+        State.profiles.forEach((p, i) => {
+            const div = document.createElement('div');
+            div.className = 'btn';
+            div.style.textAlign = 'left';
+            div.innerHTML = `${p.name} <span style="float:right; color:var(--gold)">$${p.coins}</span>`;
+            div.onclick = () => {
+                State.currentProfile = i;
+                State.level = p.lvl || 1;
+                State.coins = p.coins;
+                showScreen('menu');
+            };
+            list.appendChild(div);
+        });
+    },
+
+    register() {
+        const name = document.getElementById('inp-name').value.trim();
+        if(name.length < 3) return alert('Túl rövid név!');
+        State.profiles.push({ name: name, coins: 0, lvl: 1, skin: 'classic', owned: ['classic'] });
+        State.save();
+        this.loadProfiles();
+        showScreen('profiles');
+    },
+
+    start() {
+        showScreen(null); // Hide UI
+        document.getElementById('hud').style.opacity = 1;
+        document.getElementById('controls').style.display = 'block';
+        
+        this.frog.dead = false;
+        this.generateLevel();
+        this.weather = Math.random() < 0.4 ? 'rain' : 'clear';
+        if(this.weather === 'rain') {
+            this.particles = [];
+            for(let i=0; i<80; i++) this.particles.push(new Particle(0,0,'rain'));
+        } else {
+            this.particles = [];
+        }
+
+        if(this.loopId) cancelAnimationFrame(this.loopId);
+        this.loop();
+    },
+
+    generateLevel() {
+        this.map = [{type:'goal'}, {type:'grass'}];
+        const len = 10 + Math.min(State.level, 20);
+        
+        for(let i=0; i<len; i++) {
+            const r = Math.random();
+            let type = 'road';
+            if(r < 0.3) type = 'water';
+            else if (r < 0.5) type = 'grass';
+            
+            // Avoid triple water
+            if(type==='water' && this.map[this.map.length-1].type==='water' && this.map[this.map.length-2].type==='water') type='road';
+            
+            this.map.push({ type: type, speed: (Math.random()*2 + 1 + State.level*0.1) * (Math.random()>0.5?1:-1) });
+        }
+        this.map.push({type:'grass'}, {type:'grass'}, {type:'grass'}); // Start safe zone
+
+        this.entities = [];
+        this.map.forEach((lane, i) => {
+            if(i < 2 || i >= this.map.length - 3) return; // Skip safe zones
+
+            if(lane.type === 'road') {
+                const cnt = Math.floor(Math.random() * 2) + 1;
+                for(let k=0; k<cnt; k++) {
+                    const isTrabant = Math.random() < 0.3;
+                    this.entities.push({
+                        type: 'car',
+                        subtype: isTrabant ? 'trabant' : 'modern',
+                        lane: i,
+                        x: k * (width/cnt) + Math.random()*100,
+                        w: isTrabant ? 110 : 130,
+                        h: 55,
+                        speed: lane.speed * (isTrabant ? 0.7 : 1.1),
+                        color: isTrabant ? `hsl(${Math.random()*50+40}, 40%, 70%)` : `hsl(${Math.random()*360}, 70%, 50%)`
+                    });
+                }
+            } else if (lane.type === 'water') {
+                const cnt = Math.floor(Math.random() * 2) + 2;
+                for(let k=0; k<cnt; k++) {
+                    this.entities.push({ type: 'log', lane: i, x: k*(width/cnt), w: 160, h: 50, speed: lane.speed });
+                }
+            } else if (lane.type === 'grass') {
+                if(Math.random() > 0.5) this.entities.push({type: 'tree', lane: i, x: Math.random()*width, w:40});
+                if(Math.random() > 0.7) this.entities.push({type: 'coin', lane: i, x: Math.random()*width, w:20, active:true});
+            }
+        });
+
+        // Set frog pos
+        const startLane = this.map.length - 2;
+        this.frog.lane = startLane;
+        this.frog.tx = width/2;
+        this.frog.x = width/2;
+        this.frog.ty = startLane * this.laneH + this.laneH/2;
+        this.frog.y = this.frog.ty;
+        this.frog.jump = 0;
+        this.camY = this.frog.y - height/2;
+        
+        document.getElementById('ui-level').innerText = State.level;
+        document.getElementById('ui-coins').innerText = State.coins;
+    },
+
+    update() {
+        // --- INPUT ---
+        const cmd = Input.pop();
+        if(cmd && !this.frog.dead && this.frog.jump < 0.1) {
+            let nLane = this.frog.lane;
+            let nX = this.frog.tx;
+            
+            if(cmd==='up') nLane--;
+            if(cmd==='down') nLane++;
+            if(cmd==='left') nX -= 70;
+            if(cmd==='right') nX += 70;
+
+            // Collision check with walls & trees
+            if(nX > 20 && nX < width - 20 && nLane < this.map.length) {
+                let blocked = this.entities.some(e => e.type === 'tree' && e.lane === nLane && Math.abs(e.x - nX) < 40);
+                if(!blocked) {
+                    AudioSynth.sfx('jump');
+                    this.frog.lane = nLane; this.frog.tx = nX;
+                    this.frog.ty = nLane * this.laneH + this.laneH/2;
+                    this.frog.jump = 1;
+                    if(cmd==='up') this.frog.rot = 0;
+                    if(cmd==='down') this.frog.rot = Math.PI;
+                    if(cmd==='left') this.frog.rot = -Math.PI/2;
+                    if(cmd==='right') this.frog.rot = Math.PI/2;
+
+                    if(this.frog.lane === 0) this.win();
+                }
+            }
+        }
+
+        // --- PHYSICS ---
+        this.frog.x += (this.frog.tx - this.frog.x) * 0.2;
+        this.frog.y += (this.frog.ty - this.frog.y) * 0.2;
+        this.frog.jump *= 0.85; // Gravity
+        if(this.frog.jump < 0.01 && this.frog.jump > 0) {
+            this.frog.jump = 0; 
+            AudioSynth.sfx('land');
+        }
+
+        // Camera
+        const targetCamY = this.frog.y - height * 0.6;
+        this.camY += (targetCamY - this.camY) * 0.05;
+
+        // Entities
+        let onLog = false;
+        this.entities.forEach(e => {
+            // Movement
+            if(e.speed) {
+                e.x += e.speed;
+                // Infinite Loop
+                if(e.speed > 0 && e.x > width + e.w) e.x = -e.w;
+                if(e.speed < 0 && e.x < -e.w) e.x = width + e.w;
+
+                // Trabant smoke
+                if(e.subtype === 'trabant' && Math.random() > 0.85) {
+                    this.particles.push(new Particle(e.x + (e.speed>0?-50:50), e.lane*this.laneH + 50, 'smoke'));
+                }
+            }
+
+            // Collision
+            if(Math.abs(e.lane - this.frog.lane) < 0.1) { // Same lane
+                const dist = Math.abs(this.frog.x - e.x);
+                
+                if(e.type === 'car' && dist < e.w/2 + 10 && this.frog.jump < 0.5) {
+                    this.die('hit');
+                }
+                if(e.type === 'log' && dist < e.w/2 + 10) {
+                    onLog = true;
+                    this.frog.x += e.speed; this.frog.tx += e.speed;
+                }
+                if(e.type === 'coin' && e.active && dist < 30) {
+                    e.active = false;
+                    State.coins += 10;
+                    State.profiles[State.currentProfile].coins = State.coins;
+                    State.save();
+                    document.getElementById('ui-coins').innerText = State.coins;
+                    AudioSynth.sfx('coin');
+                }
+            }
+        });
+
+        // Water death
+        const currentType = this.map[this.frog.lane] ? this.map[this.frog.lane].type : 'void';
+        if(currentType === 'water' && !onLog && this.frog.jump < 0.2 && !this.frog.dead) {
+            this.die('drown');
+        }
+        // Offscreen log death
+        if(onLog && (this.frog.x < 0 || this.frog.x > width)) this.die('drown');
+
+        // Particles
+        this.particles.forEach((p, i) => {
+            p.update();
+            if(p.life <= 0) this.particles.splice(i, 1);
+        });
+    },
+
+    draw() {
+        // --- BACKGROUND ---
+        ctx.fillStyle = '#050b14'; // Deep night blue
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.save();
+        ctx.translate(0, -this.camY);
+
+        // --- MAP ---
+        this.map.forEach((lane, i) => {
+            const y = i * this.laneH;
+            if(y < this.camY - this.laneH || y > this.camY + height) return; // Optimization
+
+            // Base Texture
+            if(lane.type === 'road') {
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(0, y, width, this.laneH);
+                // Asphalt noise
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                for(let k=0; k<10; k++) ctx.fillRect(Math.random()*width, y+Math.random()*this.laneH, 2, 2);
+                // Lane markings
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                for(let x=0; x<width; x+=100) ctx.fillRect(x, y + this.laneH/2, 50, 2);
+            } else if (lane.type === 'water') {
+                // Animated Water
+                const time = Date.now() * 0.001;
+                const grad = ctx.createLinearGradient(0, y, 0, y+this.laneH);
+                grad.addColorStop(0, '#0f172a'); grad.addColorStop(1, '#1e3a8a');
+                ctx.fillStyle = grad; ctx.fillRect(0, y, width, this.laneH);
+                
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                for(let x=0; x<width; x+=60) {
+                    ctx.fillRect(x + Math.sin(time + i)*10, y + 20 + Math.cos(time*2 + x)*5, 30, 2);
+                }
+            } else if (lane.type === 'grass' || lane.type === 'goal') {
+                ctx.fillStyle = lane.type==='goal' ? '#064e3b' : '#14532d';
+                ctx.fillRect(0, y, width, this.laneH);
+                // Grass details
+                ctx.fillStyle = '#166534';
+                for(let x=0; x<width; x+=40) ctx.fillRect(x, y+Math.random()*this.laneH, 4, 6);
+                
+                if(lane.type==='goal') {
+                    // Checkered pattern overlay
+                    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                    for(let r=0; r<4; r++) for(let c=0; c<width/30; c++) if((r+c)%2) ctx.fillRect(c*30, y+r*20, 30, 20);
+                }
+            }
+        });
+
+        // --- ENTITIES (Shadows first) ---
+        this.entities.forEach(e => {
+            if(e.y < this.camY - 100 || e.y > this.camY + height) return;
+            const y = e.lane * this.laneH + this.laneH/2;
+            
+            // Shadows
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.beginPath();
+            if(e.type === 'car') ctx.roundRect(e.x - e.w/2 + 5, y - e.h/2 + 5, e.w, e.h, 5);
+            else if(e.type === 'tree') ctx.arc(e.x + 5, y + 5, 20, 0, Math.PI*2);
+            else if(e.type === 'log') ctx.roundRect(e.x - e.w/2 + 5, y - e.h/2 + 5, e.w, e.h, 5);
+            ctx.fill();
+        });
+
+        // --- ENTITIES (Actual draw) ---
+        this.entities.forEach(e => {
+            if(e.y < this.camY - 100 || e.y > this.camY + height) return;
+            const y = e.lane * this.laneH + this.laneH/2;
+
+            if(e.type === 'car') {
+                GFX.drawCar(ctx, e.x, y, e.w, e.h, e.color, e.speed > 0, e.subtype);
+            } else if (e.type === 'log') {
+                // Detailed Log
+                const grad = ctx.createLinearGradient(e.x-e.w/2, y, e.x+e.w/2, y);
+                grad.addColorStop(0, '#3f2c22'); grad.addColorStop(1, '#5d4037');
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.roundRect(e.x - e.w/2, y - e.h/2, e.w, e.h, 8); ctx.fill();
+                // Texture
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(e.x - 20, y - e.h/2, 2, e.h);
+                ctx.fillRect(e.x + 40, y - e.h/2, 2, e.h);
+            } else if (e.type === 'tree') {
+                // Bushy Tree
+                ctx.fillStyle = '#064e3b';
+                ctx.beginPath(); ctx.arc(e.x, y, 25, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#065f46';
+                ctx.beginPath(); ctx.arc(e.x-5, y-5, 15, 0, Math.PI*2); ctx.fill();
+            } else if (e.type === 'coin' && e.active) {
+                // Gold Coin
+                ctx.fillStyle = '#fbbf24';
+                ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 15;
+                ctx.beginPath(); ctx.arc(e.x, y, 10, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff'; ctx.fillText('$', e.x-3, y+4);
+            }
+        });
+
+        // --- FROG (THE HERO) ---
+        if(!this.frog.dead || this.frog.jump > 0) { // Keep showing if jumping
+            const p = State.profiles[State.currentProfile];
+            GFX.drawFrog(ctx, this.frog.x, this.frog.y, 15, this.frog.rot, this.frog.jump, p.skin, this.frog.dead);
+        }
+
+        // --- PARTICLES ---
+        this.particles.forEach(p => p.draw(ctx));
+
+        ctx.restore();
+
+        // --- OVERLAY EFFECTS ---
+        // Rain overlay
+        if(this.weather === 'rain') {
+            ctx.fillStyle = 'rgba(0, 15, 30, 0.3)';
+            ctx.fillRect(0,0,width,height);
+        }
+        // Vignette (Dark Corners)
+        const grad = ctx.createRadialGradient(width/2, height/2, height/2, width/2, height/2, height);
+        grad.addColorStop(0, 'transparent');
+        grad.addColorStop(1, 'rgba(0,0,0,0.8)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,0,width,height);
+    },
+
+    loop() {
+        if(this.frog.dead) { this.draw(); return; }
+        this.update();
+        this.draw();
+        this.loopId = requestAnimationFrame(() => this.loop());
+    },
+
+    die(reason) {
+        if(this.frog.dead) return;
+        this.frog.dead = true;
+        AudioSynth.sfx(reason === 'drown' ? 'splash' : 'squish');
+        
+        // Game Over Screen
+        setTimeout(() => {
+            document.getElementById('end-title').innerText = "MEGHALTÁL";
+            document.getElementById('end-title').style.color = "#ef4444";
+            document.getElementById('end-msg').innerText = reason === 'drown' ? "Megfulladtál a mocsárban." : "Kilapított egy jármű.";
+            document.getElementById('btn-restart').innerText = "ÚJRA";
+            showScreen('end');
+            document.getElementById('controls').style.display = 'none';
+        }, 800);
+    },
+
+    win() {
+        this.frog.dead = true; // Stop movement
+        AudioSynth.sfx('win');
+        State.level++;
+        State.profiles[State.currentProfile].lvl = State.level;
+        State.coins += 50;
+        State.profiles[State.currentProfile].coins = State.coins;
+        State.save();
+
+        setTimeout(() => {
+            document.getElementById('end-title').innerText = "GYŐZELEM!";
+            document.getElementById('end-title').style.color = "#4ade80";
+            document.getElementById('end-msg').innerText = "Sikeresen átjutottál! +50 Kriptopénz.";
+            document.getElementById('btn-restart').innerText = "KÖVETKEZŐ SZINT";
+            showScreen('end');
+            document.getElementById('controls').style.display = 'none';
+        }, 500);
+    },
+
+    nextOrRestart() {
+        this.start();
     }
-});
-function resize() { width=canvas.width=window.innerWidth; height=canvas.height=window.innerHeight; }
-window.addEventListener('resize', resize);
-initApp();
+};
+
+// --- UI HELPERS ---
+function showScreen(id) {
+    document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+    if(id) {
+        document.getElementById(`panel-${id}`).style.display = 'block';
+        if(id === 'shop') renderShop();
+    }
+}
+
+function renderShop() {
+    const p = State.profiles[State.currentProfile];
+    document.getElementById('shop-balance').innerText = p.coins;
+    const grid = document.getElementById('shop-grid');
+    grid.innerHTML = '';
+    
+    SKINS.forEach(skin => {
+        const owned = p.owned.includes(skin.id);
+        const selected = p.skin === skin.id;
+        
+        const item = document.createElement('div');
+        item.className = `shop-item ${selected ? 'selected' : ''}`;
+        
+        let btnText = selected ? 'AKTÍV' : (owned ? 'KIVÁLASZT' : 'MEGVESZ');
+        let priceText = owned ? '' : `${skin.price} $`;
+        
+        item.innerHTML = `
+            <div class="skin-circle" style="background:${skin.color}; border: 4px solid ${skin.spots}"></div>
+            <span class="skin-name">${skin.name}</span>
+            <span class="skin-price">${priceText}</span>
+        `;
+        
+        item.onclick = () => {
+            if(owned) {
+                p.skin = skin.id;
+                State.save();
+                AudioSynth.sfx('buy'); // Positive sound
+                renderShop();
+            } else {
+                if(p.coins >= skin.price) {
+                    if(confirm(`${skin.price} érméért megveszed?`)) {
+                        p.coins -= skin.price;
+                        p.owned.push(skin.id);
+                        p.skin = skin.id;
+                        State.save();
+                        AudioSynth.sfx('buy');
+                        renderShop();
+                    }
+                } else {
+                    alert("Nincs elég pénzed!");
+                }
+            }
+        };
+        grid.appendChild(item);
+    });
+}
+
+// Start
+Game.init();
+
 </script>
 </body>
 </html>
