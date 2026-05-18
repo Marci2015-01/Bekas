@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Frogger Pro - Invites Fixed</title>
+<title>Frogger Pro - Global Leaderboard Update</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style> 
-:root { --bg: #0f172a; --text: #f8fafc; --accent: #4ade80; --danger: #ef4444; --gold: #fbbf24; } 
+:root { --bg: #0f172a; --text: #f8fafc; --accent: #4ade80; --danger: #ef4444; --gold: #fbbf24; --diamond: #06b6d4; } 
 html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: var(--bg); font-family: 'Inter', sans-serif; touch-action: none; user-select: none; color: var(--text); } 
 canvas { display: block; width: 100%; height: 100%; }
 
@@ -23,20 +23,28 @@ button:active { transform: scale(0.98); }
 button.secondary { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1); font-size: 14px; } 
 button.secondary:hover { color: white; border-color: white; transform: none; box-shadow: none; }
 button.btn-danger { background: #ef4444; color: white; }
+button.btn-purple { background: #a855f7; color: white; }
 
 /* TABS & SHOP */
 .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
 .tabs button { margin: 0; padding: 12px 5px; font-size: 13px; background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); }
 .tabs button.active { background: var(--accent); color: #0f172a; border-color: var(--accent); }
-#shop-panel { max-height: 85vh; display: flex; flex-direction: column; }
-#shop-grid-wrapper { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; padding-right: 5px; }
-#shop-grid-wrapper::-webkit-scrollbar { width: 6px; }
-#shop-grid-wrapper::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+#shop-panel, #leaderboard-panel { max-height: 85vh; display: flex; flex-direction: column; }
+#shop-grid-wrapper, .scroll-list { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; padding-right: 5px; }
+#shop-grid-wrapper::-webkit-scrollbar, .scroll-list::-webkit-scrollbar { width: 6px; }
+#shop-grid-wrapper::-webkit-scrollbar-thumb, .scroll-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
 .shop-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; } 
 .shop-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; } 
 .shop-item.active { border: 2px solid var(--accent); background: rgba(74, 222, 128, 0.1); } 
 .skin-preview { width: 30px; height: 30px; border-radius: 50%; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); } 
 .trail-preview { width: 8px; height: 30px; border-radius: 4px; margin-bottom: 8px; }
+
+/* LEADERBOARD ITEM */
+.lb-item { display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1); align-items: center; }
+.lb-item.is-me { border-color: var(--accent); background: rgba(74, 222, 128, 0.1); }
+.lb-rank { font-weight: 800; font-size: 18px; color: var(--gold); width: 35px; text-align: left; }
+.lb-name { flex-grow: 1; text-align: left; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; }
+.lb-score { font-weight: 800; color: white; font-size: 14px; }
 
 /* HUD */ 
 #hud { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; pointer-events: none; opacity: 0; transition: opacity 1s; z-index: 50; } 
@@ -61,7 +69,7 @@ button.btn-danger { background: #ef4444; color: white; }
 <div id="ui-layer"> 
     <div id="profile-panel" class="panel"> 
         <h1>VÁLASSZ BÉKÁT</h1> 
-        <div id="profile-list-container" style="margin-bottom:20px; max-height:150px; overflow-y:auto; text-align:left;"></div> 
+        <div id="profile-list-container" class="scroll-list" style="max-height:150px; text-align:left;"></div> 
         <button onclick="showRegister()" class="secondary">+ ÚJ PROFIL</button> 
     </div>
 
@@ -77,8 +85,9 @@ button.btn-danger { background: #ef4444; color: white; }
         <button onclick="startClassicMode()">KLASSZIKUS JÁTÉK</button> 
         <button onclick="showDuelMenu()" class="btn-danger">PÁRBAJ (BOTOK)</button> 
         <button onclick="showShop()" style="background: var(--gold); color: black;">GARÁZS</button> 
+        <button onclick="showLeaderboard()" class="btn-purple">VILÁGRANGLISTA</button> 
         
-        <p style="margin-bottom: 5px; font-size: 12px;">BARÁT MEGHÍVÁSA PÁRBAJRA:</p>
+        <p style="margin-bottom: 5px; font-size: 12px; color: #94a3b8; margin-top: 10px;">BARÁT MEGHÍVÁSA PÁRBAJRA:</p>
         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
             <button onclick="inviteFriendGmail()" style="background: #ea4335; color: white; margin-bottom: 0; font-size: 12px; padding: 12px;">GMAIL</button> 
             <button onclick="inviteFriendMessenger()" style="background: #0084FF; color: white; margin-bottom: 0; font-size: 12px; padding: 12px;">MESSENGER</button> 
@@ -86,6 +95,13 @@ button.btn-danger { background: #ef4444; color: white; }
         </div>
 
         <button class="secondary" onclick="showProfiles()">KILÉPÉS</button> 
+    </div>
+
+    <div id="leaderboard-panel" class="panel">
+        <h1 style="color:var(--gold)">VILÁGRANGLISTA</h1>
+        <p>A világ leggazdagabb békái.</p>
+        <div id="leaderboard-list" class="scroll-list"></div>
+        <button class="secondary" onclick="showMenu()" style="margin-bottom:0;">VISSZA A MENÜBE</button>
     </div>
 
     <div id="duel-menu" class="panel">
@@ -131,6 +147,8 @@ button.btn-danger { background: #ef4444; color: white; }
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
+const GAME_URL = "[IDE_JON_A_TE_LINKED]";
+
 // --- AUDIO ---
 const AudioEngine = { 
     ctx: null, isPlaying: false, timer: null, index: 0, melody: [[523,100],[659,100],[784,90],[0,200]], 
@@ -145,6 +163,7 @@ const AudioEngine = {
         if(!this.ctx)return; 
         if(t==='jump')this.playTone(150,0.1,'triangle',0.1); 
         if(t==='coin'){this.playTone(1200,0.1,'sine',0.1);setTimeout(()=>this.playTone(1800,0.2,'sine',0.1),50);} 
+        if(t==='diamond'){this.playTone(2000,0.1,'square',0.1);setTimeout(()=>this.playTone(2500,0.2,'square',0.1),50);setTimeout(()=>this.playTone(3000,0.3,'square',0.1),100);}
         if(t==='die')this.playTone(100,0.4,'sawtooth',0.2); 
         if(t==='win'){this.playTone(400,0.1);setTimeout(()=>this.playTone(600,0.1),100);} 
     }
@@ -174,6 +193,16 @@ let profiles = JSON.parse(localStorage.getItem('frog_profiles_pro')) || [];
 let currentFrogIndex = -1;
 let currentShopTab = 'skins';
 function saveProfiles() { localStorage.setItem('frog_profiles_pro', JSON.stringify(profiles)); }
+
+// VIRTUÁLIS GLOBÁLIS JÁTÉKOSOK GENERÁLÁSA
+const FAKE_GLOBAL_PLAYERS = [];
+const pNames = ["xX_FrogKiller_Xx", "PepeThePro", "Kermit_God", "SwampMaster99", "Toxic_Jumper", "L3g3nd", "NinjaToad", "GoldenBoy", "JustA_Frog", "ProGamer_HU", "ElBarto", "MadMax", "SpeedRunner", "Glitcher", "T0x1c", "NoobSlayer"];
+// Generálunk 50 kamu profilt random pontokkal
+for(let i=0; i<50; i++) {
+    let name = pNames[Math.floor(Math.random() * pNames.length)] + Math.floor(Math.random() * 999);
+    let coins = Math.floor(Math.random() * 50000) + 1000; // 1000 és 50000 közötti pont
+    FAKE_GLOBAL_PLAYERS.push({ name: name, coins: coins, isGlobal: true });
+}
 
 // --- STATE ---
 let width, height, laneH = 80;
@@ -223,38 +252,55 @@ function showMenu() {
     document.getElementById('welcome-title').innerText = `SZIA, ${profiles[currentFrogIndex].name.toUpperCase()}!`;
 }
 
-// ÚJ, JAVÍTOTT INVITATIONS
+function showLeaderboard() {
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('leaderboard-panel').style.display = 'flex';
+    const lbList = document.getElementById('leaderboard-list');
+    lbList.innerHTML = '';
+    
+    // Összevonjuk a helyi profilokat a globális "kamu" profilokkal
+    let allPlayers = [...profiles.map(p => ({...p, isMe: true})), ...FAKE_GLOBAL_PLAYERS];
+    
+    // Sorba rendezzük pénz alapján
+    allPlayers.sort((a, b) => b.coins - a.coins);
+    
+    allPlayers.forEach((p, index) => {
+        let card = document.createElement('div');
+        card.className = `lb-item ${p.isMe ? 'is-me' : ''}`;
+        
+        let rankColor = index === 0 ? '#fbbf24' : (index === 1 ? '#cbd5e1' : (index === 2 ? '#b45309' : 'var(--text)'));
+        
+        card.innerHTML = `
+            <div class="lb-rank" style="color: ${rankColor}">#${index + 1}</div>
+            <div class="lb-name" style="${p.isMe ? 'color:var(--accent)' : ''}">${p.name} ${p.isMe ? '<b>(TE)</b>' : ''}</div>
+            <div class="lb-score">${p.coins} $</div>
+        `;
+        lbList.appendChild(card);
+    });
+
+    // Automatikusan scrollozzon a játékoshoz
+    setTimeout(() => {
+        const myItem = document.querySelector('.lb-item.is-me');
+        if(myItem) myItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+}
+
 function inviteFriendGmail() { 
     const subject = encodeURIComponent("Párbaj Frogger Pro-ban!");
-    const body = encodeURIComponent("Gyere, játssz velem egy Frogger Pro párbajt! Lássuk, te túléled-e a Marha Nehéz botokat!\n\nJátssz itt: https://froggerpro.com");
-    // Ez egyenesen a webalapú Gmailbe visz a böngészőben! Nem indít Outlookot.
+    const body = encodeURIComponent(`Gyere, játssz velem egy Frogger Pro párbajt! Lássuk, te túléled-e a Marha Nehéz botokat!\n\nJátssz itt: ${GAME_URL}`);
     window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=&su=${subject}&body=${body}`, '_blank');
 }
 
 function inviteFriendMessenger() {
-    const link = encodeURIComponent("https://froggerpro.com");
-    // Ez a telefonokon egyből kinyitja az appot
+    const link = encodeURIComponent(GAME_URL);
     window.location.href = `fb-messenger://share/?link=${link}`;
-    
-    // Ha nem nyílna meg (mert asztali gépen vagy), adunk egy alternatívát
-    setTimeout(() => {
-        if(confirm("Ha nem nyílt meg a Messenger (pl. asztali gépen vagy), szeretnéd kimásolni a szöveget?")) {
-            copyInvite();
-        }
-    }, 800);
+    setTimeout(() => { if(confirm("Ha nem nyílt meg a Messenger (pl. asztali gépen vagy), szeretnéd kimásolni a szöveget?")) copyInvite(); }, 800);
 }
 
 function copyInvite() {
-    const textMsg = "Gyere, játssz velem egy Frogger Pro párbajt! Lássuk, te túléled-e a Marha Nehéz botokat! Játssz itt: https://froggerpro.com";
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(textMsg).then(() => {
-            alert("A meghívó kimásolva a vágólapra! Illeszd be bárhova (Ctrl+V).");
-        }).catch(err => {
-            prompt("Másold ki a szöveget innen:", textMsg);
-        });
-    } else {
-        prompt("Másold ki a szöveget innen:", textMsg);
-    }
+    const textMsg = `Gyere, játssz velem egy Frogger Pro párbajt! Lássuk, te túléled-e a Marha Nehéz botokat! Játssz itt: ${GAME_URL}`;
+    if (navigator.clipboard) { navigator.clipboard.writeText(textMsg).then(() => alert("A meghívó kimásolva a vágólapra! Illeszd be bárhova (Ctrl+V).")).catch(err => prompt("Másold ki a szöveget innen:", textMsg)); } 
+    else { prompt("Másold ki a szöveget innen:", textMsg); }
 }
 
 function showDuelMenu() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('duel-menu').style.display = 'block'; }
@@ -354,8 +400,9 @@ function generateLevel() {
         if(lane.type === 'road') { 
             let cnt = Math.floor(Math.random() * 2) + 1; 
             for(let j=0; j<cnt; j++) { 
-                let sub = Math.random() < 0.25 ? 'trabant' : 'normal'; 
-                entities.push({ type: 'car', subtype: sub, lane: i, x: Math.random()*width, w: sub==='trabant'?100:120, h: 50, speed: lane.speed * (sub==='trabant'?0.8:1), color: ['#3b82f6', '#ef4444', '#8b5cf6'][Math.floor(Math.random()*3)] }); 
+                let sub = Math.random() < 0.1 ? 'police' : (Math.random() < 0.25 ? 'trabant' : 'normal'); 
+                let spd = lane.speed * (sub==='police' ? 2.0 : (sub==='trabant'?0.8:1));
+                entities.push({ type: 'car', subtype: sub, lane: i, x: Math.random()*width, w: sub==='trabant'?100:120, h: 50, speed: spd, color: ['#3b82f6', '#ef4444', '#8b5cf6'][Math.floor(Math.random()*3)] }); 
             } 
         } else if (lane.type === 'rail') {
             let trainSpeed = (lane.speed > 0 ? 1 : -1) * (25 + Math.random() * 10); 
@@ -365,7 +412,10 @@ function generateLevel() {
             for(let j=0; j<Math.floor(Math.random()*2)+2; j++) entities.push({type: 'log', lane: i, x: Math.random()*width, w: 160, h: 45, speed: lane.speed}); 
         } else if (lane.type === 'grass') { 
             if(Math.random()>0.6) entities.push({type: 'tree', lane: i, x: Math.random()*width, w:60, h:60}); 
-            if(Math.random()>0.8 && !isDuel) entities.push({type: 'coin', lane: i, x: Math.random()*width, w:20, h:20, active:true}); 
+            if(!isDuel) {
+                if(Math.random() > 0.95) entities.push({type: 'diamond', lane: i, x: Math.random()*width, w:20, h:20, active:true}); 
+                else if(Math.random()>0.7) entities.push({type: 'coin', lane: i, x: Math.random()*width, w:20, h:20, active:true}); 
+            }
         } 
     });
 
@@ -408,16 +458,11 @@ function updateBots() {
         r.moveTimer--;
         if(r.moveTimer <= 0) {
             r.moveTimer = duelWaitTimes[duelDiff] + Math.random()*10;
-            let nl = r.lane - 1;
-            if(nl >= 0 && isSafe(r.tx, nl)) {
-                r.lane = nl; r.ty -= laneH; r.jumpP = 1; r.rot = 0; AudioEngine.fx('jump');
-                if(r.lane === 0) finishRacer(r);
-            } else {
-                let d = Math.random() > 0.5 ? 60 : -60;
-                if(isSafe(r.tx + d, r.lane) && r.tx + d > 20 && r.tx + d < width-20) {
-                    r.tx += d; r.jumpP = 1; r.rot = d>0 ? Math.PI/2 : -Math.PI/2; AudioEngine.fx('jump');
-                }
-            }
+            let forward = r.lane - 1; let backward = r.lane + 1; let d = Math.random() > 0.5 ? 60 : -60;
+            if(forward >= 0 && isSafe(r.tx, forward)) { r.lane = forward; r.ty -= laneH; r.jumpP = 1; r.rot = 0; AudioEngine.fx('jump'); if(r.lane === 0) finishRacer(r); } 
+            else if(isSafe(r.tx + d, r.lane) && r.tx + d > 20 && r.tx + d < width-20) { r.tx += d; r.jumpP = 1; r.rot = d>0 ? Math.PI/2 : -Math.PI/2; AudioEngine.fx('jump'); }
+            else if(isSafe(r.tx - d, r.lane) && r.tx - d > 20 && r.tx - d < width-20) { r.tx -= d; r.jumpP = 1; r.rot = d<0 ? Math.PI/2 : -Math.PI/2; AudioEngine.fx('jump'); }
+            else if(backward < map.length - 1 && isSafe(r.tx, backward)) { r.lane = backward; r.ty += laneH; r.jumpP = 1; r.rot = Math.PI; AudioEngine.fx('jump'); }
         }
     });
 }
@@ -427,19 +472,13 @@ function finishRacer(r) {
     if(!isDuel && r.isPlayer) { winClassic(); return; }
     
     if(isDuel) {
-        if(r.isPlayer && finishedRacers.length < activeRacers.length - 1) {
-            spectating = true; document.getElementById('spectator-msg').style.display = 'block';
-        }
+        if(r.isPlayer && finishedRacers.length < activeRacers.length - 1) { spectating = true; document.getElementById('spectator-msg').style.display = 'block'; }
         updateHud(); 
         if(finishedRacers.length >= activeRacers.length - 1) {
             spectating = false; document.getElementById('spectator-msg').style.display = 'none';
             let eliminated = activeRacers.find(x => !x.finished);
             if(eliminated.isPlayer) { loseDuel("TE LETTÉL AZ UTOLSÓ ÉS KIESTÉL!"); } 
-            else {
-                activeRacers = activeRacers.filter(x => x !== eliminated);
-                if(activeRacers.length === 1 && activeRacers[0].isPlayer) { winDuel(); } 
-                else { roundNum++; showEndScreen(true, `${eliminated.name} KIESETT! Jöhet a következő kör.`); }
-            }
+            else { activeRacers = activeRacers.filter(x => x !== eliminated); if(activeRacers.length === 1 && activeRacers[0].isPlayer) { winDuel(); } else { roundNum++; showEndScreen(true, `${eliminated.name} KIESETT! Jöhet a következő kör.`); } }
         }
     }
 }
@@ -497,6 +536,7 @@ function update() {
             if(e.speed>0 && e.x > width + wrap) e.x = -wrap; if(e.speed<0 && e.x < -wrap) e.x = width + wrap; 
         } 
         if(e.subtype === 'trabant' && Math.random() > 0.8) particles.push({x: e.x + (e.speed>0?-e.w/2:e.w/2), y: e.lane*laneH + laneH/2 + 10, vx:0, vy:-1, life:0.5, color:'rgba(200,200,200,0.5)'}); 
+        if(e.subtype === 'police' && Math.random() > 0.6) particles.push({x: e.x + (e.speed>0?-e.w/2:e.w/2), y: e.lane*laneH + laneH/2 + 10, vx:0, vy:-1.5, life:0.6, color:'rgba(100,150,255,0.4)'}); 
     });
 
     activeRacers.forEach(r => {
@@ -512,7 +552,11 @@ function update() {
                 let overlap = Math.abs(r.x - e.x) < (e.w/2 + 10);
                 if((e.type==='car' || e.type.startsWith('train')) && overlap && r.jumpP<0.5) die(r);
                 if(e.type==='log' && overlap) { onLog=true; r.tx+=e.speed; r.x+=e.speed; }
-                if(r.isPlayer && e.type==='coin' && e.active && Math.abs(r.x-e.x)<30) { e.active=false; AudioEngine.fx('coin'); profiles[currentFrogIndex].coins += Math.floor(1 * r.mult); saveProfiles(); updateHud(); }
+                
+                if(r.isPlayer && overlap) {
+                    if(e.type==='coin' && e.active) { e.active=false; AudioEngine.fx('coin'); profiles[currentFrogIndex].coins += Math.floor(1 * r.mult); saveProfiles(); updateHud(); }
+                    if(e.type==='diamond' && e.active) { e.active=false; AudioEngine.fx('diamond'); profiles[currentFrogIndex].coins += Math.floor(50 * r.mult); saveProfiles(); updateHud(); }
+                }
             }
         });
         if(map[r.lane] && map[r.lane].type==='water' && !onLog && r.jumpP<0.2) die(r); 
@@ -534,20 +578,48 @@ function draw() {
         else if(lane.type==='water'){ let g=ctx.createLinearGradient(0,y,0,y+laneH);g.addColorStop(0,'#0c4a6e');g.addColorStop(1,'#075985'); ctx.fillStyle=g;ctx.fillRect(0,y,width,laneH); ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fillRect(0,y+10,width,5);ctx.fillRect(0,y+30,width,2); } 
     }); 
     
+    let now = Date.now();
     entities.forEach(e => { 
         if(e.y < camY - 100 || e.y > camY + height) return; 
         let y = e.lane * laneH + laneH/2; ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); 
         if(e.type==='car' || e.type.startsWith('train')) ctx.roundRect(e.x-e.w/2+10,y-e.h/2+10,e.w,e.h,10); else if(e.type==='tree') ctx.arc(e.x+5,y+5,25,0,Math.PI*2); else if(e.type==='log') ctx.roundRect(e.x-e.w/2+5,y-e.h/2+10,e.w,e.h,5); ctx.fill(); 
+        
         if(e.type==='log'){ let g=ctx.createLinearGradient(e.x-e.w/2,y-e.h/2,e.x-e.w/2,y+e.h/2);g.addColorStop(0,'#451a03');g.addColorStop(1,'#78350f'); ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(e.x-e.w/2,y-e.h/2,e.w,e.h,6);ctx.fill(); } 
         else if(e.type==='car'){ 
             const isRight=e.speed>0; ctx.save(); ctx.translate(e.x,y); if(!isRight)ctx.scale(-1,1); 
-            if(e.subtype === 'trabant') { ctx.fillStyle = e.color; ctx.beginPath(); ctx.roundRect(-e.w/2, -e.h/2, e.w, e.h, 4); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(-e.w/4, -e.h/2+2, e.w/2, e.h-4); ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.arc(e.w/2, -12, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(e.w/2, 12, 6, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ef4444'; ctx.fillRect(-e.w/2, -15, 3, 30); } 
-            else { let b=ctx.createLinearGradient(e.w/2,0,e.w/2+150,0);b.addColorStop(0,'rgba(255,255,200,0.4)');b.addColorStop(1,'transparent'); ctx.fillStyle=b;ctx.beginPath();ctx.moveTo(e.w/2,-15);ctx.lineTo(e.w/2+150,-40);ctx.lineTo(e.w/2+150,40);ctx.lineTo(e.w/2,15);ctx.fill(); ctx.fillStyle=e.color;ctx.beginPath();ctx.roundRect(-e.w/2,-e.h/2,e.w,e.h,8);ctx.fill(); ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.roundRect(-e.w/4,-e.h/2+5,e.w/2,e.h-10,4);ctx.fill(); ctx.fillStyle='#fbbf24';ctx.fillRect(e.w/2-2,-15,2,6);ctx.fillRect(e.w/2-2,10,2,6); } ctx.restore(); 
+            
+            if(e.subtype === 'trabant') { 
+                ctx.fillStyle = e.color; ctx.beginPath(); ctx.roundRect(-e.w/2, -e.h/2, e.w, e.h, 4); ctx.fill(); 
+                ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(-e.w/4, -e.h/2+2, e.w/2, e.h-4); 
+                ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.arc(e.w/2, -12, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(e.w/2, 12, 6, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(-e.w/2, -15, 3, 30); 
+            } 
+            else if (e.subtype === 'police') {
+                ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.roundRect(-e.w/2, -e.h/2, e.w, e.h, 8); ctx.fill();
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(-e.w/4, -e.h/2, e.w/2, e.h); 
+                ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.roundRect(-e.w/4 + 5, -e.h/2+5, e.w/2 - 10, e.h-10, 4); ctx.fill();
+                let isRed = (now % 300) < 150;
+                ctx.fillStyle = isRed ? '#ef4444' : '#1e293b'; ctx.fillRect(-5, -e.h/2 - 2, 5, 4); ctx.fillRect(-5, e.h/2 - 2, 5, 4);
+                ctx.fillStyle = !isRed ? '#3b82f6' : '#1e293b'; ctx.fillRect(0, -e.h/2 - 2, 5, 4); ctx.fillRect(0, e.h/2 - 2, 5, 4);
+                if(isRed) { ctx.fillStyle='rgba(239, 68, 68, 0.4)'; ctx.beginPath(); ctx.arc(-2, -e.h/2, 25, 0, 6.28); ctx.fill(); }
+                else { ctx.fillStyle='rgba(59, 130, 246, 0.4)'; ctx.beginPath(); ctx.arc(2, -e.h/2, 25, 0, 6.28); ctx.fill(); }
+                let b=ctx.createLinearGradient(e.w/2,0,e.w/2+150,0);b.addColorStop(0,'rgba(255,255,255,0.6)');b.addColorStop(1,'transparent');
+                ctx.fillStyle=b;ctx.beginPath();ctx.moveTo(e.w/2,-15);ctx.lineTo(e.w/2+150,-40);ctx.lineTo(e.w/2+150,40);ctx.lineTo(e.w/2,15);ctx.fill(); 
+            }
+            else { 
+                let b=ctx.createLinearGradient(e.w/2,0,e.w/2+150,0);b.addColorStop(0,'rgba(255,255,200,0.4)');b.addColorStop(1,'transparent'); 
+                ctx.fillStyle=b;ctx.beginPath();ctx.moveTo(e.w/2,-15);ctx.lineTo(e.w/2+150,-40);ctx.lineTo(e.w/2+150,40);ctx.lineTo(e.w/2,15);ctx.fill(); 
+                ctx.fillStyle=e.color;ctx.beginPath();ctx.roundRect(-e.w/2,-e.h/2,e.w,e.h,8);ctx.fill(); 
+                ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.roundRect(-e.w/4,-e.h/2+5,e.w/2,e.h-10,4);ctx.fill(); 
+                ctx.fillStyle='#fbbf24';ctx.fillRect(e.w/2-2,-15,2,6);ctx.fillRect(e.w/2-2,10,2,6); 
+            } 
+            ctx.restore(); 
         } 
         else if(e.type==='train_engine'){ const isRight = e.speed>0; ctx.save(); ctx.translate(e.x,y); if(!isRight) ctx.scale(-1,1); let grad = ctx.createLinearGradient(-e.w/2, -e.h/2, e.w/2, e.h/2); grad.addColorStop(0, '#94a3b8'); grad.addColorStop(1, '#475569'); ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(-e.w/2, -e.h/2 + 2, e.w, e.h - 4, 8); ctx.fill(); ctx.fillStyle = '#0f172a'; for(let wx = -e.w/2 + 30; wx < e.w/2 - 40; wx += 40) { ctx.beginPath(); ctx.roundRect(wx, -15, 25, 30, 4); ctx.fill(); } ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.roundRect(e.w/2 - 30, -e.h/2 + 5, 30, e.h - 10, 4); ctx.fill(); ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 15; ctx.beginPath(); ctx.arc(e.w/2 - 10, 0, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.fillStyle = '#1e293b'; ctx.fillRect(-e.w/2 - 10, -3, 10, 6); ctx.restore(); }
         else if(e.type==='train_wagon'){ const isRight = e.speed>0; ctx.save(); ctx.translate(e.x,y); if(!isRight) ctx.scale(-1,1); let grad = ctx.createLinearGradient(-e.w/2, -e.h/2, e.w/2, e.h/2); grad.addColorStop(0, '#475569'); grad.addColorStop(1, '#334155'); ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(-e.w/2, -e.h/2 + 4, e.w, e.h - 8, 4); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(-e.w/2 + 10, -e.h/2 + 10, e.w - 20, e.h - 20); ctx.fillStyle = '#fbbf24'; ctx.fillRect(-e.w/2 + 15, -e.h/2 + 15, 10, 5); ctx.fillStyle = '#1e293b'; ctx.fillRect(-e.w/2 - 10, -3, 10, 6); ctx.restore(); }
         else if(e.type==='tree'){ ctx.fillStyle='#14532d';ctx.beginPath(); for(let i=0;i<7;i++){let a=(i/7)*Math.PI*2,r=25+Math.random()*5;ctx.lineTo(e.x+Math.cos(a)*r,y+Math.sin(a)*r);}ctx.fill(); ctx.fillStyle='#15803d';ctx.beginPath();ctx.arc(e.x,y,15,0,Math.PI*2);ctx.fill(); } 
         else if(e.type==='coin'&&e.active){ ctx.fillStyle='#fbbf24';ctx.shadowColor='#f59e0b';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(e.x,y,8,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0; } 
+        else if(e.type==='diamond'&&e.active){ ctx.fillStyle='#06b6d4';ctx.shadowColor='#22d3ee';ctx.shadowBlur=20;ctx.beginPath();ctx.moveTo(e.x,y-10);ctx.lineTo(e.x+10,y);ctx.lineTo(e.x,y+10);ctx.lineTo(e.x-10,y);ctx.fill();ctx.shadowBlur=0; ctx.fillStyle='rgba(255,255,255,0.8)';ctx.beginPath();ctx.moveTo(e.x,y-8);ctx.lineTo(e.x+4,y);ctx.lineTo(e.x-4,y);ctx.fill(); }
     }); 
     
     particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life;ctx.beginPath();ctx.arc(p.x,p.y,3,0,6.28);ctx.fill();ctx.globalAlpha=1;});
