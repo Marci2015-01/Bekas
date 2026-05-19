@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Frogger Pro - Potions & Spin Update</title>
+<title>Frogger Pro - Daily Reward & Skip Update</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style> 
 :root { --bg: #0f172a; --text: #f8fafc; --accent: #4ade80; --danger: #ef4444; --gold: #fbbf24; --diamond: #06b6d4; } 
@@ -47,12 +47,17 @@ button.btn-spin { background: linear-gradient(45deg, #fbbf24, #f59e0b); color: #
 .lb-name { flex-grow: 1; text-align: left; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; }
 .lb-score { font-weight: 800; color: white; font-size: 14px; }
 
-/* HUD */ 
+/* HUD & ALERTS */ 
 #hud { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; pointer-events: none; opacity: 0; transition: opacity 1s; z-index: 50; } 
 .hud-stat { background: rgba(15, 23, 42, 0.8); padding: 8px 16px; border-radius: 30px; font-size: 13px; font-weight: 600; color: white; backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); }
 #duel-hud { position: absolute; top: 70px; right: 20px; pointer-events: none; opacity: 0; text-align: right; z-index: 50; }
 .racer-tag { background: rgba(0,0,0,0.6); color: white; padding: 5px 10px; border-radius: 5px; margin-bottom: 5px; font-size: 12px; display: flex; align-items: center; gap: 5px; border-left: 3px solid #fff; transition: 0.3s; }
-.spectator-mode { color: var(--gold); font-size: 18px; font-weight: 800; text-align: center; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); text-shadow: 0 2px 10px rgba(0,0,0,1); display: none; z-index: 50; }
+
+.spectator-mode { color: var(--gold); font-size: 18px; font-weight: 800; text-align: center; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); text-shadow: 0 2px 10px rgba(0,0,0,1); display: none; z-index: 150; pointer-events: auto; }
+#skip-btn { margin-top:15px; padding:10px 20px; font-size:14px; background:var(--danger); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5); text-transform: uppercase; }
+#skip-btn:hover { transform: scale(1.05); }
+
+#notification { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #0f172a; padding: 15px 30px; border-radius: 30px; font-weight: 800; opacity: 0; transition: 0.5s; z-index: 200; pointer-events: none; box-shadow: 0 10px 30px rgba(74,222,128,0.4); text-align: center; }
 
 #controls { position: absolute; bottom: 0; left: 0; right: 0; height: 35vh; z-index: 50; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; opacity: 0; pointer-events: none; } 
 .c-btn { width: 100%; height: 100%; }
@@ -65,12 +70,18 @@ button.btn-spin { background: linear-gradient(45deg, #fbbf24, #f59e0b); color: #
 </head>
 <body>
 
+<div id="notification">🎁 NAPI JUTALOM: +1 PÖRGETÉS!</div>
+
 <div id="hud"> 
     <div class="hud-stat"><span id="level-display">SZINT 1</span></div> 
     <div class="hud-stat"><span style="color:var(--gold)">●</span><span id="coin-display">0</span></div>
 </div>
 <div id="duel-hud"></div>
-<div id="spectator-msg" class="spectator-mode">🎥 NÉZŐ MÓD: FIGYELD A TÖBBIEKET!</div>
+
+<div id="spectator-msg" class="spectator-mode">
+    🎥 NÉZŐ MÓD: FIGYELD A TÖBBIEKET!<br>
+    <button id="skip-btn" onclick="skipSpectate()">⏩ Párbaj Gyorsítása ⏩</button>
+</div>
 
 <div id="ui-layer"> 
     <div id="profile-panel" class="panel"> 
@@ -109,7 +120,7 @@ button.btn-spin { background: linear-gradient(45deg, #fbbf24, #f59e0b); color: #
 
     <div id="spin-panel" class="panel">
         <h1 style="color:var(--gold)">SZERENCSEKERÉK</h1>
-        <p>Párbajok megnyerésével (15% esély) szerezhetsz pörgetéseket. Nyerj brutális italokat, vagy a legendás Skin 40-et!</p>
+        <p>Párbajok megnyerésével (15% esély) szerezhetsz pörgetéseket, vagy gyere vissza naponta 1 ingyenesért!</p>
         <div id="spin-result-box">Kattints a pörgetéshez!</div>
         <button onclick="doSpin()" class="btn-spin" id="modal-spin-btn">PÖRGETÉS (0)</button>
         <button class="secondary" onclick="showMenu()">VISSZA A MENÜBE</button>
@@ -239,6 +250,13 @@ const asphaltPattern = ctx.createPattern(noiseCanvas,'repeat');
 // --- UI FUNCTIONS ---
 function initApp() { resize(); showProfiles(); }
 
+function showNotification(msg) {
+    let n = document.getElementById('notification');
+    n.innerHTML = msg;
+    n.style.opacity = 1;
+    setTimeout(() => { n.style.opacity = 0; }, 4000);
+}
+
 function showProfiles() { 
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none'); 
     if (profiles.length === 0) { showRegister(); return; } 
@@ -248,6 +266,8 @@ function showProfiles() {
         if(!p.skin) p.skin = 'skin_0'; if(!p.ownedSkins) p.ownedSkins = ['skin_0']; 
         if(!p.trail) p.trail = 'trail_0'; if(!p.ownedTrails) p.ownedTrails = ['trail_0'];
         if(p.spins === undefined) p.spins = 0; if(!p.activePotion) p.activePotion = null; if(!p.potionEndTime) p.potionEndTime = 0;
+        if(p.lastFreeSpin === undefined) p.lastFreeSpin = 0;
+        
         const div = document.createElement('div'); 
         div.style.cssText = "padding:10px; background:rgba(255,255,255,0.05); margin-bottom:5px; cursor:pointer; border-radius:4px; border:1px solid rgba(255,255,255,0.1);"; 
         div.innerHTML = `<b>${p.name}</b> <span style="font-size:12px; float:right; color:#fbbf24">lvl ${p.lvl||1} • ${p.coins}$</span>`; 
@@ -259,13 +279,26 @@ function showRegister() { document.getElementById('profile-panel').style.display
 function registerFrog() { 
     const name = document.getElementById('frog-name-input').value.trim(); 
     if(name.length < 2) return; 
-    profiles.push({ name, coins: 0, lvl: 1, skin: 'skin_0', ownedSkins: ['skin_0'], trail: 'trail_0', ownedTrails: ['trail_0'], spins: 0, activePotion: null, potionEndTime: 0 }); 
+    profiles.push({ name, coins: 0, lvl: 1, skin: 'skin_0', ownedSkins: ['skin_0'], trail: 'trail_0', ownedTrails: ['trail_0'], spins: 0, activePotion: null, potionEndTime: 0, lastFreeSpin: 0 }); 
     saveProfiles(); currentFrogIndex = profiles.length - 1; level = 1; showMenu();
 }
 function showMenu() { 
     gameState = 'menu'; document.querySelectorAll('.panel').forEach(p => p.style.display = 'none'); 
     document.getElementById('main-menu').style.display = 'block'; document.getElementById('hud').style.opacity = 0; document.getElementById('duel-hud').style.opacity = 0; document.getElementById('spectator-msg').style.display = 'none';
+    
     let p = profiles[currentFrogIndex];
+    if(p.lastFreeSpin === undefined) p.lastFreeSpin = 0;
+    
+    // NAPI PÖRGETÉS (24 óránként)
+    let now = Date.now();
+    let dayInMs = 24 * 60 * 60 * 1000;
+    if (now - p.lastFreeSpin > dayInMs) {
+        p.spins++;
+        p.lastFreeSpin = now;
+        saveProfiles();
+        setTimeout(() => showNotification("🎁 NAPI JUTALOM: +1 PÖRGETÉS! 🎁"), 600);
+    }
+
     document.getElementById('welcome-title').innerText = `SZIA, ${p.name.toUpperCase()}!`;
     document.getElementById('menu-spin-btn').innerText = `PÖRGETÉS (${p.spins})`;
 }
@@ -390,10 +423,6 @@ function renderShop() {
     });
 }
 
-function updateHud() { 
-    if(currentFrogIndex === -1) return; 
-}
-
 // --- GAME INIT ---
 function startClassicMode() {
     isDuel = false; spectating = false;
@@ -508,6 +537,37 @@ function updateBots() {
     });
 }
 
+function skipSpectate() {
+    if(!spectating) return;
+    
+    // Keressük meg, hogy a még aktív botok közül ki van a leghátrébb (legnagyobb sávszám)
+    let unfinished = activeRacers.filter(r => !r.finished);
+    if(unfinished.length === 0) return;
+    
+    unfinished.sort((a,b) => b.lane - a.lane); 
+    let loser = unfinished[0]; 
+    
+    // A többi célba ér
+    for(let r of unfinished) {
+        if (r !== loser) {
+            r.finished = true;
+            finishedRacers.push(r);
+        }
+    }
+    
+    // Értékelés azonnal
+    spectating = false; 
+    document.getElementById('spectator-msg').style.display = 'none';
+    
+    activeRacers = activeRacers.filter(x => x !== loser); 
+    if(activeRacers.length === 1 && activeRacers[0].isPlayer) { 
+        winDuel(); 
+    } else { 
+        roundNum++; 
+        showEndScreen(true, `${loser.name} KIESETT! Jöhet a következő kör.`); 
+    }
+}
+
 function finishRacer(r) {
     r.finished = true; finishedRacers.push(r); AudioEngine.fx('win');
     if(!isDuel && r.isPlayer) { winClassic(); return; }
@@ -534,12 +594,12 @@ function winClassic() {
     profiles[currentFrogIndex].coins += reward; profiles[currentFrogIndex].lvl++; saveProfiles();
     showEndScreen(true, `Átjutottál! Nyeremény: ${reward}$`);
 }
+
 function winDuel() {
     let prize = Math.floor(duelPrizes[duelDiff] * activeRacers[0].mult);
     let p = profiles[currentFrogIndex];
     p.coins += prize; 
     
-    // 15% esély pörgetésre
     let spinMsg = "";
     if(Math.random() < 0.15) {
         p.spins++;
@@ -570,9 +630,8 @@ function update() {
     
     let prof = profiles[currentFrogIndex];
     let isPotionActive = prof.activePotion && prof.potionEndTime > Date.now();
-    if(!isPotionActive && prof.activePotion) { prof.activePotion = null; saveProfiles(); } // Lejárt
+    if(!isPotionActive && prof.activePotion) { prof.activePotion = null; saveProfiles(); } 
     
-    // HUD UPDATE
     let skinObj = AVAILABLE_SKINS.find(s => s.id === prof.skin) || AVAILABLE_SKINS[0];
     document.getElementById('level-display').innerText = isDuel ? `PÁRBAJ KÖR ${roundNum}` : `SZINT ${level}`;
     let potStr = "";
@@ -624,7 +683,6 @@ function update() {
         if(r.jumpP > 0.1 && r.trailObj && r.trailObj.id !== 'trail_0') trailParticles.push({x: r.x, y: r.y, life: 1, color: r.trailObj.color});
         r.x += (r.tx - r.x) * 0.2; r.y += (r.ty - r.y) * 0.2; 
         
-        // TURBÓ ITAL hatás: Sokkal gyorsabb ugrás
         let turboBoost = (r.isPlayer && isPotionActive && prof.activePotion === 'turbo') ? 0.1 : 0;
         r.jumpP *= Math.max(0.2, 0.85 - (r.trailObj ? r.trailObj.boost : 0) - turboBoost); 
         
@@ -633,9 +691,7 @@ function update() {
             if(e.lane === r.lane) {
                 let overlap = Math.abs(r.x - e.x) < (e.w/2 + 10);
                 
-                // Ütközés járművekkel
                 if((e.type==='car' || e.type.startsWith('train')) && overlap && r.jumpP<0.5) {
-                    // SZELLEM ITAL hatás: Nem hal meg az autótól
                     if(!(r.isPlayer && isPotionActive && prof.activePotion === 'ghost')) {
                         die(r);
                     }
@@ -643,9 +699,7 @@ function update() {
                 
                 if(e.type==='log' && overlap) { onLog=true; r.tx+=e.speed; r.x+=e.speed; }
                 
-                // Gyűjtögetés
                 if(r.isPlayer && overlap) {
-                    // ARANY ITAL hatás: 2x érme
                     let coinMult = (isPotionActive && prof.activePotion === 'double_coin') ? 2 : 1;
                     
                     if(e.type==='coin' && e.active) { 
@@ -725,7 +779,6 @@ function draw() {
     particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life;ctx.beginPath();ctx.arc(p.x,p.y,3,0,6.28);ctx.fill();ctx.globalAlpha=1;});
     trailParticles.forEach(p=>{ ctx.fillStyle=p.color; ctx.globalAlpha=p.life * 0.7; ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha=1; });
 
-    // DRAW RACERS
     let prof = profiles[currentFrogIndex];
     let isPotionActive = prof && prof.activePotion && prof.potionEndTime > Date.now();
 
@@ -733,7 +786,6 @@ function draw() {
         if(r.finished || r.deadTimer > 0) return;
         ctx.save();ctx.translate(r.x,r.y);ctx.rotate(r.rot);let s=1+r.jumpP*0.3;ctx.scale(s,s); 
         
-        // Aura rajzolása, ha van aktív ital a játékoson
         if(r.isPlayer && isPotionActive) {
             ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2);
             if(prof.activePotion === 'ghost') ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
@@ -747,7 +799,6 @@ function draw() {
         ctx.filter = 'brightness(1.1)'; ctx.beginPath();ctx.ellipse(0,0,14,18,0,0,6.28);ctx.fill(); ctx.filter = 'none'; 
         ctx.fillStyle='#022c22';ctx.beginPath();ctx.arc(-6,-8,2,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(6,-8,2,0,6.28);ctx.fill(); 
         
-        // Szellem ital: A béka maga is kicsit átlátszó
         if(r.isPlayer && isPotionActive && prof.activePotion === 'ghost') { ctx.globalAlpha = 0.5; }
         
         ctx.restore(); 
